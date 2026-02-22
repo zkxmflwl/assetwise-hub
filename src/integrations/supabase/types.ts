@@ -14,7 +14,313 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      asset_types: {
+        Row: {
+          asset_type_code: string
+          created_at: string
+          is_active: boolean
+          major_category: string
+          sort_order: number
+          sub_category: string
+          updated_at: string
+        }
+        Insert: {
+          asset_type_code: string
+          created_at?: string
+          is_active?: boolean
+          major_category: string
+          sort_order?: number
+          sub_category: string
+          updated_at?: string
+        }
+        Update: {
+          asset_type_code?: string
+          created_at?: string
+          is_active?: boolean
+          major_category?: string
+          sort_order?: number
+          sub_category?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dash_users: {
+        Row: {
+          created_at: string
+          department_code: string | null
+          is_active: boolean
+          role_code: string
+          updated_at: string
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          created_at?: string
+          department_code?: string | null
+          is_active?: boolean
+          role_code: string
+          updated_at?: string
+          user_id: string
+          user_name: string
+        }
+        Update: {
+          created_at?: string
+          department_code?: string | null
+          is_active?: boolean
+          role_code?: string
+          updated_at?: string
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dash_users_department_code_fkey"
+            columns: ["department_code"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["department_code"]
+          },
+        ]
+      }
+      department_sales_summary: {
+        Row: {
+          department_code: string
+          id: number
+          last_modified_by_user_id: string | null
+          month_key: string
+          net_sales_amount: number
+          note: string | null
+          purchase_amount: number
+          sales_amount: number
+          total_headcount: number
+          updated_at: string
+        }
+        Insert: {
+          department_code: string
+          id?: never
+          last_modified_by_user_id?: string | null
+          month_key: string
+          net_sales_amount?: number
+          note?: string | null
+          purchase_amount?: number
+          sales_amount?: number
+          total_headcount?: number
+          updated_at?: string
+        }
+        Update: {
+          department_code?: string
+          id?: never
+          last_modified_by_user_id?: string | null
+          month_key?: string
+          net_sales_amount?: number
+          note?: string | null
+          purchase_amount?: number
+          sales_amount?: number
+          total_headcount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_sales_summary_department_code_fkey"
+            columns: ["department_code"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["department_code"]
+          },
+          {
+            foreignKeyName: "department_sales_summary_last_modified_by_user_id_fkey"
+            columns: ["last_modified_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "dash_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      departments: {
+        Row: {
+          created_at: string
+          department_code: string
+          department_name: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department_code: string
+          department_name: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department_code?: string
+          department_name?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      intangible_assets: {
+        Row: {
+          asset_type_code: string | null
+          department_code: string | null
+          expiry_date: string | null
+          id: number
+          last_modified_by_user_id: string | null
+          license_name: string
+          note: string | null
+          quantity: number
+          start_date: string | null
+          updated_at: string
+          vendor_name: string | null
+        }
+        Insert: {
+          asset_type_code?: string | null
+          department_code?: string | null
+          expiry_date?: string | null
+          id?: never
+          last_modified_by_user_id?: string | null
+          license_name: string
+          note?: string | null
+          quantity?: number
+          start_date?: string | null
+          updated_at?: string
+          vendor_name?: string | null
+        }
+        Update: {
+          asset_type_code?: string | null
+          department_code?: string | null
+          expiry_date?: string | null
+          id?: never
+          last_modified_by_user_id?: string | null
+          license_name?: string
+          note?: string | null
+          quantity?: number
+          start_date?: string | null
+          updated_at?: string
+          vendor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intangible_assets_asset_type_code_fkey"
+            columns: ["asset_type_code"]
+            isOneToOne: false
+            referencedRelation: "asset_types"
+            referencedColumns: ["asset_type_code"]
+          },
+          {
+            foreignKeyName: "intangible_assets_department_code_fkey"
+            columns: ["department_code"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["department_code"]
+          },
+          {
+            foreignKeyName: "intangible_assets_last_modified_by_user_id_fkey"
+            columns: ["last_modified_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "dash_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      tangible_assets: {
+        Row: {
+          asset_no: string | null
+          asset_type_code: string | null
+          cpu_spec: string | null
+          department_code: string | null
+          hdd_spec: string | null
+          id: number
+          issued_date: string | null
+          last_modified_by_user_id: string | null
+          manager_name: string | null
+          manufacturer: string | null
+          mem_spec: string | null
+          model_name: string | null
+          note: string | null
+          os_name: string | null
+          purchase_date: string | null
+          purpose: string | null
+          screen_size: string | null
+          serial_no: string | null
+          ssd_spec: string | null
+          updated_at: string
+          usage_location: string | null
+          user_name: string | null
+        }
+        Insert: {
+          asset_no?: string | null
+          asset_type_code?: string | null
+          cpu_spec?: string | null
+          department_code?: string | null
+          hdd_spec?: string | null
+          id?: never
+          issued_date?: string | null
+          last_modified_by_user_id?: string | null
+          manager_name?: string | null
+          manufacturer?: string | null
+          mem_spec?: string | null
+          model_name?: string | null
+          note?: string | null
+          os_name?: string | null
+          purchase_date?: string | null
+          purpose?: string | null
+          screen_size?: string | null
+          serial_no?: string | null
+          ssd_spec?: string | null
+          updated_at?: string
+          usage_location?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          asset_no?: string | null
+          asset_type_code?: string | null
+          cpu_spec?: string | null
+          department_code?: string | null
+          hdd_spec?: string | null
+          id?: never
+          issued_date?: string | null
+          last_modified_by_user_id?: string | null
+          manager_name?: string | null
+          manufacturer?: string | null
+          mem_spec?: string | null
+          model_name?: string | null
+          note?: string | null
+          os_name?: string | null
+          purchase_date?: string | null
+          purpose?: string | null
+          screen_size?: string | null
+          serial_no?: string | null
+          ssd_spec?: string | null
+          updated_at?: string
+          usage_location?: string | null
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tangible_assets_asset_type_code_fkey"
+            columns: ["asset_type_code"]
+            isOneToOne: false
+            referencedRelation: "asset_types"
+            referencedColumns: ["asset_type_code"]
+          },
+          {
+            foreignKeyName: "tangible_assets_department_code_fkey"
+            columns: ["department_code"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["department_code"]
+          },
+          {
+            foreignKeyName: "tangible_assets_last_modified_by_user_id_fkey"
+            columns: ["last_modified_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "dash_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
