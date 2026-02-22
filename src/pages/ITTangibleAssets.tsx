@@ -1,51 +1,63 @@
 import { useState } from 'react';
-import { mockTangibleAssets, TangibleAsset } from '@/data/mockData';
+import { useTangibleAssets } from '@/hooks/useTangibleAssets';
+import { useDepartments } from '@/hooks/useDepartments';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Trash2, Search, Download } from 'lucide-react';
+import { TangibleAssetRow } from '@/services/assetService';
+import { Plus, Trash2, Search, Download, Loader2 } from 'lucide-react';
 
-const columns: { key: keyof TangibleAsset; label: string; width?: string }[] = [
-  { key: 'department', label: '소속' },
-  { key: 'user', label: '사용자' },
-  { key: 'manager', label: '관리자' },
-  { key: 'type', label: '종류' },
-  { key: 'manufacturer', label: '제조사' },
-  { key: 'model', label: '모델' },
-  { key: 'serialNumber', label: 'S/N' },
-  { key: 'cpu', label: 'CPU' },
-  { key: 'memory', label: 'MEM' },
-  { key: 'hdd', label: 'HDD' },
-  { key: 'ssd', label: 'SSD' },
-  { key: 'screenSize', label: '화면크기' },
-  { key: 'os', label: 'OS' },
-  { key: 'purpose', label: '용도' },
-  { key: 'location', label: '사용처' },
-  { key: 'purchaseDate', label: '구매일' },
-  { key: 'assignDate', label: '지급일' },
-  { key: 'note', label: '비고' },
-  { key: 'lastModifiedDate', label: '수정일' },
-  { key: 'lastModifiedBy', label: '수정자' },
+const columns: { key: keyof TangibleAssetRow | 'dept_name' | 'type_name' | 'modifier_name'; label: string; getter: (a: TangibleAssetRow) => string }[] = [
+  { key: 'dept_name', label: '소속', getter: (a) => a.departments?.department_name || '-' },
+  { key: 'user_name', label: '사용자', getter: (a) => a.user_name || '-' },
+  { key: 'manager_name', label: '관리자', getter: (a) => a.manager_name || '-' },
+  { key: 'type_name', label: '종류', getter: (a) => a.asset_types?.sub_category || '-' },
+  { key: 'manufacturer', label: '제조사', getter: (a) => a.manufacturer || '-' },
+  { key: 'model_name', label: '모델', getter: (a) => a.model_name || '-' },
+  { key: 'serial_no', label: 'S/N', getter: (a) => a.serial_no || '-' },
+  { key: 'cpu_spec', label: 'CPU', getter: (a) => a.cpu_spec || '-' },
+  { key: 'mem_spec', label: 'MEM', getter: (a) => a.mem_spec || '-' },
+  { key: 'hdd_spec', label: 'HDD', getter: (a) => a.hdd_spec || '-' },
+  { key: 'ssd_spec', label: 'SSD', getter: (a) => a.ssd_spec || '-' },
+  { key: 'screen_size', label: '화면크기', getter: (a) => a.screen_size || '-' },
+  { key: 'os_name', label: 'OS', getter: (a) => a.os_name || '-' },
+  { key: 'purpose', label: '용도', getter: (a) => a.purpose || '-' },
+  { key: 'usage_location', label: '사용처', getter: (a) => a.usage_location || '-' },
+  { key: 'purchase_date', label: '구매일', getter: (a) => a.purchase_date || '-' },
+  { key: 'issued_date', label: '지급일', getter: (a) => a.issued_date || '-' },
+  { key: 'note', label: '비고', getter: (a) => a.note || '-' },
+  { key: 'updated_at', label: '수정일', getter: (a) => a.updated_at ? new Date(a.updated_at).toLocaleDateString('ko-KR') : '-' },
+  { key: 'modifier_name', label: '수정자', getter: (a) => a.dash_users?.user_name || '-' },
 ];
 
 export default function ITTangibleAssets() {
   const { hasPermission } = useAuth();
-  const [assets, setAssets] = useState<TangibleAsset[]>(mockTangibleAssets);
+  const { data: assets = [], isLoading, error } = useTangibleAssets();
+  const { data: departments = [] } = useDepartments();
   const [search, setSearch] = useState('');
   const [filterDept, setFilterDept] = useState('');
   const canEdit = hasPermission('editor');
 
-  const departments = [...new Set(assets.map((a) => a.department))];
-
   const filtered = assets.filter((a) => {
-    const matchSearch = search === '' || Object.values(a).some((v) => String(v).toLowerCase().includes(search.toLowerCase()));
-    const matchDept = filterDept === '' || a.department === filterDept;
+    const matchSearch = search === '' || columns.some((col) => col.getter(a).toLowerCase().includes(search.toLowerCase()));
+    const matchDept = filterDept === '' || a.department_code === filterDept;
     return matchSearch && matchDept;
   });
 
-  const handleDelete = (id: string) => {
-    if (confirm('이 자산을 삭제하시겠습니까?')) {
-      setAssets((prev) => prev.filter((a) => a.id !== id));
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-64 flex-col items-center justify-center gap-2 text-destructive">
+        <p>데이터를 불러오는 중 오류가 발생했습니다.</p>
+        <button onClick={() => window.location.reload()} className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground">재시도</button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -62,7 +74,6 @@ export default function ITTangibleAssets() {
         )}
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -80,7 +91,7 @@ export default function ITTangibleAssets() {
         >
           <option value="">전체 부서</option>
           {departments.map((d) => (
-            <option key={d} value={d}>{d}</option>
+            <option key={d.department_code} value={d.department_code}>{d.department_name}</option>
           ))}
         </select>
         <button className="flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -89,13 +100,11 @@ export default function ITTangibleAssets() {
         </button>
       </div>
 
-      {/* Stats */}
       <div className="flex gap-4 text-sm text-muted-foreground">
         <span>전체: <strong className="text-foreground">{assets.length}</strong>건</span>
         <span>필터: <strong className="text-foreground">{filtered.length}</strong>건</span>
       </div>
 
-      {/* Table */}
       <div className="glass-card overflow-hidden rounded-xl">
         <div className="overflow-x-auto scrollbar-thin">
           <table className="w-full text-sm">
@@ -106,11 +115,12 @@ export default function ITTangibleAssets() {
                     {col.label}
                   </th>
                 ))}
-                {canEdit && <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground">작업</th>}
               </tr>
             </thead>
             <tbody>
-              {filtered.map((asset, i) => (
+              {filtered.length === 0 ? (
+                <tr><td colSpan={columns.length} className="py-8 text-center text-muted-foreground">데이터 없음</td></tr>
+              ) : filtered.map((asset, i) => (
                 <tr
                   key={asset.id}
                   className="border-b border-border/30 hover:bg-secondary/20 transition-colors"
@@ -118,19 +128,9 @@ export default function ITTangibleAssets() {
                 >
                   {columns.map((col) => (
                     <td key={col.key} className="whitespace-nowrap px-3 py-2.5 text-foreground">
-                      {asset[col.key]}
+                      {col.getter(asset)}
                     </td>
                   ))}
-                  {canEdit && (
-                    <td className="px-3 py-2.5">
-                      <button
-                        onClick={() => handleDelete(asset.id)}
-                        className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </td>
-                  )}
                 </tr>
               ))}
             </tbody>
