@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useTangibleAssets } from '@/hooks/useTangibleAssets';
+import { useTangibleAssetMutations } from '@/hooks/useTangibleAssetMutations';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useAuth } from '@/contexts/AuthContext';
-import { TangibleAssetRow } from '@/services/assetService';
-import { Plus, Trash2, Search, Download, Loader2 } from 'lucide-react';
+import { TangibleAssetRow, TangibleAssetInsert } from '@/services/assetService';
+import { Plus, Search, Download, Loader2, Pencil, Trash2 } from 'lucide-react';
+import TangibleAssetDialog from '@/components/TangibleAssetDialog';
+import DeleteConfirmDialog from '@/components/DeleteConfirmDialog';
 
-const columns: { key: keyof TangibleAssetRow | 'dept_name' | 'type_name' | 'modifier_name'; label: string; getter: (a: TangibleAssetRow) => string }[] = [
+const columns: { key: string; label: string; getter: (a: TangibleAssetRow) => string }[] = [
   { key: 'dept_name', label: '소속', getter: (a) => a.departments?.department_name || '-' },
   { key: 'user_name', label: '사용자', getter: (a) => a.user_name || '-' },
   { key: 'manager_name', label: '관리자', getter: (a) => a.manager_name || '-' },
@@ -32,8 +35,12 @@ export default function ITTangibleAssets() {
   const { hasPermission } = useAuth();
   const { data: assets = [], isLoading, error } = useTangibleAssets();
   const { data: departments = [] } = useDepartments();
+  const { createMutation, updateMutation, deleteMutation } = useTangibleAssetMutations();
   const [search, setSearch] = useState('');
   const [filterDept, setFilterDept] = useState('');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingAsset, setEditingAsset] = useState<TangibleAssetRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<TangibleAssetRow | null>(null);
   const canEdit = hasPermission('editor');
 
   const filtered = assets.filter((a) => {
@@ -41,6 +48,21 @@ export default function ITTangibleAssets() {
     const matchDept = filterDept === '' || a.department_code === filterDept;
     return matchSearch && matchDept;
   });
+
+  const handleAdd = () => { setEditingAsset(null); setDialogOpen(true); };
+  const handleEdit = (asset: TangibleAssetRow) => { setEditingAsset(asset); setDialogOpen(true); };
+  const handleSubmit = (data: TangibleAssetInsert) => {
+    if (editingAsset) {
+      updateMutation.mutate({ id: editingAsset.id, asset: data }, { onSuccess: () => setDialogOpen(false) });
+    } else {
+      createMutation.mutate(data, { onSuccess: () => setDialogOpen(false) });
+    }
+  };
+  const handleDelete = () => {
+    if (deleteTarget) {
+      deleteMutation.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -67,7 +89,7 @@ export default function ITTangibleAssets() {
           <p className="mt-1 text-sm text-muted-foreground">노트북, 모니터, PC 등 IT 유형자산 관리</p>
         </div>
         {canEdit && (
-          <button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">
+          <button onClick={handleAdd} className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">
             <Plus className="h-4 w-4" />
             자산 추가
           </button>
@@ -115,28 +137,51 @@ export default function ITTangibleAssets() {
                     {col.label}
                   </th>
                 ))}
+                {canEdit && <th className="px-3 py-3 text-xs font-medium text-muted-foreground">관리</th>}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={columns.length} className="py-8 text-center text-muted-foreground">데이터 없음</td></tr>
-              ) : filtered.map((asset, i) => (
-                <tr
-                  key={asset.id}
-                  className="border-b border-border/30 hover:bg-secondary/20 transition-colors"
-                  style={{ animationDelay: `${i * 30}ms` }}
-                >
+                <tr><td colSpan={columns.length + (canEdit ? 1 : 0)} className="py-8 text-center text-muted-foreground">데이터 없음</td></tr>
+              ) : filtered.map((asset) => (
+                <tr key={asset.id} className="border-b border-border/30 hover:bg-secondary/20 transition-colors">
                   {columns.map((col) => (
                     <td key={col.key} className="whitespace-nowrap px-3 py-2.5 text-foreground">
                       {col.getter(asset)}
                     </td>
                   ))}
+                  {canEdit && (
+                    <td className="whitespace-nowrap px-3 py-2.5">
+                      <div className="flex gap-1">
+                        <button onClick={() => handleEdit(asset)} className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => setDeleteTarget(asset)} className="rounded p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      <TangibleAssetDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        asset={editingAsset}
+        departments={departments}
+        onSubmit={handleSubmit}
+        isSubmitting={createMutation.isPending || updateMutation.isPending}
+      />
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

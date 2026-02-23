@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useIntangibleAssets } from '@/hooks/useIntangibleAssets';
+import { useIntangibleAssetMutations } from '@/hooks/useIntangibleAssetMutations';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useAuth } from '@/contexts/AuthContext';
-import { IntangibleAssetRow } from '@/services/licenseService';
-import { Plus, Search, Download, Loader2 } from 'lucide-react';
+import { IntangibleAssetRow, IntangibleAssetInsert } from '@/services/licenseService';
+import { Plus, Search, Download, Loader2, Pencil, Trash2 } from 'lucide-react';
+import IntangibleAssetDialog from '@/components/IntangibleAssetDialog';
+import DeleteConfirmDialog from '@/components/DeleteConfirmDialog';
 
 const columns: { key: string; label: string; getter: (a: IntangibleAssetRow) => string }[] = [
   { key: 'license_name', label: '라이선스명', getter: (a) => a.license_name },
@@ -21,8 +24,12 @@ export default function ITIntangibleAssets() {
   const { hasPermission } = useAuth();
   const { data: assets = [], isLoading, error } = useIntangibleAssets();
   const { data: departments = [] } = useDepartments();
+  const { createMutation, updateMutation, deleteMutation } = useIntangibleAssetMutations();
   const [search, setSearch] = useState('');
   const [filterDept, setFilterDept] = useState('');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingAsset, setEditingAsset] = useState<IntangibleAssetRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<IntangibleAssetRow | null>(null);
   const canEdit = hasPermission('editor');
 
   const filtered = assets.filter((a) => {
@@ -30,6 +37,21 @@ export default function ITIntangibleAssets() {
     const matchDept = filterDept === '' || a.department_code === filterDept;
     return matchSearch && matchDept;
   });
+
+  const handleAdd = () => { setEditingAsset(null); setDialogOpen(true); };
+  const handleEdit = (asset: IntangibleAssetRow) => { setEditingAsset(asset); setDialogOpen(true); };
+  const handleSubmit = (data: IntangibleAssetInsert) => {
+    if (editingAsset) {
+      updateMutation.mutate({ id: editingAsset.id, asset: data }, { onSuccess: () => setDialogOpen(false) });
+    } else {
+      createMutation.mutate(data, { onSuccess: () => setDialogOpen(false) });
+    }
+  };
+  const handleDelete = () => {
+    if (deleteTarget) {
+      deleteMutation.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -56,7 +78,7 @@ export default function ITIntangibleAssets() {
           <p className="mt-1 text-sm text-muted-foreground">소프트웨어, 라이선스, SaaS 등 무형자산 관리</p>
         </div>
         {canEdit && (
-          <button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">
+          <button onClick={handleAdd} className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">
             <Plus className="h-4 w-4" />
             자산 추가
           </button>
@@ -110,11 +132,12 @@ export default function ITIntangibleAssets() {
                     {col.label}
                   </th>
                 ))}
+                {canEdit && <th className="px-3 py-3 text-xs font-medium text-muted-foreground">관리</th>}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={columns.length} className="py-8 text-center text-muted-foreground">데이터 없음</td></tr>
+                <tr><td colSpan={columns.length + (canEdit ? 1 : 0)} className="py-8 text-center text-muted-foreground">데이터 없음</td></tr>
               ) : filtered.map((asset) => (
                 <tr key={asset.id} className="border-b border-border/30 hover:bg-secondary/20 transition-colors">
                   {columns.map((col) => (
@@ -122,12 +145,38 @@ export default function ITIntangibleAssets() {
                       {col.getter(asset)}
                     </td>
                   ))}
+                  {canEdit && (
+                    <td className="whitespace-nowrap px-3 py-2.5">
+                      <div className="flex gap-1">
+                        <button onClick={() => handleEdit(asset)} className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => setDeleteTarget(asset)} className="rounded p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      <IntangibleAssetDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        asset={editingAsset}
+        departments={departments}
+        onSubmit={handleSubmit}
+        isSubmitting={createMutation.isPending || updateMutation.isPending}
+      />
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }
