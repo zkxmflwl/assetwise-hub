@@ -20,21 +20,24 @@ interface ColDef {
 export default function ITTangibleAssets() {
   const { hasPermission, authUser } = useAuth();
   const { data: assets = [], isLoading, error, refetch } = useTangibleAssets();
-  const { data: departments = [] } = useDepartments();
-  const { data: assetTypes = [] } = useAssetTypes('유형자산');
+  const { data: departments = [], isLoading: deptLoading, error: deptError } = useDepartments();
+  const { data: assetTypes = [], isLoading: typeLoading, error: typeError } = useAssetTypes('유형자산');
   const canEdit = hasPermission('MANAGER');
 
   const { rows, addRow, updateCell, markDeleted, reset, forceSync, dirtyStats, hasDirty, getChanges } = useGridEditor<TangibleAssetRow>(
     assets,
     {
       idField: 'id',
-      newRowTemplate: () => ({
-        asset_no: '', department_code: null, user_name: '', manager_name: '',
-        asset_type_code: null, manufacturer: '', model_name: '', serial_no: '',
-        cpu_spec: '', mem_spec: '', hdd_spec: '', ssd_spec: '',
-        screen_size: '', os_name: '', purpose: '', usage_location: '',
-        purchase_date: null, issued_date: null, note: '',
-      } as any),
+      newRowTemplate: () => {
+        const today = new Date().toISOString().slice(0, 10);
+        return {
+          asset_no: '', department_code: null, user_name: '', manager_name: '',
+          asset_type_code: null, manufacturer: '', model_name: '', serial_no: '',
+          cpu_spec: '', mem_spec: '', hdd_spec: '', ssd_spec: '',
+          screen_size: '', os_name: '', purpose: '', usage_location: '',
+          purchase_date: today, issued_date: today, note: '',
+        } as any;
+      },
     },
   );
 
@@ -44,10 +47,10 @@ export default function ITTangibleAssets() {
 
   const columns: ColDef[] = useMemo(() => [
     { key: 'asset_no', label: '자산번호', type: 'text' },
-    { key: 'department_code', label: '부서', type: 'select', options: departments.map(d => ({ value: d.department_code, label: d.department_name })) },
+    { key: 'department_code', label: '부서', type: 'select', options: deptLoading ? [{ value: '', label: '불러오는 중...' }] : deptError ? [{ value: '', label: '로드 실패' }] : departments.map(d => ({ value: d.department_code, label: d.department_name })) },
     { key: 'user_name', label: '사용자', type: 'text' },
     { key: 'manager_name', label: '관리자', type: 'text' },
-    { key: 'asset_type_code', label: '자산유형', type: 'select', options: (assetTypes || []).map(t => ({ value: t.asset_type_code, label: t.sub_category })) },
+    { key: 'asset_type_code', label: '자산유형', type: 'select', options: typeLoading ? [{ value: '', label: '불러오는 중...' }] : typeError ? [{ value: '', label: '로드 실패' }] : (assetTypes || []).map(t => ({ value: t.asset_type_code, label: t.sub_category })) },
     { key: 'manufacturer', label: '제조사', type: 'text' },
     { key: 'model_name', label: '모델명', type: 'text' },
     { key: 'serial_no', label: 'S/N', type: 'text' },

@@ -9,7 +9,8 @@ export function useAssetTypes(majorCategory?: string) {
         .from('asset_types')
         .select('asset_type_code, sub_category, major_category')
         .eq('is_active', true)
-        .order('sort_order');
+        .order('sort_order')
+        .order('sub_category');
       if (majorCategory) query = query.eq('major_category', majorCategory);
       const { data, error } = await query;
       if (error) throw error;
