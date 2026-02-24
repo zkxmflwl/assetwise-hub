@@ -5,5 +5,6 @@ export function useIntangibleAssets() {
   return useQuery({
     queryKey: ['intangible-assets'],
     queryFn: fetchIntangibleAssets,
+    refetchOnWindowFocus: false,
   });
 }

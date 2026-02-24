@@ -46,30 +46,36 @@ export type Database = {
       }
       dash_users: {
         Row: {
+          auth_user_id: string
           created_at: string
           department_code: string | null
           is_active: boolean
+          must_change_password: boolean
           role_code: string
           updated_at: string
-          user_id: string
+          user_email: string
           user_name: string
         }
         Insert: {
+          auth_user_id: string
           created_at?: string
           department_code?: string | null
           is_active?: boolean
-          role_code: string
+          must_change_password?: boolean
+          role_code?: string
           updated_at?: string
-          user_id: string
+          user_email: string
           user_name: string
         }
         Update: {
+          auth_user_id?: string
           created_at?: string
           department_code?: string | null
           is_active?: boolean
+          must_change_password?: boolean
           role_code?: string
           updated_at?: string
-          user_id?: string
+          user_email?: string
           user_name?: string
         }
         Relationships: [
@@ -86,7 +92,7 @@ export type Database = {
         Row: {
           department_code: string
           id: number
-          last_modified_by_user_id: string | null
+          last_modified_by_auth_user_id: string | null
           month_key: string
           net_sales_amount: number
           note: string | null
@@ -98,7 +104,7 @@ export type Database = {
         Insert: {
           department_code: string
           id?: never
-          last_modified_by_user_id?: string | null
+          last_modified_by_auth_user_id?: string | null
           month_key: string
           net_sales_amount?: number
           note?: string | null
@@ -110,7 +116,7 @@ export type Database = {
         Update: {
           department_code?: string
           id?: never
-          last_modified_by_user_id?: string | null
+          last_modified_by_auth_user_id?: string | null
           month_key?: string
           net_sales_amount?: number
           note?: string | null
@@ -128,11 +134,11 @@ export type Database = {
             referencedColumns: ["department_code"]
           },
           {
-            foreignKeyName: "department_sales_summary_last_modified_by_user_id_fkey"
-            columns: ["last_modified_by_user_id"]
+            foreignKeyName: "department_sales_summary_last_modified_by_auth_user_id_fkey"
+            columns: ["last_modified_by_auth_user_id"]
             isOneToOne: false
             referencedRelation: "dash_users"
-            referencedColumns: ["user_id"]
+            referencedColumns: ["auth_user_id"]
           },
         ]
       }
@@ -166,7 +172,7 @@ export type Database = {
           department_code: string | null
           expiry_date: string | null
           id: number
-          last_modified_by_user_id: string | null
+          last_modified_by_auth_user_id: string | null
           license_name: string
           note: string | null
           quantity: number
@@ -179,7 +185,7 @@ export type Database = {
           department_code?: string | null
           expiry_date?: string | null
           id?: never
-          last_modified_by_user_id?: string | null
+          last_modified_by_auth_user_id?: string | null
           license_name: string
           note?: string | null
           quantity?: number
@@ -192,7 +198,7 @@ export type Database = {
           department_code?: string | null
           expiry_date?: string | null
           id?: never
-          last_modified_by_user_id?: string | null
+          last_modified_by_auth_user_id?: string | null
           license_name?: string
           note?: string | null
           quantity?: number
@@ -216,11 +222,11 @@ export type Database = {
             referencedColumns: ["department_code"]
           },
           {
-            foreignKeyName: "intangible_assets_last_modified_by_user_id_fkey"
-            columns: ["last_modified_by_user_id"]
+            foreignKeyName: "intangible_assets_last_modified_by_auth_user_id_fkey"
+            columns: ["last_modified_by_auth_user_id"]
             isOneToOne: false
             referencedRelation: "dash_users"
-            referencedColumns: ["user_id"]
+            referencedColumns: ["auth_user_id"]
           },
         ]
       }
@@ -233,7 +239,7 @@ export type Database = {
           hdd_spec: string | null
           id: number
           issued_date: string | null
-          last_modified_by_user_id: string | null
+          last_modified_by_auth_user_id: string | null
           manager_name: string | null
           manufacturer: string | null
           mem_spec: string | null
@@ -257,7 +263,7 @@ export type Database = {
           hdd_spec?: string | null
           id?: never
           issued_date?: string | null
-          last_modified_by_user_id?: string | null
+          last_modified_by_auth_user_id?: string | null
           manager_name?: string | null
           manufacturer?: string | null
           mem_spec?: string | null
@@ -281,7 +287,7 @@ export type Database = {
           hdd_spec?: string | null
           id?: never
           issued_date?: string | null
-          last_modified_by_user_id?: string | null
+          last_modified_by_auth_user_id?: string | null
           manager_name?: string | null
           manufacturer?: string | null
           mem_spec?: string | null
@@ -313,11 +319,11 @@ export type Database = {
             referencedColumns: ["department_code"]
           },
           {
-            foreignKeyName: "tangible_assets_last_modified_by_user_id_fkey"
-            columns: ["last_modified_by_user_id"]
+            foreignKeyName: "tangible_assets_last_modified_by_auth_user_id_fkey"
+            columns: ["last_modified_by_auth_user_id"]
             isOneToOne: false
             referencedRelation: "dash_users"
-            referencedColumns: ["user_id"]
+            referencedColumns: ["auth_user_id"]
           },
         ]
       }

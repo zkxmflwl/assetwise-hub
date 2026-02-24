@@ -5,5 +5,6 @@ export function useTangibleAssets() {
   return useQuery({
     queryKey: ['tangible-assets'],
     queryFn: fetchTangibleAssets,
+    refetchOnWindowFocus: false,
   });
 }
