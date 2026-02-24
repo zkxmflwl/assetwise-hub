@@ -140,7 +140,7 @@ export default function ITTangibleAssets() {
     if (col.type === 'select') {
       return (
         <select value={val || ''} disabled={disabled} onChange={(e) => updateCell(row.tempId, col.key as any, e.target.value || null)}
-          className="w-full min-w-[80px] rounded border border-border bg-transparent px-1.5 py-1 text-xs text-foreground disabled:opacity-40 focus:border-primary focus:outline-none">
+          className="w-full min-w-[80px] rounded border border-border bg-card px-1.5 py-1 text-xs text-foreground disabled:opacity-40 focus:border-primary focus:outline-none [&>option]:bg-card [&>option]:text-foreground">
           <option value="">-</option>
           {col.options?.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
