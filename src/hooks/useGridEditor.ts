@@ -36,8 +36,8 @@ export function useGridEditor<T>(
   const addRow = useCallback(() => {
     const tempId = genTempId();
     setRows((prev) => [
-      ...prev,
       { data: { ...options.newRowTemplate() } as T, status: 'new', tempId },
+      ...prev,
     ]);
   }, [options]);
 
