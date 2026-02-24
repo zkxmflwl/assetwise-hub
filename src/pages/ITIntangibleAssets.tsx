@@ -20,19 +20,22 @@ interface ColDef {
 export default function ITIntangibleAssets() {
   const { hasPermission, authUser } = useAuth();
   const { data: assets = [], isLoading, error, refetch } = useIntangibleAssets();
-  const { data: departments = [] } = useDepartments();
-  const { data: assetTypes = [] } = useAssetTypes('무형자산');
+  const { data: departments = [], isLoading: deptLoading, error: deptError } = useDepartments();
+  const { data: assetTypes = [], isLoading: typeLoading, error: typeError } = useAssetTypes('무형자산');
   const canEdit = hasPermission('MANAGER');
 
   const { rows, addRow, updateCell, markDeleted, reset, forceSync, dirtyStats, hasDirty, getChanges } = useGridEditor<IntangibleAssetRow>(
     assets,
     {
       idField: 'id',
-      newRowTemplate: () => ({
-        license_name: '', vendor_name: '', quantity: 0,
-        department_code: null, start_date: null, expiry_date: null,
-        note: '', asset_type_code: null,
-      } as any),
+      newRowTemplate: () => {
+        const today = new Date().toISOString().slice(0, 10);
+        return {
+          license_name: '', vendor_name: '', quantity: 0,
+          department_code: null, start_date: today, expiry_date: today,
+          note: '', asset_type_code: null,
+        } as any;
+      },
     },
   );
 
@@ -44,8 +47,8 @@ export default function ITIntangibleAssets() {
     { key: 'license_name', label: '라이선스명', type: 'text', required: true },
     { key: 'vendor_name', label: '공급사', type: 'text' },
     { key: 'quantity', label: '수량', type: 'number' },
-    { key: 'department_code', label: '부서', type: 'select', options: departments.map(d => ({ value: d.department_code, label: d.department_name })) },
-    { key: 'asset_type_code', label: '자산유형', type: 'select', options: (assetTypes || []).map(t => ({ value: t.asset_type_code, label: t.sub_category })) },
+    { key: 'department_code', label: '부서', type: 'select', options: deptLoading ? [{ value: '', label: '불러오는 중...' }] : deptError ? [{ value: '', label: '로드 실패' }] : departments.map(d => ({ value: d.department_code, label: d.department_name })) },
+    { key: 'asset_type_code', label: '자산유형', type: 'select', options: typeLoading ? [{ value: '', label: '불러오는 중...' }] : typeError ? [{ value: '', label: '로드 실패' }] : (assetTypes || []).map(t => ({ value: t.asset_type_code, label: t.sub_category })) },
     { key: 'start_date', label: '시작일', type: 'date' },
     { key: 'expiry_date', label: '만료일', type: 'date' },
     { key: 'note', label: '비고', type: 'text' },
