@@ -52,7 +52,7 @@ export default function ITIntangibleAssets() {
     { key: 'start_date', label: '시작일', type: 'date' },
     { key: 'expiry_date', label: '만료일', type: 'date' },
     { key: 'note', label: '비고', type: 'text' },
-  ], [departments, assetTypes]);
+  ], [departments, assetTypes, deptLoading, deptError, typeLoading, typeError]);
 
   const visibleRows = useMemo(() => {
     if (!search) return rows;
