@@ -65,7 +65,7 @@ export default function ITTangibleAssets() {
     { key: 'purchase_date', label: '구매일', type: 'date' },
     { key: 'issued_date', label: '지급일', type: 'date' },
     { key: 'note', label: '비고', type: 'text' },
-  ], [departments, assetTypes]);
+  ], [departments, assetTypes, deptLoading, deptError, typeLoading, typeError]);
 
   const visibleRows = useMemo(() => {
     if (!search) return rows;
