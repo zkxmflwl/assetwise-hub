@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useTangibleAssets } from '@/hooks/useTangibleAssets';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useAssetTypes } from '@/hooks/useAssetTypes';
@@ -7,7 +7,8 @@ import { useGridEditor, GridRow } from '@/hooks/useGridEditor';
 import { TangibleAssetRow } from '@/services/assetService';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, RotateCcw, Loader2, Search } from 'lucide-react';
+import { Plus, Trash2, Save, RotateCcw, Loader2, Search, Upload, Download, FileDown } from 'lucide-react';
+import { parseCsvFile, mapTangibleCsvRows, downloadTangibleCsv, downloadTangibleTemplate } from '@/utils/csv';
 
 interface ColDef {
   key: string;
@@ -23,8 +24,9 @@ export default function ITTangibleAssets() {
   const { data: departments = [], isLoading: deptLoading, error: deptError } = useDepartments();
   const { data: assetTypes = [], isLoading: typeLoading, error: typeError } = useAssetTypes('유형자산');
   const canEdit = hasPermission('MANAGER');
+  const csvInputRef = useRef<HTMLInputElement>(null);
 
-  const { rows, addRow, updateCell, markDeleted, reset, forceSync, dirtyStats, hasDirty, getChanges } = useGridEditor<TangibleAssetRow>(
+  const { rows, addRow, addRows, updateCell, markDeleted, reset, forceSync, dirtyStats, hasDirty, getChanges } = useGridEditor<TangibleAssetRow>(
     assets,
     {
       idField: 'id',
@@ -72,6 +74,42 @@ export default function ITTangibleAssets() {
     const s = search.toLowerCase();
     return rows.filter(r => columns.some(col => String((r.data as any)[col.key] || '').toLowerCase().includes(s)));
   }, [rows, search, columns]);
+
+  // ── CSV Upload ──
+  const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+
+    try {
+      const csvRows = await parseCsvFile(file);
+      if (csvRows.length === 0) { toast.warning('CSV에 데이터가 없습니다.'); return; }
+
+      const existingAssetNos = new Set(rows.map(r => (r.data as any).asset_no).filter(Boolean));
+      const result = mapTangibleCsvRows(csvRows, { departments, assetTypes: assetTypes || [] }, existingAssetNos);
+
+      if (result.rows.length > 0) {
+        addRows(result.rows);
+      }
+
+      if (result.warnings.length > 0) {
+        console.warn('CSV 업로드 경고:', result.warnings);
+      }
+
+      toast.success(`CSV 업로드 완료 (추가 ${result.successCount}건${result.failCount > 0 ? ` / 실패 ${result.failCount}건` : ''})`);
+      if (result.warnings.length > 0) {
+        toast.warning(`경고 ${result.warnings.length}건 (콘솔 확인)`);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'CSV 파싱 실패');
+    }
+  };
+
+  // ── CSV Download ──
+  const handleCsvDownload = () => {
+    const dataRows = rows.filter(r => r.status !== 'deleted').map(r => r.data as any);
+    downloadTangibleCsv(dataRows, { departments, assetTypes: assetTypes || [] });
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -191,6 +229,20 @@ export default function ITTangibleAssets() {
           <button onClick={() => { reset(); setSelectedIds(new Set()); }} disabled={!hasDirty} className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary/50 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors">
             <RotateCcw className="h-3.5 w-3.5" /> 초기화
           </button>
+
+          <div className="mx-1 h-6 w-px bg-border" />
+
+          <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={handleCsvUpload} />
+          <button onClick={() => csvInputRef.current?.click()} className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary/50 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <Upload className="h-3.5 w-3.5" /> CSV 업로드
+          </button>
+          <button onClick={handleCsvDownload} className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary/50 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <Download className="h-3.5 w-3.5" /> CSV 다운로드
+          </button>
+          <button onClick={downloadTangibleTemplate} className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary/50 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <FileDown className="h-3.5 w-3.5" /> 템플릿
+          </button>
+
           {hasDirty && (
             <div className="flex gap-2 text-xs">
               {dirtyStats.added > 0 && <span className="rounded bg-emerald-900/50 px-2 py-1 text-emerald-400">추가 {dirtyStats.added}</span>}
