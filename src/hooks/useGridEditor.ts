@@ -41,6 +41,15 @@ export function useGridEditor<T>(
     ]);
   }, [options]);
 
+  const addRows = useCallback((dataList: Partial<T>[]) => {
+    const newRows = dataList.map((d) => ({
+      data: { ...options.newRowTemplate(), ...d } as T,
+      status: 'new' as RowStatus,
+      tempId: genTempId(),
+    }));
+    setRows((prev) => [...newRows, ...prev]);
+  }, [options]);
+
   const updateCell = useCallback((tempId: string, field: keyof T, value: any) => {
     setRows((prev) => prev.map((r) => {
       if (r.tempId !== tempId) return r;
@@ -100,5 +109,5 @@ export function useGridEditor<T>(
     deletes: rows.filter((r) => r.status === 'deleted').map((r) => r.data),
   }), [rows]);
 
-  return { rows, addRow, updateCell, markDeleted, reset, forceSync, dirtyStats, hasDirty, getChanges };
+  return { rows, addRow, addRows, updateCell, markDeleted, reset, forceSync, dirtyStats, hasDirty, getChanges };
 }
