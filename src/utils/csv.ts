@@ -182,7 +182,7 @@ export function mapTangibleCsvRows(
       }
     }
 
-    // Duplicate check
+    // Duplicate check (existing + within CSV)
     if (row.asset_no && existingAssetNos.has(row.asset_no)) {
       warnings.push(`${lineNum}행: 관리번호 "${row.asset_no}" 중복 - 스킵`);
       failCount++;
