@@ -51,27 +51,13 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // 로그인 + 활성 사용자면 메인으로
   if (authUser && dashUser?.is_active) {
     return <Navigate to="/" replace />;
   }
 
-  // ✅ 여기서 "if (authUser) return <Navigate ...>" 는 넣지 마세요
-  // dashUser 로딩 타이밍과 충돌해서 깜빡임 원인이 됩니다.
-
   return <>{children}</>;
 }
 
-  // 로그인 + dashUser 정상(활성)일 때만 메인으로
-  if (authUser && dashUser?.is_active) return <Navigate to="/" replace />;
-
-  // authUser는 있는데 dashUser가 없거나 비활성인 경우는 로그인 페이지로 두지 말고
-  // ProtectedRoute에서 접근불가 화면 처리하도록 "/"로 보내는 선택도 가능.
-  // 다만 깜빡임 방지를 위해 isLoading이 false인 상태에서만 분기됨.
-  if (authUser && (!dashUser || !dashUser.is_active)) return <Navigate to="/" replace />;
-
-  return <>{children}</>;
-}
 
 const AppRoutes = () => (
   <Routes>
