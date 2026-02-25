@@ -87,46 +87,41 @@ return () => {
   // 2) 최초 세션 확인 (1회)
   useEffect(() => {
     let cancelled = false;
-
+  
     const init = async () => {
       setIsLoading(true);
-
+  
       const { data, error } = await supabase.auth.getSession();
       if (error) {
         console.error('getSession error:', error);
       }
-
+  
       if (cancelled || !mountedRef.current) return;
-
+  
       const user = data.session?.user ?? null;
       setAuthUser(user);
-
-      if (user) {
-        const du = await fetchDashUser(user.id);
-        if (cancelled || !mountedRef.current) return;
-        setDashUser(du);
-      } else {
+  
+      // ✅ dashUser 조회는 하지 않음 (3번 effect가 담당)
+      if (!user) {
         setDashUser(null);
-      }
-
-      if (!cancelled && mountedRef.current) {
         setIsLoading(false);
       }
+      // user가 있으면 isLoading은 유지(true)
+      // -> 3번 effect에서 fetchDashUser 완료 후 false로 내림
     };
-
+  
     void init();
-
+  
     return () => {
       cancelled = true;
     };
-  }, [fetchDashUser]);
+  }, []);
 
   // 3) authUser가 바뀌면 dashUser 동기화 (로그인/토큰복구/로그아웃 이후)
   useEffect(() => {
     let cancelled = false;
-
+  
     const syncDashUser = async () => {
-      // init 단계에서 아직 로딩 중이면 여기서 중복으로 당기지 않게 막고 싶으면 조건 추가 가능
       if (!authUser) {
         if (!cancelled && mountedRef.current) {
           setDashUser(null);
@@ -134,16 +129,16 @@ return () => {
         }
         return;
       }
-
+  
       const du = await fetchDashUser(authUser.id);
       if (cancelled || !mountedRef.current) return;
-
+  
       setDashUser(du);
       setIsLoading(false);
     };
-
+  
     void syncDashUser();
-
+  
     return () => {
       cancelled = true;
     };
