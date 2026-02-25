@@ -61,23 +61,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     mountedRef.current = true;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('onAuthStateChange:', event, session?.user?.id);
+  console.log('onAuthStateChange:', event, session?.user?.id);
 
-      // 여기서는 Supabase 추가 쿼리 await 하지 말고 상태만 반영
-      if (!mountedRef.current) return;
+  if (!mountedRef.current) return;
 
-      setAuthUser(session?.user ?? null);
+  // 로그인/세션 복구 시: dashUser 다시 조회할 때까지 로딩 유지
+  if (session?.user) {
+    setIsLoading(true);
+  }
 
-      if (!session?.user) {
-        setDashUser(null);
-      }
-    });
+  setAuthUser(session?.user ?? null);
 
-    return () => {
-      mountedRef.current = false;
-      subscription.unsubscribe();
-    };
-  }, []);
+  // 로그아웃 시: dashUser 비우고 로딩 종료
+  if (!session?.user) {
+    setDashUser(null);
+    setIsLoading(false);
+  }
+});
+
+return () => {
+  mountedRef.current = false;
+  subscription.unsubscribe();
+};
 
   // 2) 최초 세션 확인 (1회)
   useEffect(() => {
