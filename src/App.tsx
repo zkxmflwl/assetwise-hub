@@ -51,6 +51,17 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // 로그인 + 활성 사용자면 메인으로
+  if (authUser && dashUser?.is_active) {
+    return <Navigate to="/" replace />;
+  }
+
+  // ✅ 여기서 "if (authUser) return <Navigate ...>" 는 넣지 마세요
+  // dashUser 로딩 타이밍과 충돌해서 깜빡임 원인이 됩니다.
+
+  return <>{children}</>;
+}
+
   // 로그인 + dashUser 정상(활성)일 때만 메인으로
   if (authUser && dashUser?.is_active) return <Navigate to="/" replace />;
 
