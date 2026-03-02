@@ -1,14 +1,14 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSalesData, useAvailableMonths } from '@/hooks/useSalesData';
-import { SalesSummaryRow } from '@/services/salesService';
+import { SalesSummaryRow, fetchYtdSummary, fetchSalesSummary } from '@/services/salesService';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGridEditor, GridRow } from '@/hooks/useGridEditor';
 import { supabase } from '@/integrations/supabase/client';
 import { formatKRW } from '@/data/mockData';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, RotateCcw, Loader2, Search, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Plus, Trash2, Save, RotateCcw, Loader2, ArrowUp, ArrowDown, ArrowUpDown, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 type SortDir = 'asc' | 'desc' | null;
 
@@ -19,6 +19,13 @@ interface ColDef {
   options?: { value: string; label: string }[];
 }
 
+function getPrevMonthKey(monthKey: string): string {
+  if (!monthKey) return '';
+  const [y, m] = monthKey.split('-').map(Number);
+  if (m === 1) return `${y - 1}-12`;
+  return `${y}-${String(m - 1).padStart(2, '0')}`;
+}
+
 export default function DepartmentBI() {
   const { hasPermission, authUser } = useAuth();
   const canEdit = hasPermission('MANAGER');
@@ -27,8 +34,37 @@ export default function DepartmentBI() {
   const [selectedMonth, setSelectedMonth] = useState<string>('');
 
   const activeMonth = selectedMonth || months[0] || '';
+  const prevMonth = getPrevMonthKey(activeMonth);
 
   const { data: salesData = [], isLoading, refetch } = useSalesData(activeMonth || undefined);
+
+  // YTD cumulative data (Jan ~ activeMonth of same year)
+  const ytdYear = activeMonth ? activeMonth.split('-')[0] : '';
+  const { data: ytdData = [] } = useQuery({
+    queryKey: ['ytd-summary', ytdYear, activeMonth],
+    queryFn: () => fetchYtdSummary(ytdYear, activeMonth),
+    enabled: !!ytdYear && !!activeMonth,
+  });
+
+  // Previous month data for MoM comparison
+  const { data: prevMonthData = [] } = useQuery({
+    queryKey: ['sales-summary', prevMonth],
+    queryFn: () => fetchSalesSummary(prevMonth),
+    enabled: !!prevMonth,
+  });
+
+  const ytdStats = useMemo(() => {
+    const totalSales = ytdData.reduce((s, r) => s + Number(r.sales_amount || 0), 0);
+    const totalPurchase = ytdData.reduce((s, r) => s + Number(r.purchase_amount || 0), 0);
+    const totalNetSales = ytdData.reduce((s, r) => s + Number(r.net_sales_amount || 0), 0);
+    return { totalSales, totalPurchase, totalNetSales };
+  }, [ytdData]);
+
+  const momChange = useMemo(() => {
+    const curSales = salesData.reduce((s, r) => s + Number(r.sales_amount || 0), 0);
+    const prevSales = prevMonthData.reduce((s, r) => s + Number(r.sales_amount || 0), 0);
+    return curSales - prevSales;
+  }, [salesData, prevMonthData]);
 
   const { rows, addRow, updateCell, markDeleted, reset, forceSync, dirtyStats, hasDirty, getChanges } = useGridEditor<SalesSummaryRow>(
     salesData,
@@ -48,14 +84,12 @@ export default function DepartmentBI() {
   );
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [search, setSearch] = useState('');
   const [saving, setSaving] = useState(false);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
 
   const columns: ColDef[] = useMemo(() => [
     { key: 'department_code', label: '부서', type: 'select', options: departments.map(d => ({ value: d.department_code, label: d.department_name })) },
-    { key: 'month_key', label: '연월', type: 'text' },
     { key: 'total_headcount', label: '인원', type: 'number' },
     { key: 'sales_amount', label: '매출', type: 'number' },
     { key: 'purchase_amount', label: '매입', type: 'number' },
@@ -76,10 +110,6 @@ export default function DepartmentBI() {
 
   const visibleRows = useMemo(() => {
     let filtered = rows;
-    if (search) {
-      const s = search.toLowerCase();
-      filtered = filtered.filter(r => columns.some(col => getDisplayValue(r, col).toLowerCase().includes(s)));
-    }
     if (sortKey && sortDir) {
       const col = columns.find(c => c.key === sortKey);
       filtered = [...filtered].sort((a, b) => {
@@ -90,7 +120,7 @@ export default function DepartmentBI() {
       });
     }
     return filtered;
-  }, [rows, search, columns, sortKey, sortDir, getDisplayValue]);
+  }, [rows, columns, sortKey, sortDir, getDisplayValue]);
 
   const handleSort = (key: string) => {
     if (sortKey !== key) { setSortKey(key); setSortDir('asc'); }
@@ -98,15 +128,10 @@ export default function DepartmentBI() {
     else { setSortKey(null); setSortDir(null); }
   };
 
-  const handleAddRow = () => {
-    // Check duplicate: same month_key + department_code
-    addRow();
-  };
+  const handleAddRow = () => { addRow(); };
 
   const handleSave = async () => {
     const { inserts, updates, deletes } = getChanges();
-
-    // Validate unique month+dept for inserts and updates
     const allRows = rows.filter(r => r.status !== 'deleted');
     const seen = new Set<string>();
     for (const r of allRows) {
@@ -224,6 +249,31 @@ export default function DepartmentBI() {
         )}
       </div>
 
+      {/* YTD Summary Cards */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground">누적매출 (YTD)</p>
+          <p className="mt-1 text-lg font-bold text-foreground">{formatKRW(ytdStats.totalSales)}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground">누적매입 (YTD)</p>
+          <p className="mt-1 text-lg font-bold text-foreground">{formatKRW(ytdStats.totalPurchase)}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground">누적순매출 (YTD)</p>
+          <p className="mt-1 text-lg font-bold text-foreground">{formatKRW(ytdStats.totalNetSales)}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground">전월 대비 매출 증감</p>
+          <div className="mt-1 flex items-center gap-1.5">
+            {momChange > 0 ? <TrendingUp className="h-4 w-4 text-emerald-600" /> : momChange < 0 ? <TrendingDown className="h-4 w-4 text-red-500" /> : <Minus className="h-4 w-4 text-muted-foreground" />}
+            <p className={`text-lg font-bold ${momChange > 0 ? 'text-emerald-600' : momChange < 0 ? 'text-red-500' : 'text-foreground'}`}>
+              {momChange > 0 ? '+' : ''}{formatKRW(momChange)}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {canEdit && (
         <div className="flex flex-wrap items-center gap-2">
           <button onClick={handleAddRow} className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:opacity-90 transition-opacity">
@@ -248,13 +298,7 @@ export default function DepartmentBI() {
         </div>
       )}
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="검색..."
-          className="w-full rounded-lg border border-border bg-card py-2 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors" />
-      </div>
-
-      <div className="text-xs text-muted-foreground">전체 {salesData.length}건 / 표시 {visibleRows.length}건</div>
+      <div className="text-xs text-muted-foreground">전체 {salesData.length}건</div>
 
       <div className="glass-card overflow-hidden rounded-xl">
         <div className="overflow-x-auto scrollbar-thin" style={{ maxHeight: '70vh' }}>
