@@ -8,12 +8,6 @@ export interface SalesSummaryRow {
   sales_amount: number;
   purchase_amount: number;
   net_sales_amount: number;
-  cumulative_sales_amount: number;
-  cumulative_purchase_amount: number;
-  cumulative_net_sales_amount: number;
-  cumulative_qoq: number;
-  active_project_count: number;
-  monthly_order_project_count: number;
   note: string | null;
   departments: { department_name: string } | null;
 }

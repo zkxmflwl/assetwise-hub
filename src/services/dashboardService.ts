@@ -10,22 +10,15 @@ export interface DashboardStats {
 }
 
 export async function fetchDashboardStats(): Promise<DashboardStats> {
-  // Get latest month cumulative totals from department_sales_summary
+  // Sum all monthly rows across all departments to get cumulative totals
   const { data: salesData, error: salesError } = await supabase
     .from('department_sales_summary')
-    .select('month_key, cumulative_sales_amount, cumulative_purchase_amount, cumulative_net_sales_amount')
-    .order('month_key', { ascending: false });
+    .select('sales_amount, purchase_amount, net_sales_amount');
   if (salesError) throw salesError;
 
-  // Find latest month
-  const latestMonth = salesData && salesData.length > 0 ? (salesData[0] as any).month_key : '';
-  const latestData = latestMonth
-    ? salesData.filter((r: any) => r.month_key === latestMonth)
-    : [];
-
-  const cumulativeSales = latestData.reduce((s, r: any) => s + Number(r.cumulative_sales_amount || 0), 0);
-  const cumulativePurchase = latestData.reduce((s, r: any) => s + Number(r.cumulative_purchase_amount || 0), 0);
-  const cumulativeNetSales = latestData.reduce((s, r: any) => s + Number(r.cumulative_net_sales_amount || 0), 0);
+  const cumulativeSales = (salesData || []).reduce((s, r: any) => s + Number(r.sales_amount || 0), 0);
+  const cumulativePurchase = (salesData || []).reduce((s, r: any) => s + Number(r.purchase_amount || 0), 0);
+  const cumulativeNetSales = (salesData || []).reduce((s, r: any) => s + Number(r.net_sales_amount || 0), 0);
 
   const [activeProjectCount, yearlyCompletedOrderCount] = await Promise.all([
     fetchActiveProjectCount(),

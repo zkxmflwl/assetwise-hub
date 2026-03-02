@@ -152,16 +152,10 @@ export type Database = {
       }
       department_sales_summary: {
         Row: {
-          active_project_count: number | null
-          cumulative_net_sales_amount: number | null
-          cumulative_purchase_amount: number | null
-          cumulative_qoq: number | null
-          cumulative_sales_amount: number | null
           department_code: string
           id: number
           last_modified_by_auth_user_id: string | null
           month_key: string
-          monthly_order_project_count: number | null
           net_sales_amount: number
           note: string | null
           purchase_amount: number
@@ -170,16 +164,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          active_project_count?: number | null
-          cumulative_net_sales_amount?: number | null
-          cumulative_purchase_amount?: number | null
-          cumulative_qoq?: number | null
-          cumulative_sales_amount?: number | null
           department_code: string
           id?: never
           last_modified_by_auth_user_id?: string | null
           month_key: string
-          monthly_order_project_count?: number | null
           net_sales_amount?: number
           note?: string | null
           purchase_amount?: number
@@ -188,16 +176,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          active_project_count?: number | null
-          cumulative_net_sales_amount?: number | null
-          cumulative_purchase_amount?: number | null
-          cumulative_qoq?: number | null
-          cumulative_sales_amount?: number | null
           department_code?: string
           id?: never
           last_modified_by_auth_user_id?: string | null
           month_key?: string
-          monthly_order_project_count?: number | null
           net_sales_amount?: number
           note?: string | null
           purchase_amount?: number
