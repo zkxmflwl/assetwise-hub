@@ -4,8 +4,6 @@ export interface TangibleAssetRow {
   id: number;
   asset_no: string | null;
   department_code: string | null;
-  user_name: string | null;
-  manager_name: string | null;
   asset_type_code: string | null;
   manufacturer: string | null;
   model_name: string | null;

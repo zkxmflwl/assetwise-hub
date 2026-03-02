@@ -44,6 +44,68 @@ export type Database = {
         }
         Relationships: []
       }
+      business_projects: {
+        Row: {
+          client_name: string | null
+          department_code: string | null
+          end_date: string | null
+          id: number
+          last_modified_by_account_id: string | null
+          net_sales_amount: number | null
+          note: string | null
+          order_date: string | null
+          project_code: string | null
+          project_name: string
+          project_status: string
+          purchase_amount: number | null
+          sales_amount: number | null
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_name?: string | null
+          department_code?: string | null
+          end_date?: string | null
+          id?: never
+          last_modified_by_account_id?: string | null
+          net_sales_amount?: number | null
+          note?: string | null
+          order_date?: string | null
+          project_code?: string | null
+          project_name: string
+          project_status: string
+          purchase_amount?: number | null
+          sales_amount?: number | null
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string | null
+          department_code?: string | null
+          end_date?: string | null
+          id?: never
+          last_modified_by_account_id?: string | null
+          net_sales_amount?: number | null
+          note?: string | null
+          order_date?: string | null
+          project_code?: string | null
+          project_name?: string
+          project_status?: string
+          purchase_amount?: number | null
+          sales_amount?: number | null
+          start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_projects_department_code_fkey"
+            columns: ["department_code"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["department_code"]
+          },
+        ]
+      }
       dash_users: {
         Row: {
           auth_user_id: string
@@ -90,10 +152,16 @@ export type Database = {
       }
       department_sales_summary: {
         Row: {
+          active_project_count: number | null
+          cumulative_net_sales_amount: number | null
+          cumulative_purchase_amount: number | null
+          cumulative_qoq: number | null
+          cumulative_sales_amount: number | null
           department_code: string
           id: number
           last_modified_by_auth_user_id: string | null
           month_key: string
+          monthly_order_project_count: number | null
           net_sales_amount: number
           note: string | null
           purchase_amount: number
@@ -102,10 +170,16 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          active_project_count?: number | null
+          cumulative_net_sales_amount?: number | null
+          cumulative_purchase_amount?: number | null
+          cumulative_qoq?: number | null
+          cumulative_sales_amount?: number | null
           department_code: string
           id?: never
           last_modified_by_auth_user_id?: string | null
           month_key: string
+          monthly_order_project_count?: number | null
           net_sales_amount?: number
           note?: string | null
           purchase_amount?: number
@@ -114,10 +188,16 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          active_project_count?: number | null
+          cumulative_net_sales_amount?: number | null
+          cumulative_purchase_amount?: number | null
+          cumulative_qoq?: number | null
+          cumulative_sales_amount?: number | null
           department_code?: string
           id?: never
           last_modified_by_auth_user_id?: string | null
           month_key?: string
+          monthly_order_project_count?: number | null
           net_sales_amount?: number
           note?: string | null
           purchase_amount?: number
@@ -240,7 +320,6 @@ export type Database = {
           id: number
           issued_date: string | null
           last_modified_by_auth_user_id: string | null
-          manager_name: string | null
           manufacturer: string | null
           mem_spec: string | null
           model_name: string | null
@@ -253,7 +332,6 @@ export type Database = {
           ssd_spec: string | null
           updated_at: string
           usage_location: string | null
-          user_name: string | null
         }
         Insert: {
           asset_no?: string | null
@@ -264,7 +342,6 @@ export type Database = {
           id?: never
           issued_date?: string | null
           last_modified_by_auth_user_id?: string | null
-          manager_name?: string | null
           manufacturer?: string | null
           mem_spec?: string | null
           model_name?: string | null
@@ -277,7 +354,6 @@ export type Database = {
           ssd_spec?: string | null
           updated_at?: string
           usage_location?: string | null
-          user_name?: string | null
         }
         Update: {
           asset_no?: string | null
@@ -288,7 +364,6 @@ export type Database = {
           id?: never
           issued_date?: string | null
           last_modified_by_auth_user_id?: string | null
-          manager_name?: string | null
           manufacturer?: string | null
           mem_spec?: string | null
           model_name?: string | null
@@ -301,7 +376,6 @@ export type Database = {
           ssd_spec?: string | null
           updated_at?: string
           usage_location?: string | null
-          user_name?: string | null
         }
         Relationships: [
           {

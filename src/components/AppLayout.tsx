@@ -22,26 +22,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-screen w-full bg-background">
       <PasswordChangeModal />
       <aside
-        className={`fixed left-0 top-0 z-40 h-screen flex flex-col border-r border-border transition-all duration-300 ${collapsed ? 'w-16' : 'w-60'}`}
-        style={{ background: 'var(--gradient-sidebar)' }}>
+        className={`fixed left-0 top-0 z-40 h-screen flex flex-col border-r border-border bg-card transition-all duration-300 ${collapsed ? 'w-16' : 'w-60'}`}>
         <div className="flex h-16 items-center justify-between border-b border-border px-4">
           {!collapsed && <span className="text-gradient text-lg font-bold tracking-tight">AssetBI</span>}
-          <button onClick={() => setCollapsed(!collapsed)} className="rounded-md p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">
+          <button onClick={() => setCollapsed(!collapsed)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
             {collapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
           </button>
         </div>
         <nav className="flex-1 space-y-1 px-2 py-4">
           {navItems.map((item) => (
-            <NavLink key={item.url} to={item.url} end={item.url === '/'} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground transition-all" activeClassName="bg-secondary text-primary font-medium stat-glow">
+            <NavLink key={item.url} to={item.url} end={item.url === '/'} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all" activeClassName="bg-primary/10 text-primary font-medium">
               <item.icon className="h-5 w-5 shrink-0" />
               {!collapsed && <span>{item.title}</span>}
             </NavLink>
           ))}
           {hasPermission('ADMIN') && (
-            <NavLink to="/admin/users" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground transition-all" activeClassName="bg-secondary text-primary font-medium stat-glow">
+            <NavLink to="/admin/users" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all" activeClassName="bg-primary/10 text-primary font-medium">
               <UserCog className="h-5 w-5 shrink-0" />
               {!collapsed && <span>사용자 관리</span>}
             </NavLink>

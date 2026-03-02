@@ -1,43 +1,42 @@
 import { supabase } from '@/integrations/supabase/client';
+import { fetchActiveProjectCount, fetchYearlyCompletedOrderCount } from './businessProjectService';
 
 export interface DashboardStats {
-  tangibleCount: number;
-  intangibleCount: number;
-  totalHeadcount: number;
-  totalNetSales: number;
+  cumulativeSales: number;
+  cumulativePurchase: number;
+  cumulativeNetSales: number;
+  activeProjectCount: number;
+  yearlyCompletedOrderCount: number;
 }
 
 export async function fetchDashboardStats(): Promise<DashboardStats> {
-  const [tangibleRes, intangibleRes, salesRes] = await Promise.all([
-    supabase.from('tangible_assets').select('id', { count: 'exact', head: true }),
-    supabase.from('intangible_assets').select('id', { count: 'exact', head: true }),
-    supabase.from('department_sales_summary').select('total_headcount, net_sales_amount'),
-  ]);
+  // Get latest month cumulative totals from department_sales_summary
+  const { data: salesData, error: salesError } = await supabase
+    .from('department_sales_summary')
+    .select('month_key, cumulative_sales_amount, cumulative_purchase_amount, cumulative_net_sales_amount')
+    .order('month_key', { ascending: false });
+  if (salesError) throw salesError;
 
-  if (tangibleRes.error) throw tangibleRes.error;
-  if (intangibleRes.error) throw intangibleRes.error;
-  if (salesRes.error) throw salesRes.error;
-
-  // Get latest month's data for totals
-  const salesData = salesRes.data || [];
-  const latestMonth = salesData.length > 0
-    ? salesData.reduce((max, r) => {
-        const key = (r as any).month_key || '';
-        return key > max ? key : max;
-      }, '')
-    : '';
-
+  // Find latest month
+  const latestMonth = salesData && salesData.length > 0 ? (salesData[0] as any).month_key : '';
   const latestData = latestMonth
     ? salesData.filter((r: any) => r.month_key === latestMonth)
     : [];
 
-  const totalHeadcount = latestData.reduce((s, r: any) => s + (r.total_headcount || 0), 0);
-  const totalNetSales = latestData.reduce((s, r: any) => s + Number(r.net_sales_amount || 0), 0);
+  const cumulativeSales = latestData.reduce((s, r: any) => s + Number(r.cumulative_sales_amount || 0), 0);
+  const cumulativePurchase = latestData.reduce((s, r: any) => s + Number(r.cumulative_purchase_amount || 0), 0);
+  const cumulativeNetSales = latestData.reduce((s, r: any) => s + Number(r.cumulative_net_sales_amount || 0), 0);
+
+  const [activeProjectCount, yearlyCompletedOrderCount] = await Promise.all([
+    fetchActiveProjectCount(),
+    fetchYearlyCompletedOrderCount(),
+  ]);
 
   return {
-    tangibleCount: tangibleRes.count || 0,
-    intangibleCount: intangibleRes.count || 0,
-    totalHeadcount,
-    totalNetSales,
+    cumulativeSales,
+    cumulativePurchase,
+    cumulativeNetSales,
+    activeProjectCount,
+    yearlyCompletedOrderCount,
   };
 }

@@ -22,11 +22,11 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
         <div className="mb-10 text-center">
           <h1 className="text-gradient text-4xl font-extrabold tracking-tight">AssetBI</h1>
-          <p className="mt-2 text-sm text-muted-foreground">기업 자산관리 & BI 대시보드</p>
+          <p className="mt-2 text-sm text-muted-foreground">for CSPI</p>
         </div>
         <div className="glass-card rounded-2xl p-8">
           <h2 className="mb-6 text-xl font-semibold text-foreground">로그인</h2>

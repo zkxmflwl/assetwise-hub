@@ -1,8 +1,5 @@
 import Papa from 'papaparse';
 
-/**
- * Parse a CSV file, supporting UTF-8 and attempting CP949/EUC-KR fallback.
- */
 export function parseCsvFile(file: File): Promise<Record<string, string>[]> {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
@@ -24,9 +21,6 @@ export function parseCsvFile(file: File): Promise<Record<string, string>[]> {
   });
 }
 
-/**
- * Download data as a CSV file (UTF-8 BOM for Excel compatibility).
- */
 export function downloadCsv(filename: string, headers: string[], rows: string[][]) {
   const csv = Papa.unparse({ fields: headers, data: rows });
   const bom = '\uFEFF';
@@ -39,41 +33,25 @@ export function downloadCsv(filename: string, headers: string[], rows: string[][
   URL.revokeObjectURL(url);
 }
 
-/**
- * Normalize text for matching: trim, lowercase.
- */
 export function normalizeText(s: string | null | undefined): string {
   return (s ?? '').trim().toLowerCase();
 }
 
-/**
- * Parse "YY.MM" purchase date format to "YYYY-MM-DD".
- * Returns null if parsing fails.
- */
 export function parsePurchaseDate(val: string | null | undefined): string | null {
   if (!val) return null;
   const trimmed = val.trim();
-
-  // Try YYYY-MM-DD or YYYY-MM first
   if (/^\d{4}-\d{2}(-\d{2})?$/.test(trimmed)) {
     return trimmed.length === 7 ? `${trimmed}-01` : trimmed;
   }
-
-  // Try YY.MM
   const match = trimmed.match(/^(\d{2})\.(\d{2})$/);
   if (!match) return null;
-
   const yy = parseInt(match[1], 10);
   const mm = parseInt(match[2], 10);
   if (mm < 1 || mm > 12) return null;
-
   const year = yy <= 69 ? 2000 + yy : 1900 + yy;
   return `${year}-${String(mm).padStart(2, '0')}-01`;
 }
 
-/**
- * Format purchase_date (YYYY-MM-DD) back to YY.MM for CSV download.
- */
 export function formatPurchaseDateForCsv(date: string | null | undefined): string {
   if (!date) return '';
   const match = date.match(/^(\d{4})-(\d{2})/);
@@ -83,16 +61,16 @@ export function formatPurchaseDateForCsv(date: string | null | undefined): strin
 }
 
 // ── Tangible asset CSV mapping ──
+// Removed '배정' (user_name) column since it was dropped from DB
 
 const TANGIBLE_CSV_HEADERS = [
-  '관리번호', '소속', '배정', '용도', '종류', '제조사', '모델',
+  '관리번호', '소속', '용도', '종류', '제조사', '모델',
   'S/N', 'CPU', 'MEM', 'HDD', 'SSD', '화면크기', 'OS', '구매연월', '비고',
 ];
 
 const TANGIBLE_CSV_TO_DB: Record<string, string> = {
   '관리번호': 'asset_no',
   '소속': 'department_code',
-  '배정': 'user_name',
   '용도': 'purpose',
   '종류': 'asset_type_code',
   '제조사': 'manufacturer',
@@ -130,19 +108,16 @@ export function mapTangibleCsvRows(
   const warnings: string[] = [];
   let failCount = 0;
 
-  // Build lookup maps
   const deptMap = new Map(lookup.departments.map(d => [normalizeText(d.department_name), d.department_code]));
   const typeMap = new Map(lookup.assetTypes.map(t => [normalizeText(t.sub_category), t.asset_type_code]));
 
   for (let i = 0; i < csvRows.length; i++) {
     const csv = csvRows[i];
-    const lineNum = i + 2; // 1-indexed + header
+    const lineNum = i + 2;
     const row: Record<string, any> = {
-      manager_name: '',
       usage_location: '',
       issued_date: today,
     };
-    let hasError = false;
 
     for (const [csvKey, dbKey] of Object.entries(TANGIBLE_CSV_TO_DB)) {
       const val = csv[csvKey]?.trim() ?? '';
@@ -150,32 +125,18 @@ export function mapTangibleCsvRows(
       if (dbKey === 'department_code') {
         if (val) {
           const code = deptMap.get(normalizeText(val));
-          if (code) {
-            row[dbKey] = code;
-          } else {
-            warnings.push(`${lineNum}행: 부서 "${val}" 매핑 실패`);
-            row[dbKey] = null;
-          }
-        } else {
-          row[dbKey] = null;
-        }
+          if (code) row[dbKey] = code;
+          else { warnings.push(`${lineNum}행: 부서 "${val}" 매핑 실패`); row[dbKey] = null; }
+        } else row[dbKey] = null;
       } else if (dbKey === 'asset_type_code') {
         if (val) {
           const code = typeMap.get(normalizeText(val));
-          if (code) {
-            row[dbKey] = code;
-          } else {
-            warnings.push(`${lineNum}행: 자산유형 "${val}" 매핑 실패`);
-            row[dbKey] = null;
-          }
-        } else {
-          row[dbKey] = null;
-        }
+          if (code) row[dbKey] = code;
+          else { warnings.push(`${lineNum}행: 자산유형 "${val}" 매핑 실패`); row[dbKey] = null; }
+        } else row[dbKey] = null;
       } else if (dbKey === 'purchase_date') {
         const parsed = parsePurchaseDate(val);
-        if (val && !parsed) {
-          warnings.push(`${lineNum}행: 구매연월 "${val}" 형식 오류`);
-        }
+        if (val && !parsed) warnings.push(`${lineNum}행: 구매연월 "${val}" 형식 오류`);
         row[dbKey] = parsed;
       } else {
         row[dbKey] = val || null;
@@ -206,7 +167,6 @@ export function tangibleRowToCsvRow(
   return [
     row.asset_no ?? '',
     deptMap.get(row.department_code) ?? row.department_code ?? '',
-    row.user_name ?? '',
     row.purpose ?? '',
     typeMap.get(row.asset_type_code) ?? row.asset_type_code ?? '',
     row.manufacturer ?? '',
