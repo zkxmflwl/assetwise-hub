@@ -47,14 +47,13 @@ export type Database = {
       business_projects: {
         Row: {
           client_name: string | null
-          department_code: string | null
+          department_code: string
           end_date: string | null
           id: number
-          last_modified_by_account_id: string | null
+          last_modified_by_auth_user_id: string | null
           net_sales_amount: number | null
           note: string | null
           order_date: string | null
-          project_code: string | null
           project_name: string
           project_status: string
           purchase_amount: number | null
@@ -64,14 +63,13 @@ export type Database = {
         }
         Insert: {
           client_name?: string | null
-          department_code?: string | null
+          department_code: string
           end_date?: string | null
           id?: never
-          last_modified_by_account_id?: string | null
+          last_modified_by_auth_user_id?: string | null
           net_sales_amount?: number | null
           note?: string | null
           order_date?: string | null
-          project_code?: string | null
           project_name: string
           project_status: string
           purchase_amount?: number | null
@@ -81,14 +79,13 @@ export type Database = {
         }
         Update: {
           client_name?: string | null
-          department_code?: string | null
+          department_code?: string
           end_date?: string | null
           id?: never
-          last_modified_by_account_id?: string | null
+          last_modified_by_auth_user_id?: string | null
           net_sales_amount?: number | null
           note?: string | null
           order_date?: string | null
-          project_code?: string | null
           project_name?: string
           project_status?: string
           purchase_amount?: number | null
@@ -103,6 +100,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "departments"
             referencedColumns: ["department_code"]
+          },
+          {
+            foreignKeyName: "business_projects_last_modified_by_auth_user_id_fkey"
+            columns: ["last_modified_by_auth_user_id"]
+            isOneToOne: false
+            referencedRelation: "dash_users"
+            referencedColumns: ["auth_user_id"]
           },
         ]
       }
