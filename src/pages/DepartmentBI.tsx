@@ -1,44 +1,14 @@
 import { useState } from 'react';
 import { useSalesData, useAvailableMonths } from '@/hooks/useSalesData';
-import { useDepartments } from '@/hooks/useDepartments';
 import { formatKRW } from '@/data/mockData';
-import { useAuth } from '@/contexts/AuthContext';
-import StatCard from '@/components/StatCard';
-import { Users, TrendingUp, TrendingDown, DollarSign, Loader2 } from 'lucide-react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
+import { Loader2 } from 'lucide-react';
 
 export default function DepartmentBI() {
-  const { hasPermission } = useAuth();
   const { data: months = [] } = useAvailableMonths();
   const [selectedMonth, setSelectedMonth] = useState<string>('');
-  const [selectedDeptCode, setSelectedDeptCode] = useState<string>('');
 
-  // Use selected month or latest available
   const activeMonth = selectedMonth || months[0] || '';
   const { data: salesData = [], isLoading } = useSalesData(activeMonth || undefined);
-  const { data: departments = [] } = useDepartments();
-
-  const selectedSales = selectedDeptCode
-    ? salesData.find((d) => d.department_code === selectedDeptCode)
-    : salesData[0];
-
-  const comparisonData = salesData
-    .filter((d) => Number(d.sales_amount) > 0)
-    .map((d) => ({
-      name: d.departments?.department_name || d.department_code,
-      매출: Number(d.sales_amount) / 100000000,
-      매입: Number(d.purchase_amount) / 100000000,
-      순매출: Number(d.net_sales_amount) / 100000000,
-    }));
 
   if (isLoading) {
     return (
@@ -52,16 +22,16 @@ export default function DepartmentBI() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">사업부 BI</h1>
-        <p className="mt-1 text-sm text-muted-foreground">사업부 별 인원, 매출, 매입, 순매출 현황</p>
+        <p className="mt-1 text-sm text-muted-foreground">부서별 당월/누적 매출 및 프로젝트 현황</p>
       </div>
 
-      {/* Month + Department Selector */}
+      {/* Month Selector */}
       <div className="flex flex-wrap gap-3">
         {months.length > 0 && (
           <select
             value={activeMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+            className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
           >
             {months.map((m) => (
               <option key={m} value={m}>{m}</option>
@@ -70,82 +40,46 @@ export default function DepartmentBI() {
         )}
       </div>
 
-      {/* Department buttons */}
-      <div className="flex flex-wrap gap-2">
-        {salesData.map((d) => {
-          const deptName = d.departments?.department_name || d.department_code;
-          const isSelected = d.department_code === (selectedDeptCode || salesData[0]?.department_code);
-          return (
-            <button
-              key={d.department_code}
-              onClick={() => setSelectedDeptCode(d.department_code)}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-                isSelected
-                  ? 'bg-primary text-primary-foreground stat-glow'
-                  : 'bg-secondary text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {deptName}
-            </button>
-          );
-        })}
-      </div>
-
-      {selectedSales && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title="총원"
-            value={`${selectedSales.total_headcount}명`}
-            icon={<Users className="h-5 w-5" />}
-          />
-          <StatCard
-            title="매출"
-            value={formatKRW(Number(selectedSales.sales_amount))}
-            icon={<TrendingUp className="h-5 w-5" />}
-          />
-          <StatCard
-            title="매입"
-            value={formatKRW(Number(selectedSales.purchase_amount))}
-            icon={<TrendingDown className="h-5 w-5" />}
-          />
-          <StatCard
-            title="순매출"
-            value={formatKRW(Number(selectedSales.net_sales_amount))}
-            icon={<DollarSign className="h-5 w-5" />}
-          />
-        </div>
-      )}
-
-      {salesData.length === 0 && (
+      {salesData.length === 0 ? (
         <div className="glass-card rounded-xl p-8 text-center text-muted-foreground">
-          선택한 기간에 매출 데이터가 없습니다.
+          선택한 기간에 데이터가 없습니다.
         </div>
-      )}
-
-      {comparisonData.length > 0 && (
-        <div className="glass-card rounded-xl p-6">
-          <h3 className="mb-4 text-lg font-semibold text-foreground">사업부 비교</h3>
-          <p className="mb-4 text-xs text-muted-foreground">단위: 억원</p>
-          <ResponsiveContainer width="100%" height={340}>
-            <BarChart data={comparisonData} barGap={2}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(222 30% 18%)" />
-              <XAxis dataKey="name" tick={{ fill: 'hsl(215 20% 55%)', fontSize: 12 }} />
-              <YAxis tick={{ fill: 'hsl(215 20% 55%)', fontSize: 12 }} />
-              <Tooltip
-                contentStyle={{
-                  background: 'hsl(222 41% 10%)',
-                  border: '1px solid hsl(222 30% 20%)',
-                  borderRadius: '8px',
-                  color: 'hsl(210 40% 96%)',
-                }}
-                formatter={(value: number) => `${value.toFixed(1)}억`}
-              />
-              <Legend wrapperStyle={{ color: 'hsl(215 20% 55%)' }} />
-              <Bar dataKey="매출" fill="hsl(187 86% 43%)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="매입" fill="hsl(38 92% 50%)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="순매출" fill="hsl(152 69% 41%)" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+      ) : (
+        <div className="glass-card overflow-hidden rounded-xl">
+          <div className="overflow-x-auto scrollbar-thin">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="whitespace-nowrap px-4 py-3 text-left font-semibold text-foreground">부서</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">당월매출</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">당월매입</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">당월순매출</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">누적매출</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">누적매입</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">누적순매출</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">누적 QoQ</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">영업중</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">당월수주</th>
+                </tr>
+              </thead>
+              <tbody>
+                {salesData.map((d) => (
+                  <tr key={d.department_code} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-3 font-medium text-foreground">{d.departments?.department_name || d.department_code}</td>
+                    <td className="px-4 py-3 text-right text-foreground">{formatKRW(Number(d.sales_amount))}</td>
+                    <td className="px-4 py-3 text-right text-foreground">{formatKRW(Number(d.purchase_amount))}</td>
+                    <td className="px-4 py-3 text-right text-foreground">{formatKRW(Number(d.net_sales_amount))}</td>
+                    <td className="px-4 py-3 text-right text-foreground">{formatKRW(Number((d as any).cumulative_sales_amount || 0))}</td>
+                    <td className="px-4 py-3 text-right text-foreground">{formatKRW(Number((d as any).cumulative_purchase_amount || 0))}</td>
+                    <td className="px-4 py-3 text-right text-foreground">{formatKRW(Number((d as any).cumulative_net_sales_amount || 0))}</td>
+                    <td className="px-4 py-3 text-right text-foreground">{Number((d as any).cumulative_qoq || 0).toFixed(2)}%</td>
+                    <td className="px-4 py-3 text-right text-foreground">{(d as any).active_project_count ?? 0}건</td>
+                    <td className="px-4 py-3 text-right text-foreground">{(d as any).monthly_order_project_count ?? 0}건</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
