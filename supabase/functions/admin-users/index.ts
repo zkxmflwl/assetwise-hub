@@ -45,8 +45,12 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "create-user": {
-        const { user_email, user_name, department_code } = params;
+        const { user_email, user_name, department_code, role_code } = params;
         if (!user_email || !user_name)
+          throw new Error("user_email and user_name required");
+
+        const validRoles = ["ADMIN", "MANAGER", "VIEWER"];
+        const finalRole = validRoles.includes(role_code) ? role_code : "VIEWER";
           throw new Error("user_email and user_name required");
 
         const prefix = user_email.split("@")[0];
@@ -66,7 +70,7 @@ Deno.serve(async (req) => {
             auth_user_id: authUser.user.id,
             user_email,
             user_name,
-            role_code: "VIEWER",
+            role_code: finalRole,
             department_code: department_code || null,
             must_change_password: true,
             is_active: true,
