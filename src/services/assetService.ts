@@ -15,7 +15,7 @@ export interface TangibleAssetRow {
   screen_size: string | null;
   os_name: string | null;
   purpose: string | null;
-  usage_location: string | null;
+  usage: string | null;
   purchase_date: string | null;
   issued_date: string | null;
   note: string | null;
