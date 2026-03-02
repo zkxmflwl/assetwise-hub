@@ -51,7 +51,6 @@ Deno.serve(async (req) => {
 
         const validRoles = ["ADMIN", "MANAGER", "VIEWER"];
         const finalRole = validRoles.includes(role_code) ? role_code : "VIEWER";
-          throw new Error("user_email and user_name required");
 
         const prefix = user_email.split("@")[0];
         const defaultPassword = prefix + "1234!";
