@@ -22,7 +22,7 @@ export default function DepartmentBI() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">사업부 BI</h1>
-        <p className="mt-1 text-sm text-muted-foreground">부서별 당월/누적 매출 및 프로젝트 현황</p>
+        <p className="mt-1 text-sm text-muted-foreground">부서별 당월 매출 현황</p>
       </div>
 
       {/* Month Selector */}
@@ -51,30 +51,22 @@ export default function DepartmentBI() {
               <thead>
                 <tr className="border-b border-border bg-muted/50">
                   <th className="whitespace-nowrap px-4 py-3 text-left font-semibold text-foreground">부서</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">인원</th>
                   <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">당월매출</th>
                   <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">당월매입</th>
                   <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">당월순매출</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">누적매출</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">누적매입</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">누적순매출</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">누적 QoQ</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">영업중</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">당월수주</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-left font-semibold text-foreground">비고</th>
                 </tr>
               </thead>
               <tbody>
                 {salesData.map((d) => (
                   <tr key={d.department_code} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3 font-medium text-foreground">{d.departments?.department_name || d.department_code}</td>
+                    <td className="px-4 py-3 text-right text-foreground">{d.total_headcount}명</td>
                     <td className="px-4 py-3 text-right text-foreground">{formatKRW(Number(d.sales_amount))}</td>
                     <td className="px-4 py-3 text-right text-foreground">{formatKRW(Number(d.purchase_amount))}</td>
                     <td className="px-4 py-3 text-right text-foreground">{formatKRW(Number(d.net_sales_amount))}</td>
-                    <td className="px-4 py-3 text-right text-foreground">{formatKRW(Number((d as any).cumulative_sales_amount || 0))}</td>
-                    <td className="px-4 py-3 text-right text-foreground">{formatKRW(Number((d as any).cumulative_purchase_amount || 0))}</td>
-                    <td className="px-4 py-3 text-right text-foreground">{formatKRW(Number((d as any).cumulative_net_sales_amount || 0))}</td>
-                    <td className="px-4 py-3 text-right text-foreground">{Number((d as any).cumulative_qoq || 0).toFixed(2)}%</td>
-                    <td className="px-4 py-3 text-right text-foreground">{(d as any).active_project_count ?? 0}건</td>
-                    <td className="px-4 py-3 text-right text-foreground">{(d as any).monthly_order_project_count ?? 0}건</td>
+                    <td className="px-4 py-3 text-muted-foreground">{d.note || '-'}</td>
                   </tr>
                 ))}
               </tbody>
