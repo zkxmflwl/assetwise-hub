@@ -36,3 +36,14 @@ export async function fetchAvailableMonths() {
   const unique = [...new Set((data || []).map((d) => d.month_key))];
   return unique;
 }
+
+export async function fetchYtdSummary(year: string, upToMonth: string) {
+  const startMonth = `${year}-01`;
+  const { data, error } = await supabase
+    .from('department_sales_summary')
+    .select('sales_amount, purchase_amount, net_sales_amount')
+    .gte('month_key', startMonth)
+    .lte('month_key', upToMonth);
+  if (error) throw error;
+  return data || [];
+}
