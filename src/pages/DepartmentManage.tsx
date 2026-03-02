@@ -1,12 +1,9 @@
 import { useState, useMemo, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useSalesData, useAvailableMonths } from '@/hooks/useSalesData';
-import { SalesSummaryRow } from '@/services/salesService';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGridEditor, GridRow } from '@/hooks/useGridEditor';
+import { Department } from '@/services/departmentService';
 import { supabase } from '@/integrations/supabase/client';
-import { formatKRW } from '@/data/mockData';
 import { toast } from 'sonner';
 import { Plus, Trash2, Save, RotateCcw, Loader2, Search, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 
@@ -15,35 +12,23 @@ type SortDir = 'asc' | 'desc' | null;
 interface ColDef {
   key: string;
   label: string;
-  type: 'text' | 'number' | 'date' | 'select';
-  options?: { value: string; label: string }[];
+  type: 'text';
 }
 
-export default function DepartmentBI() {
-  const { hasPermission, authUser } = useAuth();
-  const canEdit = hasPermission('MANAGER');
-  const { data: months = [] } = useAvailableMonths();
-  const { data: departments = [] } = useDepartments();
-  const [selectedMonth, setSelectedMonth] = useState<string>('');
+export default function DepartmentManage() {
+  const { hasPermission } = useAuth();
+  const canEdit = hasPermission('ADMIN');
+  const { data: departments = [], isLoading, refetch } = useDepartments();
 
-  const activeMonth = selectedMonth || months[0] || '';
-
-  const { data: salesData = [], isLoading, refetch } = useSalesData(activeMonth || undefined);
-
-  const { rows, addRow, updateCell, markDeleted, reset, forceSync, dirtyStats, hasDirty, getChanges } = useGridEditor<SalesSummaryRow>(
-    salesData,
+  const { rows, addRow, updateCell, markDeleted, reset, forceSync, dirtyStats, hasDirty, getChanges } = useGridEditor<Department>(
+    departments,
     {
-      idField: 'id',
+      idField: 'department_code',
       newRowTemplate: () => ({
-        department_code: departments[0]?.department_code || '',
-        month_key: activeMonth,
-        total_headcount: 0,
-        sales_amount: 0,
-        purchase_amount: 0,
-        net_sales_amount: 0,
-        note: '',
-        departments: null,
-      } as any),
+        department_code: '',
+        department_name: '',
+        is_active: true,
+      }),
     },
   );
 
@@ -53,25 +38,14 @@ export default function DepartmentBI() {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
 
-  const columns: ColDef[] = useMemo(() => [
-    { key: 'department_code', label: '부서', type: 'select', options: departments.map(d => ({ value: d.department_code, label: d.department_name })) },
-    { key: 'month_key', label: '연월', type: 'text' },
-    { key: 'total_headcount', label: '인원', type: 'number' },
-    { key: 'sales_amount', label: '매출', type: 'number' },
-    { key: 'purchase_amount', label: '매입', type: 'number' },
-    { key: 'net_sales_amount', label: '순매출', type: 'number' },
-    { key: 'note', label: '비고', type: 'text' },
-  ], [departments]);
+  const columns: ColDef[] = [
+    { key: 'department_code', label: '부서코드', type: 'text' },
+    { key: 'department_name', label: '부서명', type: 'text' },
+  ];
 
-  const getDisplayValue = useCallback((row: GridRow<SalesSummaryRow>, col: ColDef): string => {
+  const getDisplayValue = useCallback((row: GridRow<Department>, col: ColDef): string => {
     const val = (row.data as any)[col.key];
-    if (val == null || val === '') return '';
-    if (col.type === 'select' && col.options) {
-      const opt = col.options.find(o => o.value === val);
-      return opt?.label || String(val);
-    }
-    if (col.type === 'number') return String(val);
-    return String(val);
+    return val == null ? '' : String(val);
   }, []);
 
   const visibleRows = useMemo(() => {
@@ -81,16 +55,15 @@ export default function DepartmentBI() {
       filtered = filtered.filter(r => columns.some(col => getDisplayValue(r, col).toLowerCase().includes(s)));
     }
     if (sortKey && sortDir) {
-      const col = columns.find(c => c.key === sortKey);
       filtered = [...filtered].sort((a, b) => {
-        const aVal = col ? getDisplayValue(a, col) : '';
-        const bVal = col ? getDisplayValue(b, col) : '';
+        const aVal = getDisplayValue(a, columns.find(c => c.key === sortKey)!);
+        const bVal = getDisplayValue(b, columns.find(c => c.key === sortKey)!);
         const cmp = aVal.localeCompare(bVal, 'ko', { numeric: true });
         return sortDir === 'asc' ? cmp : -cmp;
       });
     }
     return filtered;
-  }, [rows, search, columns, sortKey, sortDir, getDisplayValue]);
+  }, [rows, search, sortKey, sortDir, getDisplayValue]);
 
   const handleSort = (key: string) => {
     if (sortKey !== key) { setSortKey(key); setSortDir('asc'); }
@@ -98,45 +71,37 @@ export default function DepartmentBI() {
     else { setSortKey(null); setSortDir(null); }
   };
 
-  const handleAddRow = () => {
-    // Check duplicate: same month_key + department_code
-    addRow();
-  };
-
   const handleSave = async () => {
     const { inserts, updates, deletes } = getChanges();
 
-    // Validate unique month+dept for inserts and updates
-    const allRows = rows.filter(r => r.status !== 'deleted');
-    const seen = new Set<string>();
-    for (const r of allRows) {
-      const key = `${(r.data as any).month_key}__${(r.data as any).department_code}`;
-      if (seen.has(key)) {
-        toast.error(`같은 연월+부서 조합이 중복됩니다: ${(r.data as any).month_key} / ${(r.data as any).department_code}`);
+    // Validate
+    for (const r of inserts) {
+      if (!r.department_code?.trim() || !r.department_name?.trim()) {
+        toast.error('부서코드와 부서명은 필수입니다.');
         return;
       }
-      seen.add(key);
     }
 
     setSaving(true);
     try {
-      const uid = authUser?.id;
       if (inserts.length > 0) {
-        const insertData = inserts.map(r => {
-          const { id, updated_at, departments, dash_users, ...rest } = r as any;
-          return { ...rest, last_modified_by_auth_user_id: uid };
-        });
-        const { error } = await supabase.from('department_sales_summary').insert(insertData);
+        const insertData = inserts.map(r => ({
+          department_code: r.department_code,
+          department_name: r.department_name,
+          is_active: true,
+        }));
+        const { error } = await supabase.from('departments').insert(insertData);
         if (error) throw error;
       }
       for (const r of updates) {
-        const { id, updated_at, departments, dash_users, ...rest } = r as any;
-        const { error } = await supabase.from('department_sales_summary').update({ ...rest, last_modified_by_auth_user_id: uid }).eq('id', id);
+        const { error } = await supabase.from('departments')
+          .update({ department_name: r.department_name })
+          .eq('department_code', r.department_code);
         if (error) throw error;
       }
       if (deletes.length > 0) {
-        const ids = deletes.map((r: any) => r.id);
-        const { error } = await supabase.from('department_sales_summary').delete().in('id', ids);
+        const codes = deletes.map(r => r.department_code);
+        const { error } = await supabase.from('departments').delete().in('department_code', codes);
         if (error) throw error;
       }
       toast.success(`저장 완료 (추가 ${inserts.length} / 수정 ${updates.length} / 삭제 ${deletes.length})`);
@@ -163,39 +128,20 @@ export default function DepartmentBI() {
     selectedIds.size === visibleRows.length ? setSelectedIds(new Set()) : setSelectedIds(new Set(visibleRows.map(r => r.tempId)));
   };
 
-  const renderCell = (row: GridRow<SalesSummaryRow>, col: ColDef) => {
+  const renderCell = (row: GridRow<Department>, col: ColDef) => {
     const val = (row.data as any)[col.key];
     const disabled = !canEdit || row.status === 'deleted';
+    // department_code is not editable for existing rows
+    const isCodeField = col.key === 'department_code' && row.status !== 'new';
 
-    if (!canEdit) {
-      if (col.type === 'select') {
-        const opt = col.options?.find(o => o.value === val);
-        return <span className="text-xs text-foreground">{opt?.label || val || '-'}</span>;
-      }
-      if (col.type === 'number') return <span className="text-xs text-foreground text-right block">{formatKRW(Number(val || 0))}</span>;
+    if (!canEdit || isCodeField) {
       return <span className="text-xs text-foreground">{val || '-'}</span>;
     }
 
-    if (col.type === 'select') {
-      return (
-        <select value={val || ''} disabled={disabled} onChange={(e) => updateCell(row.tempId, col.key as any, e.target.value || null)}
-          className="w-full min-w-[80px] bg-transparent px-1 py-0.5 text-xs text-foreground disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary rounded">
-          <option value="">-</option>
-          {col.options?.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-      );
-    }
-    if (col.type === 'number') {
-      return (
-        <input type="number" value={val ?? ''} disabled={disabled}
-          onChange={(e) => updateCell(row.tempId, col.key as any, Number(e.target.value))}
-          className="w-full min-w-[80px] bg-transparent px-1 py-0.5 text-xs text-foreground text-right disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary rounded" />
-      );
-    }
     return (
       <input type="text" value={val ?? ''} disabled={disabled}
         onChange={(e) => updateCell(row.tempId, col.key as any, e.target.value)}
-        className="w-full min-w-[60px] bg-transparent px-1 py-0.5 text-xs text-foreground disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary rounded" />
+        className="w-full min-w-[80px] bg-transparent px-1 py-0.5 text-xs text-foreground disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary rounded" />
     );
   };
 
@@ -211,22 +157,13 @@ export default function DepartmentBI() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">사업부 매출 관리</h1>
-        <p className="mt-1 text-sm text-muted-foreground">부서별 월별 매출/매입 데이터 관리</p>
-      </div>
-
-      <div className="flex flex-wrap gap-3 items-center">
-        {months.length > 0 && (
-          <select value={activeMonth} onChange={(e) => setSelectedMonth(e.target.value)}
-            className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none">
-            {months.map((m) => <option key={m} value={m}>{m}</option>)}
-          </select>
-        )}
+        <h1 className="text-2xl font-bold text-foreground">사업부 관리</h1>
+        <p className="mt-1 text-sm text-muted-foreground">부서 코드 및 부서명 관리</p>
       </div>
 
       {canEdit && (
         <div className="flex flex-wrap items-center gap-2">
-          <button onClick={handleAddRow} className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:opacity-90 transition-opacity">
+          <button onClick={addRow} className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:opacity-90 transition-opacity">
             <Plus className="h-3.5 w-3.5" /> 행 추가
           </button>
           <button onClick={handleDelete} className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground hover:text-destructive transition-colors">
@@ -254,7 +191,7 @@ export default function DepartmentBI() {
           className="w-full rounded-lg border border-border bg-card py-2 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors" />
       </div>
 
-      <div className="text-xs text-muted-foreground">전체 {salesData.length}건 / 표시 {visibleRows.length}건</div>
+      <div className="text-xs text-muted-foreground">전체 {departments.length}건 / 표시 {visibleRows.length}건</div>
 
       <div className="glass-card overflow-hidden rounded-xl">
         <div className="overflow-x-auto scrollbar-thin" style={{ maxHeight: '70vh' }}>
