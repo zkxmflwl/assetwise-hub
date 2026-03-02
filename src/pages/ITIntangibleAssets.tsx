@@ -1,5 +1,6 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useIntangibleAssets } from '@/hooks/useIntangibleAssets';
+import { buildDeptColorMap, getDeptRowColor } from '@/utils/departmentColors';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useAssetTypes } from '@/hooks/useAssetTypes';
 import { useAuth } from '@/contexts/AuthContext';
@@ -174,11 +175,17 @@ export default function ITIntangibleAssets() {
     );
   };
 
-  const rowBg = (status: string) => {
-    if (status === 'new') return 'bg-emerald-50';
-    if (status === 'updated') return 'bg-amber-50';
-    if (status === 'deleted') return 'bg-red-50 opacity-60 line-through';
-    return '';
+  useEffect(() => {
+    if (departments.length > 0) {
+      buildDeptColorMap(departments.map(d => d.department_code));
+    }
+  }, [departments]);
+
+  const rowBg = (row: GridRow<IntangibleAssetRow>) => {
+    if (row.status === 'new') return 'bg-emerald-50';
+    if (row.status === 'updated') return 'bg-amber-50';
+    if (row.status === 'deleted') return 'bg-red-50 opacity-60 line-through';
+    return getDeptRowColor((row.data as any).department_code);
   };
 
   if (isLoading) return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -254,7 +261,7 @@ export default function ITIntangibleAssets() {
               {visibleRows.length === 0 ? (
                 <tr><td colSpan={columns.length + (canEdit ? 1 : 0)} className="py-8 text-center text-muted-foreground">데이터 없음</td></tr>
               ) : visibleRows.map((row) => (
-                <tr key={row.tempId} className={`border-b border-border/50 transition-colors hover:bg-muted/30 ${rowBg(row.status)}`}>
+                <tr key={row.tempId} className={`border-b border-border/50 transition-colors hover:bg-muted/30 ${rowBg(row)}`}>
                   {canEdit && (
                     <td className="w-8 border-r border-border/50 px-2 py-1.5">
                       <input type="checkbox" checked={selectedIds.has(row.tempId)} onChange={() => toggleSelect(row.tempId)}
