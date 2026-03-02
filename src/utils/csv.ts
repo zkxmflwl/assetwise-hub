@@ -64,13 +64,14 @@ export function formatPurchaseDateForCsv(date: string | null | undefined): strin
 // Removed '배정' (user_name) column since it was dropped from DB
 
 const TANGIBLE_CSV_HEADERS = [
-  '관리번호', '소속', '용도', '종류', '제조사', '모델',
+  '관리번호', '소속', '배정', '용도', '종류', '제조사', '모델',
   'S/N', 'CPU', 'MEM', 'HDD', 'SSD', '화면크기', 'OS', '구매연월', '비고',
 ];
 
 const TANGIBLE_CSV_TO_DB: Record<string, string> = {
   '관리번호': 'asset_no',
   '소속': 'department_code',
+  '배정': 'usage',
   '용도': 'purpose',
   '종류': 'asset_type_code',
   '제조사': 'manufacturer',
@@ -167,6 +168,7 @@ export function tangibleRowToCsvRow(
   return [
     row.asset_no ?? '',
     deptMap.get(row.department_code) ?? row.department_code ?? '',
+    row.usage ?? '',
     row.purpose ?? '',
     typeMap.get(row.asset_type_code) ?? row.asset_type_code ?? '',
     row.manufacturer ?? '',

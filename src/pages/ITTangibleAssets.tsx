@@ -60,12 +60,13 @@ export default function ITTangibleAssets() {
   const [saving, setSaving] = useState(false);
 
   const columns: ColDef[] = useMemo(() => [
-    { key: 'asset_no', label: '자산번호', type: 'text' },
-    { key: 'department_code', label: '부서', type: 'select', options: deptLoading ? [{ value: '', label: '불러오는 중...' }] : deptError ? [{ value: '', label: '로드 실패' }] : departments.map(d => ({ value: d.department_code, label: d.department_name })) },
-    { key: 'usage', label: '사용처', type: 'text' },
-    { key: 'asset_type_code', label: '자산유형', type: 'select', options: typeLoading ? [{ value: '', label: '불러오는 중...' }] : typeError ? [{ value: '', label: '로드 실패' }] : (assetTypes || []).map(t => ({ value: t.asset_type_code, label: t.sub_category })) },
+    { key: 'asset_no', label: '관리번호', type: 'text' },
+    { key: 'department_code', label: '소속', type: 'select', options: deptLoading ? [{ value: '', label: '불러오는 중...' }] : deptError ? [{ value: '', label: '로드 실패' }] : departments.map(d => ({ value: d.department_code, label: d.department_name })) },
+    { key: 'usage', label: '배정', type: 'text' },
+    { key: 'purpose', label: '용도', type: 'text' },
+    { key: 'asset_type_code', label: '종류', type: 'select', options: typeLoading ? [{ value: '', label: '불러오는 중...' }] : typeError ? [{ value: '', label: '로드 실패' }] : (assetTypes || []).map(t => ({ value: t.asset_type_code, label: t.sub_category })) },
     { key: 'manufacturer', label: '제조사', type: 'text' },
-    { key: 'model_name', label: '모델명', type: 'text' },
+    { key: 'model_name', label: '모델', type: 'text' },
     { key: 'serial_no', label: 'S/N', type: 'text' },
     { key: 'cpu_spec', label: 'CPU', type: 'text' },
     { key: 'mem_spec', label: 'MEM', type: 'text' },
@@ -73,8 +74,7 @@ export default function ITTangibleAssets() {
     { key: 'ssd_spec', label: 'SSD', type: 'text' },
     { key: 'screen_size', label: '화면크기', type: 'text' },
     { key: 'os_name', label: 'OS', type: 'text' },
-    { key: 'purpose', label: '용도', type: 'text' },
-    { key: 'purchase_date', label: '구매일', type: 'date' },
+    { key: 'purchase_date', label: '구매연월', type: 'date' },
     { key: 'issued_date', label: '지급일', type: 'date' },
     { key: 'note', label: '비고', type: 'text' },
   ], [departments, assetTypes, deptLoading, deptError, typeLoading, typeError]);
