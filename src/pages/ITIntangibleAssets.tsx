@@ -238,15 +238,15 @@ export default function ITIntangibleAssets() {
         <div className="overflow-x-auto scrollbar-thin" style={{ maxHeight: '70vh' }}>
           <table className="w-full text-xs">
             <thead className="sticky top-0 z-10">
-              <tr className="border-b border-border bg-muted/60">
+              <tr className="border-b border-border bg-muted">
                 {canEdit && (
-                  <th className="w-8 px-2 py-2.5">
+                  <th className="w-8 border-r border-border/50 px-2 py-2.5">
                     <input type="checkbox" checked={visibleRows.length > 0 && selectedIds.size === visibleRows.length} onChange={toggleSelectAll}
                       className="h-3.5 w-3.5 rounded border-border accent-primary" />
                   </th>
                 )}
                 {columns.map(col => (
-                  <th key={col.key} className="whitespace-nowrap px-3 py-2.5 text-left font-semibold text-foreground">{col.label}</th>
+                  <th key={col.key} className="whitespace-nowrap border-r border-border/50 last:border-r-0 px-3 py-2.5 text-left font-semibold text-foreground">{col.label}</th>
                 ))}
               </tr>
             </thead>
@@ -256,13 +256,13 @@ export default function ITIntangibleAssets() {
               ) : visibleRows.map((row) => (
                 <tr key={row.tempId} className={`border-b border-border/50 transition-colors hover:bg-muted/30 ${rowBg(row.status)}`}>
                   {canEdit && (
-                    <td className="w-8 px-2 py-1.5">
+                    <td className="w-8 border-r border-border/50 px-2 py-1.5">
                       <input type="checkbox" checked={selectedIds.has(row.tempId)} onChange={() => toggleSelect(row.tempId)}
                         className="h-3.5 w-3.5 rounded border-border accent-primary" />
                     </td>
                   )}
                   {columns.map(col => (
-                    <td key={col.key} className="px-3 py-1.5">{renderCell(row, col)}</td>
+                    <td key={col.key} className="border-r border-border/50 last:border-r-0 px-3 py-1.5">{renderCell(row, col)}</td>
                   ))}
                 </tr>
               ))}
