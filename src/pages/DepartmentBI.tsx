@@ -125,16 +125,16 @@ export default function DepartmentBI() {
           <div className="overflow-x-auto scrollbar-thin">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="whitespace-nowrap px-4 py-3 text-left font-semibold text-foreground">부서</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">당월매출</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">당월매입</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">당월순매출</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">누적매출</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">누적매입</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">누적순매출</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">QoQ</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">영업중</th>
+                <tr className="border-b border-border bg-muted">
+                  <th className="whitespace-nowrap border-r border-border/50 px-4 py-3 text-left font-semibold text-foreground">부서</th>
+                  <th className="whitespace-nowrap border-r border-border/50 px-4 py-3 text-right font-semibold text-foreground">당월매출</th>
+                  <th className="whitespace-nowrap border-r border-border/50 px-4 py-3 text-right font-semibold text-foreground">당월매입</th>
+                  <th className="whitespace-nowrap border-r border-border/50 px-4 py-3 text-right font-semibold text-foreground">당월순매출</th>
+                  <th className="whitespace-nowrap border-r border-border/50 px-4 py-3 text-right font-semibold text-foreground">누적매출</th>
+                  <th className="whitespace-nowrap border-r border-border/50 px-4 py-3 text-right font-semibold text-foreground">누적매입</th>
+                  <th className="whitespace-nowrap border-r border-border/50 px-4 py-3 text-right font-semibold text-foreground">누적순매출</th>
+                  <th className="whitespace-nowrap border-r border-border/50 px-4 py-3 text-right font-semibold text-foreground">QoQ</th>
+                  <th className="whitespace-nowrap border-r border-border/50 px-4 py-3 text-right font-semibold text-foreground">영업중</th>
                   <th className="whitespace-nowrap px-4 py-3 text-right font-semibold text-foreground">진행중</th>
                 </tr>
               </thead>
@@ -143,17 +143,17 @@ export default function DepartmentBI() {
                   const c = computed[d.department_code];
                   return (
                     <tr key={d.department_code} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                      <td className="px-4 py-3 font-medium text-foreground">{d.departments?.department_name || d.department_code}</td>
-                      <td className="px-4 py-3 text-right text-foreground">{formatKRW(Number(d.sales_amount))}</td>
-                      <td className="px-4 py-3 text-right text-foreground">{formatKRW(Number(d.purchase_amount))}</td>
-                      <td className="px-4 py-3 text-right text-foreground">{formatKRW(Number(d.net_sales_amount))}</td>
-                      <td className="px-4 py-3 text-right text-foreground">{formatKRW(c?.cumSales ?? 0)}</td>
-                      <td className="px-4 py-3 text-right text-foreground">{formatKRW(c?.cumPurchase ?? 0)}</td>
-                      <td className="px-4 py-3 text-right text-foreground">{formatKRW(c?.cumNet ?? 0)}</td>
-                      <td className="px-4 py-3 text-right text-foreground">
+                      <td className="border-r border-border/50 px-4 py-3 font-medium text-foreground">{d.departments?.department_name || d.department_code}</td>
+                      <td className="border-r border-border/50 px-4 py-3 text-right text-foreground">{formatKRW(Number(d.sales_amount))}</td>
+                      <td className="border-r border-border/50 px-4 py-3 text-right text-foreground">{formatKRW(Number(d.purchase_amount))}</td>
+                      <td className="border-r border-border/50 px-4 py-3 text-right text-foreground">{formatKRW(Number(d.net_sales_amount))}</td>
+                      <td className="border-r border-border/50 px-4 py-3 text-right text-foreground">{formatKRW(c?.cumSales ?? 0)}</td>
+                      <td className="border-r border-border/50 px-4 py-3 text-right text-foreground">{formatKRW(c?.cumPurchase ?? 0)}</td>
+                      <td className="border-r border-border/50 px-4 py-3 text-right text-foreground">{formatKRW(c?.cumNet ?? 0)}</td>
+                      <td className="border-r border-border/50 px-4 py-3 text-right text-foreground">
                         {c?.qoq != null ? `${c.qoq >= 0 ? '+' : ''}${c.qoq.toFixed(1)}%` : '-'}
                       </td>
-                      <td className="px-4 py-3 text-right text-foreground">{activeProjects[d.department_code] ?? 0}건</td>
+                      <td className="border-r border-border/50 px-4 py-3 text-right text-foreground">{activeProjects[d.department_code] ?? 0}건</td>
                       <td className="px-4 py-3 text-right text-foreground">{ongoingProjects[d.department_code] ?? 0}건</td>
                     </tr>
                   );
