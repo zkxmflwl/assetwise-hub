@@ -1,14 +1,20 @@
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutDashboard, Monitor, Cloud, BarChart3, LogOut, Menu, X, Shield, UserCog } from 'lucide-react';
+import { LayoutDashboard, Monitor, Cloud, BarChart3, LogOut, Menu, X, Shield, UserCog, Building2, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import PasswordChangeModal from '@/components/PasswordChangeModal';
 
-const navItems = [
+const commonNavItems = [
   { title: '대시보드', url: '/', icon: LayoutDashboard },
   { title: 'IT 유형자산', url: '/it-tangible', icon: Monitor },
   { title: 'IT 무형자산', url: '/it-intangible', icon: Cloud },
   { title: '사업부 BI', url: '/department-bi', icon: BarChart3 },
+];
+
+const adminNavItems = [
+  { title: '사업부 관리', url: '/admin/departments', icon: Building2 },
+  { title: '사업부 매출 관리', url: '/admin/sales', icon: TrendingUp },
+  { title: '사용자 관리', url: '/admin/users', icon: UserCog },
 ];
 
 const roleLabel: Record<string, string> = {
@@ -33,17 +39,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </button>
         </div>
         <nav className="flex-1 space-y-1 px-2 py-4">
-          {navItems.map((item) => (
+          {commonNavItems.map((item) => (
             <NavLink key={item.url} to={item.url} end={item.url === '/'} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all" activeClassName="bg-primary/10 text-primary font-medium">
               <item.icon className="h-5 w-5 shrink-0" />
               {!collapsed && <span>{item.title}</span>}
             </NavLink>
           ))}
           {hasPermission('ADMIN') && (
-            <NavLink to="/admin/users" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all" activeClassName="bg-primary/10 text-primary font-medium">
-              <UserCog className="h-5 w-5 shrink-0" />
-              {!collapsed && <span>사용자 관리</span>}
-            </NavLink>
+            <>
+              {!collapsed && <div className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">관리</div>}
+              {adminNavItems.map((item) => (
+                <NavLink key={item.url} to={item.url} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all" activeClassName="bg-primary/10 text-primary font-medium">
+                  <item.icon className="h-5 w-5 shrink-0" />
+                  {!collapsed && <span>{item.title}</span>}
+                </NavLink>
+              ))}
+            </>
           )}
         </nav>
         {dashUser && (
