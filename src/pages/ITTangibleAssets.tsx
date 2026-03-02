@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { useTangibleAssets } from '@/hooks/useTangibleAssets';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useAssetTypes } from '@/hooks/useAssetTypes';
@@ -7,7 +7,7 @@ import { useGridEditor, GridRow } from '@/hooks/useGridEditor';
 import { TangibleAssetRow } from '@/services/assetService';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, RotateCcw, Loader2, Search, Upload, Download, FileDown } from 'lucide-react';
+import { Plus, Trash2, Save, RotateCcw, Loader2, Search, Upload, Download, FileDown, ArrowUp, ArrowDown, ArrowUpDown, Filter, X } from 'lucide-react';
 import { parseCsvFile, mapTangibleCsvRows, downloadTangibleCsv, downloadTangibleTemplate } from '@/utils/csv';
 
 interface ColDef {
@@ -17,6 +17,8 @@ interface ColDef {
   required?: boolean;
   options?: { value: string; label: string }[];
 }
+
+type SortDir = 'asc' | 'desc' | null;
 
 export default function ITTangibleAssets() {
   const { hasPermission, authUser } = useAuth();
@@ -58,6 +60,10 @@ export default function ITTangibleAssets() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
   const [saving, setSaving] = useState(false);
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>(null);
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+  const [activeFilterCol, setActiveFilterCol] = useState<string | null>(null);
 
   const columns: ColDef[] = useMemo(() => [
     { key: 'asset_no', label: '관리번호', type: 'text' },
@@ -79,11 +85,78 @@ export default function ITTangibleAssets() {
     { key: 'note', label: '비고', type: 'text' },
   ], [departments, assetTypes, deptLoading, deptError, typeLoading, typeError]);
 
+  // Get display value for a cell (resolves select codes to labels)
+  const getDisplayValue = useCallback((row: GridRow<TangibleAssetRow>, col: ColDef): string => {
+    const val = (row.data as any)[col.key];
+    if (val == null || val === '') return '';
+    if (col.type === 'select' && col.options) {
+      const opt = col.options.find(o => o.value === val);
+      return opt?.label || String(val);
+    }
+    return String(val);
+  }, []);
+
   const visibleRows = useMemo(() => {
-    if (!search) return rows;
-    const s = search.toLowerCase();
-    return rows.filter(r => columns.some(col => String((r.data as any)[col.key] || '').toLowerCase().includes(s)));
-  }, [rows, search, columns]);
+    let filtered = rows;
+
+    // Global search
+    if (search) {
+      const s = search.toLowerCase();
+      filtered = filtered.filter(r => columns.some(col => getDisplayValue(r, col).toLowerCase().includes(s)));
+    }
+
+    // Per-column filters
+    const activeFilters = Object.entries(columnFilters).filter(([, v]) => v.trim() !== '');
+    if (activeFilters.length > 0) {
+      filtered = filtered.filter(r =>
+        activeFilters.every(([key, filterVal]) => {
+          const col = columns.find(c => c.key === key);
+          if (!col) return true;
+          return getDisplayValue(r, col).toLowerCase().includes(filterVal.trim().toLowerCase());
+        })
+      );
+    }
+
+    // Sort
+    if (sortKey && sortDir) {
+      const col = columns.find(c => c.key === sortKey);
+      filtered = [...filtered].sort((a, b) => {
+        const aVal = col ? getDisplayValue(a, col) : String((a.data as any)[sortKey] ?? '');
+        const bVal = col ? getDisplayValue(b, col) : String((b.data as any)[sortKey] ?? '');
+        const cmp = aVal.localeCompare(bVal, 'ko', { numeric: true });
+        return sortDir === 'asc' ? cmp : -cmp;
+      });
+    }
+
+    return filtered;
+  }, [rows, search, columns, columnFilters, sortKey, sortDir, getDisplayValue]);
+
+  const handleSort = (key: string) => {
+    if (sortKey !== key) {
+      setSortKey(key);
+      setSortDir('asc');
+    } else if (sortDir === 'asc') {
+      setSortDir('desc');
+    } else {
+      setSortKey(null);
+      setSortDir(null);
+    }
+  };
+
+  const handleFilterChange = (key: string, value: string) => {
+    setColumnFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilter = (key: string) => {
+    setColumnFilters(prev => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    setActiveFilterCol(null);
+  };
+
+  const activeFilterCount = Object.values(columnFilters).filter(v => v.trim() !== '').length;
 
   const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -159,9 +232,7 @@ export default function ITTangibleAssets() {
   const renderCell = (row: GridRow<TangibleAssetRow>, col: ColDef) => {
     const val = (row.data as any)[col.key];
     const disabled = !canEdit || row.status === 'deleted';
-    const isEditing = canEdit && row.status !== 'deleted' && (row.status === 'new' || row.status === 'updated' || row.status === 'clean');
 
-    // Read-only display for non-edit mode
     if (!canEdit) {
       if (col.type === 'select') {
         const opt = col.options?.find(o => o.value === val);
@@ -244,10 +315,17 @@ export default function ITTangibleAssets() {
         </div>
       )}
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="검색..."
-          className="w-full rounded-lg border border-border bg-card py-2 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors" />
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="전체 검색..."
+            className="w-full rounded-lg border border-border bg-card py-2 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors" />
+        </div>
+        {activeFilterCount > 0 && (
+          <button onClick={() => { setColumnFilters({}); setActiveFilterCol(null); }} className="flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <X className="h-3.5 w-3.5" /> 필터 초기화 ({activeFilterCount})
+          </button>
+        )}
       </div>
 
       <div className="text-xs text-muted-foreground">전체 {assets.length}건 / 표시 {visibleRows.length}건</div>
@@ -264,7 +342,45 @@ export default function ITTangibleAssets() {
                   </th>
                 )}
                 {columns.map(col => (
-                  <th key={col.key} className="whitespace-nowrap px-3 py-2.5 text-left font-semibold text-foreground">{col.label}</th>
+                  <th key={col.key} className="whitespace-nowrap px-3 py-2.5 text-left font-semibold text-foreground">
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleSort(col.key)}
+                        className="flex items-center gap-1 hover:text-primary transition-colors"
+                      >
+                        {col.label}
+                        {sortKey === col.key ? (
+                          sortDir === 'asc' ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                        ) : (
+                          <ArrowUpDown className="h-3 w-3 opacity-30" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setActiveFilterCol(activeFilterCol === col.key ? null : col.key)}
+                        className={`p-0.5 rounded hover:bg-muted transition-colors ${columnFilters[col.key]?.trim() ? 'text-primary' : 'opacity-30 hover:opacity-70'}`}
+                      >
+                        <Filter className="h-3 w-3" />
+                      </button>
+                    </div>
+                    {activeFilterCol === col.key && (
+                      <div className="mt-1 flex items-center gap-1">
+                        <input
+                          autoFocus
+                          type="text"
+                          value={columnFilters[col.key] || ''}
+                          onChange={(e) => handleFilterChange(col.key, e.target.value)}
+                          placeholder={`${col.label} 필터...`}
+                          className="w-full min-w-[80px] rounded border border-border bg-card px-2 py-1 text-xs font-normal text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          onKeyDown={(e) => { if (e.key === 'Escape') setActiveFilterCol(null); }}
+                        />
+                        {columnFilters[col.key]?.trim() && (
+                          <button onClick={() => clearFilter(col.key)} className="p-0.5 text-muted-foreground hover:text-foreground">
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </th>
                 ))}
               </tr>
             </thead>
