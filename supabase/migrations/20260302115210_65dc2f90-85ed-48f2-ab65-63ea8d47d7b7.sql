@@ -1,0 +1,1 @@
+ALTER TABLE public.tangible_assets RENAME COLUMN usage_location TO usage;

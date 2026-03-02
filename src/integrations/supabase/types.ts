@@ -317,7 +317,7 @@ export type Database = {
           serial_no: string | null
           ssd_spec: string | null
           updated_at: string
-          usage_location: string | null
+          usage: string | null
         }
         Insert: {
           asset_no?: string | null
@@ -339,7 +339,7 @@ export type Database = {
           serial_no?: string | null
           ssd_spec?: string | null
           updated_at?: string
-          usage_location?: string | null
+          usage?: string | null
         }
         Update: {
           asset_no?: string | null
@@ -361,7 +361,7 @@ export type Database = {
           serial_no?: string | null
           ssd_spec?: string | null
           updated_at?: string
-          usage_location?: string | null
+          usage?: string | null
         }
         Relationships: [
           {

@@ -115,7 +115,7 @@ export function mapTangibleCsvRows(
     const csv = csvRows[i];
     const lineNum = i + 2;
     const row: Record<string, any> = {
-      usage_location: '',
+      usage: '',
       issued_date: today,
     };
 
