@@ -1,6 +1,6 @@
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutDashboard, Monitor, Cloud, BarChart3, LogOut, Menu, X, Shield, UserCog, Building2, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Monitor, Cloud, BarChart3, LogOut, Menu, X, Shield, UserCog, Building2 } from 'lucide-react';
 import { useState } from 'react';
 import PasswordChangeModal from '@/components/PasswordChangeModal';
 
@@ -13,7 +13,6 @@ const commonNavItems = [
 
 const adminNavItems = [
   { title: '사업부 관리', url: '/admin/departments', icon: Building2 },
-  { title: '사업부 매출 관리', url: '/admin/sales', icon: TrendingUp },
   { title: '사용자 관리', url: '/admin/users', icon: UserCog },
 ];
 

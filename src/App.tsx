@@ -9,8 +9,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ITTangibleAssets from "./pages/ITTangibleAssets";
 import ITIntangibleAssets from "./pages/ITIntangibleAssets";
-import DepartmentBIView from "./pages/DepartmentBIView";
-import DepartmentSalesManage from "./pages/DepartmentBI";
+import DepartmentBI from "./pages/DepartmentBI";
 import DepartmentManage from "./pages/DepartmentManage";
 import AdminUsers from "./pages/AdminUsers";
 import NotFound from "./pages/NotFound";
@@ -67,9 +66,8 @@ const AppRoutes = () => (
     <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
     <Route path="/it-tangible" element={<ProtectedRoute><ITTangibleAssets /></ProtectedRoute>} />
     <Route path="/it-intangible" element={<ProtectedRoute><ITIntangibleAssets /></ProtectedRoute>} />
-    <Route path="/department-bi" element={<ProtectedRoute><DepartmentBIView /></ProtectedRoute>} />
+    <Route path="/department-bi" element={<ProtectedRoute><DepartmentBI /></ProtectedRoute>} />
     <Route path="/admin/departments" element={<ProtectedRoute adminOnly><DepartmentManage /></ProtectedRoute>} />
-    <Route path="/admin/sales" element={<ProtectedRoute adminOnly><DepartmentSalesManage /></ProtectedRoute>} />
     <Route path="/admin/users" element={<ProtectedRoute adminOnly><AdminUsers /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
