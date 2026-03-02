@@ -62,6 +62,7 @@ export default function ITTangibleAssets() {
   const columns: ColDef[] = useMemo(() => [
     { key: 'asset_no', label: '자산번호', type: 'text' },
     { key: 'department_code', label: '부서', type: 'select', options: deptLoading ? [{ value: '', label: '불러오는 중...' }] : deptError ? [{ value: '', label: '로드 실패' }] : departments.map(d => ({ value: d.department_code, label: d.department_name })) },
+    { key: 'usage', label: '사용처', type: 'text' },
     { key: 'asset_type_code', label: '자산유형', type: 'select', options: typeLoading ? [{ value: '', label: '불러오는 중...' }] : typeError ? [{ value: '', label: '로드 실패' }] : (assetTypes || []).map(t => ({ value: t.asset_type_code, label: t.sub_category })) },
     { key: 'manufacturer', label: '제조사', type: 'text' },
     { key: 'model_name', label: '모델명', type: 'text' },
@@ -73,7 +74,6 @@ export default function ITTangibleAssets() {
     { key: 'screen_size', label: '화면크기', type: 'text' },
     { key: 'os_name', label: 'OS', type: 'text' },
     { key: 'purpose', label: '용도', type: 'text' },
-    { key: 'usage', label: '사용처', type: 'text' },
     { key: 'purchase_date', label: '구매일', type: 'date' },
     { key: 'issued_date', label: '지급일', type: 'date' },
     { key: 'note', label: '비고', type: 'text' },
