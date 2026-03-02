@@ -36,6 +36,7 @@ export default function AdminUsers() {
   const [newEmail, setNewEmail] = useState('');
   const [newName, setNewName] = useState('');
   const [newDept, setNewDept] = useState('');
+  const [newRole, setNewRole] = useState<RoleCode>('VIEWER');
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin-users'] });
 
@@ -48,9 +49,10 @@ export default function AdminUsers() {
         user_email: newEmail.trim(),
         user_name: newName.trim(),
         department_code: newDept || null,
+        role_code: newRole,
       });
       toast.success(`사용자 생성 완료. 초기 비밀번호: ${res.defaultPassword}`);
-      setNewEmail(''); setNewName(''); setNewDept(''); setShowCreate(false);
+      setNewEmail(''); setNewName(''); setNewDept(''); setNewRole('VIEWER'); setShowCreate(false);
       refresh();
     } catch (err: any) {
       toast.error(`생성 실패: ${err.message}`);
@@ -93,7 +95,7 @@ export default function AdminUsers() {
       {showCreate && (
         <div className="glass-card rounded-xl p-6">
           <h3 className="text-sm font-semibold text-foreground mb-4">새 사용자 생성</h3>
-          <form onSubmit={handleCreate} className="grid gap-4 sm:grid-cols-4">
+          <form onSubmit={handleCreate} className="grid gap-4 sm:grid-cols-5">
             <div>
               <label className="text-xs text-muted-foreground">이메일 *</label>
               <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="user@company.com"
@@ -103,6 +105,15 @@ export default function AdminUsers() {
               <label className="text-xs text-muted-foreground">이름 *</label>
               <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="홍길동"
                 className="mt-1 w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">권한</label>
+              <select value={newRole} onChange={(e) => setNewRole(e.target.value as RoleCode)}
+                className="mt-1 w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none">
+                <option value="VIEWER">VIEWER</option>
+                <option value="MANAGER">MANAGER</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
             </div>
             <div>
               <label className="text-xs text-muted-foreground">부서</label>
