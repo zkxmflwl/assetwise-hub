@@ -161,12 +161,13 @@ export default function DepartmentMonthlyReport() {
           <p className="mt-1 text-lg font-bold text-foreground">{formatKRW(curNetSales)}</p>
           <ChangeIndicator current={curNetSales} previous={prevNetSales} />
         </div>
-        <div className="rounded-xl border border-border bg-card p-4 col-span-2 sm:col-span-1 lg:col-span-2">
+        <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">부서 현황</p>
-          <p className="mt-1 text-sm text-foreground">{deptCurrent?.note || '-'}</p>
-          {deptCurrent?.headcount_note && (
-            <p className="mt-1 text-xs text-muted-foreground">인원비고: {deptCurrent.headcount_note}</p>
-          )}
+          <p className="mt-1 text-sm text-foreground whitespace-pre-wrap">{deptCurrent?.note || '-'}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground">인원 비고</p>
+          <p className="mt-1 text-sm text-foreground whitespace-pre-wrap">{deptCurrent?.headcount_note || '-'}</p>
         </div>
       </div>
 
