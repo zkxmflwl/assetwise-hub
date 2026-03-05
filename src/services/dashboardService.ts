@@ -53,12 +53,13 @@ export async function fetchDeptSummary(monthKey: string): Promise<DeptSummaryRow
   const [y, m] = monthKey.split('-').map(Number);
   const prevMonthKey = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
 
-  const [monthlyData, prevMonthData, ytdData, lastYearData, activeByDept] = await Promise.all([
+  const [monthlyData, prevMonthData, ytdData, lastYearData, activeByDept, ordersByDept] = await Promise.all([
     fetchSalesSummary(monthKey),
     fetchSalesSummary(prevMonthKey),
     fetchYtdByDepartment(year.toString(), monthKey),
     fetchSameMonthLastYear(monthKey),
     fetchActiveProjectsByDept(monthKey),
+    fetchMonthlyOrdersByDept(monthKey),
   ]);
 
   // Previous month map
@@ -91,6 +92,7 @@ export async function fetchDeptSummary(monthKey: string): Promise<DeptSummaryRow
       ytdNetSales: 0,
       yoyChange: null,
       activeProjects: 0,
+      monthlyOrders: 0,
     });
   }
 
@@ -107,7 +109,7 @@ export async function fetchDeptSummary(monthKey: string): Promise<DeptSummaryRow
         prevMonthlyPurchase: prev ? prev.purchase : null,
         prevMonthlyNetSales: prev ? prev.sales - prev.purchase : null,
         ytdSales: 0, ytdPurchase: 0, ytdNetSales: 0,
-        yoyChange: null, activeProjects: 0,
+        yoyChange: null, activeProjects: 0, monthlyOrders: 0,
       });
     }
     const d = depts.get(r.department_code)!;
@@ -128,10 +130,15 @@ export async function fetchDeptSummary(monthKey: string): Promise<DeptSummaryRow
     }
   }
 
-  // Active projects
+  // Active projects & monthly orders
   for (const [code, count] of Object.entries(activeByDept)) {
     if (depts.has(code)) {
       depts.get(code)!.activeProjects = count;
+    }
+  }
+  for (const [code, count] of Object.entries(ordersByDept)) {
+    if (depts.has(code)) {
+      depts.get(code)!.monthlyOrders = count;
     }
   }
 
