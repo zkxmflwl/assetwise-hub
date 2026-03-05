@@ -71,8 +71,8 @@ export default function ProjectManage() {
     { key: 'department_code', label: '사업부', type: 'select', options: departments.map(d => ({ value: d.department_code, label: d.department_name })) },
     { key: 'client_name', label: '업체명', type: 'text' },
     { key: 'project_status', label: '상태', type: 'select', options: PROJECT_STATUSES.map(s => ({ value: s, label: s })) },
+    { key: 'schedule_note', label: '영업/수주일정', type: 'text', minWidth: '120px' },
     { key: 'category', label: '분류', type: 'text' },
-    { key: 'schedule_note', label: '일정', type: 'text' },
     { key: 'base_date', label: '기준일', type: 'date' },
     { key: 'order_date', label: '수주일', type: 'date' },
     { key: 'start_date', label: '시작일', type: 'date' },
@@ -140,10 +140,11 @@ export default function ProjectManage() {
 
   const handleSave = async () => {
     const { inserts, updates, deletes } = getChanges();
-    // Validate
-    for (const r of inserts) {
+    // Validate inserts and updates
+    for (const r of [...inserts, ...updates]) {
       if (!(r as any).project_name?.trim()) { toast.error('프로젝트명은 필수입니다.'); return; }
       if (!(r as any).department_code?.trim()) { toast.error('사업부는 필수입니다.'); return; }
+      if (!(r as any).client_name?.trim()) { toast.error('업체명은 필수입니다.'); return; }
       if (!(r as any).project_status?.trim()) { toast.error('상태는 필수입니다.'); return; }
     }
 
