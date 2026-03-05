@@ -61,7 +61,6 @@ export function formatPurchaseDateForCsv(date: string | null | undefined): strin
 }
 
 // ── Tangible asset CSV mapping ──
-// Removed '배정' (user_name) column since it was dropped from DB
 
 const TANGIBLE_CSV_HEADERS = [
   '관리번호', '소속', '배정', '용도', '종류', '제조사', '모델',
@@ -131,9 +130,15 @@ export function mapTangibleCsvRows(
         } else row[dbKey] = null;
       } else if (dbKey === 'asset_type_code') {
         if (val) {
-          const code = typeMap.get(normalizeText(val));
-          if (code) row[dbKey] = code;
-          else { warnings.push(`${lineNum}행: 자산유형 "${val}" 매핑 실패`); row[dbKey] = null; }
+          const normalized = normalizeText(val);
+          // ✅ 'laptop'을 DB 코드인 'T_NOTEBOOK'으로 직접 매핑
+          if (normalized === 'laptop') {
+            row[dbKey] = 'T_NOTEBOOK';
+          } else {
+            const code = typeMap.get(normalized);
+            if (code) row[dbKey] = code;
+            else { warnings.push(`${lineNum}행: 자산유형 "${val}" 매핑 실패`); row[dbKey] = null; }
+          }
         } else row[dbKey] = null;
       } else if (dbKey === 'purchase_date') {
         const parsed = parsePurchaseDate(val);
@@ -144,7 +149,6 @@ export function mapTangibleCsvRows(
       }
     }
 
-    // Duplicate check (existing + within CSV)
     if (row.asset_no && existingAssetNos.has(row.asset_no)) {
       warnings.push(`${lineNum}행: 관리번호 "${row.asset_no}" 중복 - 스킵`);
       failCount++;
@@ -244,9 +248,15 @@ export function mapIntangibleCsvRows(
         } else row[dbKey] = null;
       } else if (dbKey === 'asset_type_code') {
         if (val) {
-          const code = typeMap.get(normalizeText(val));
-          if (code) row[dbKey] = code;
-          else { warnings.push(`${lineNum}행: 자산유형 "${val}" 매핑 실패`); row[dbKey] = null; }
+          const normalized = normalizeText(val);
+          // ✅ 'laptop'을 DB 코드인 'T_NOTEBOOK'으로 직접 매핑
+          if (normalized === 'laptop') {
+            row[dbKey] = 'T_NOTEBOOK';
+          } else {
+            const code = typeMap.get(normalized);
+            if (code) row[dbKey] = code;
+            else { warnings.push(`${lineNum}행: 자산유형 "${val}" 매핑 실패`); row[dbKey] = null; }
+          }
         } else row[dbKey] = null;
       } else if (dbKey === 'quantity') {
         row[dbKey] = val ? parseInt(val, 10) || 0 : 0;
