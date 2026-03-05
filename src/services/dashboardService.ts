@@ -24,33 +24,25 @@ export interface DeptSummaryRow {
   ytdNetSales: number;
   yoyChange: number | null;
   activeProjects: number;
+  monthlyOrders: number;
 }
 
 export async function fetchDashboardStats(monthKey: string): Promise<DashboardStats> {
-  const [y, m] = monthKey.split('-').map(Number);
-  const prevMonthKey = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
+  const year = monthKey.split('-')[0];
 
-  const [salesData, prevSalesData, activeProjectCount, monthlyOrderCount] = await Promise.all([
-    fetchSalesSummary(monthKey),
-    fetchSalesSummary(prevMonthKey),
+  const [ytdData, activeProjectCount, monthlyOrderCount] = await Promise.all([
+    fetchYtdSummary(year, monthKey),
     fetchActiveProjectCount(monthKey),
     fetchMonthlyOrderCount(monthKey),
   ]);
 
-  const monthlySales = salesData.reduce((s, r) => s + Number(r.sales_amount || 0), 0);
-  const monthlyPurchase = salesData.reduce((s, r) => s + Number(r.purchase_amount || 0), 0);
-
-  const hasPrev = prevSalesData.length > 0;
-  const prevMonthlySales = hasPrev ? prevSalesData.reduce((s, r) => s + Number(r.sales_amount || 0), 0) : null;
-  const prevMonthlyPurchase = hasPrev ? prevSalesData.reduce((s, r) => s + Number(r.purchase_amount || 0), 0) : null;
+  const ytdSales = ytdData.reduce((s, r) => s + Number(r.sales_amount || 0), 0);
+  const ytdPurchase = ytdData.reduce((s, r) => s + Number(r.purchase_amount || 0), 0);
 
   return {
-    monthlySales,
-    monthlyPurchase,
-    monthlyNetSales: monthlySales - monthlyPurchase,
-    prevMonthlySales,
-    prevMonthlyPurchase,
-    prevMonthlyNetSales: prevMonthlySales !== null && prevMonthlyPurchase !== null ? prevMonthlySales - prevMonthlyPurchase : null,
+    ytdSales,
+    ytdPurchase,
+    ytdNetSales: ytdSales - ytdPurchase,
     activeProjectCount,
     monthlyOrderCount,
   };
