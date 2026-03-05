@@ -249,13 +249,22 @@ export function mapIntangibleCsvRows(
       } else if (dbKey === 'asset_type_code') {
         if (val) {
           const normalized = normalizeText(val);
-          // ✅ 'laptop'을 DB 코드인 'T_NOTEBOOK'으로 직접 매핑
+
+          // ✅ 하드코딩 매핑 규칙 추가
           if (normalized === 'laptop') {
             row[dbKey] = 'T_NOTEBOOK';
+          } else if (normalized === '모니터' || normalized === 'monitor') {
+            row[dbKey] = 'T_MONITOR';
+          } else if (normalized === '데스크탑' || normalized === 'desktop') {
+            row[dbKey] = 'T_PC';
           } else {
+            // 그 외의 값은 DB의 sub_category 명칭과 일치하는지 확인
             const code = typeMap.get(normalized);
             if (code) row[dbKey] = code;
-            else { warnings.push(`${lineNum}행: 자산유형 "${val}" 매핑 실패`); row[dbKey] = null; }
+            else { 
+              warnings.push(`${lineNum}행: 자산유형 "${val}" 매핑 실패`); 
+              row[dbKey] = null; 
+            }
           }
         } else row[dbKey] = null;
       } else if (dbKey === 'quantity') {
