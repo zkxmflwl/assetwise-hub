@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useAuth } from '@/contexts/AuthContext';
@@ -96,91 +96,136 @@ export default function DepartmentBI() {
     else if (sortDir === 'asc') setSortDir('desc');
     else { setSortKey(null); setSortDir(null); }
   };
+  const parseNumericCell = (value: any): number | null => {
+    if (value == null || value === '') return null;
+
+    if (typeof value === 'number') {
+      return Number.isNaN(value) ? null : value;
+    }
+
+    const str = String(value).trim();
+
+    // 엑셀 오류값 방어
+    if (
+      str === '#N/A' ||
+      str === '#VALUE!' ||
+      str === '#REF!' ||
+      str === '#DIV/0!' ||
+      str === '#NAME?' ||
+      str === '#NUM!' ||
+      str === '#NULL!'
+    ) {
+      return null;
+    }
+
+    // 쉼표, 공백 제거
+    const cleaned = str.replace(/,/g, '').replace(/\s/g, '');
+
+    if (cleaned === '') return null;
+
+    const num = Number(cleaned);
+    return Number.isNaN(num) ? null : num;
+  };
 
   const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = '';
+  const file = e.target.files?.[0];
+  if (!file) return;
+  e.target.value = '';
 
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const wb = XLSX.read(arrayBuffer, { type: 'array' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      if (!ws) { toast.error('엑셀 파일에 시트가 없습니다.'); return; }
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const wb = XLSX.read(arrayBuffer, { type: 'array' });
 
-      // Convert to array of arrays
-      const data: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+    // 마지막(가장 오른쪽) 시트 사용
+    const lastSheetName = wb.SheetNames[wb.SheetNames.length - 1];
+    const ws = wb.Sheets[lastSheetName];
 
-      let totalHeadcount: number | null = null;
-      let salesAmount: number | null = null;
-      let purchaseAmount: number | null = null;
+    if (!ws) {
+      toast.error('엑셀 파일에 시트가 없습니다.');
+      return;
+    }
 
-      // Label-based parsing: search for labels in all cells
-      for (const row of data) {
-        for (let i = 0; i < row.length; i++) {
-          const cellStr = String(row[i] ?? '').trim();
-          if (cellStr === '총원' || cellStr.includes('총원')) {
-            // Look for numeric value in next cells of same row
-            for (let j = i + 1; j < row.length; j++) {
-              const v = Number(row[j]);
-              if (!isNaN(v) && row[j] !== '') { totalHeadcount = v; break; }
+    const data: any[][] = XLSX.utils.sheet_to_json(ws, {
+      header: 1,
+      defval: '',
+    });
+
+    let totalHeadcount: number | null = null;
+    let salesAmount: number | null = null;
+    let purchaseAmount: number | null = null;
+
+    for (const row of data) {
+      for (let i = 0; i < row.length; i++) {
+        const cellStr = String(row[i] ?? '').trim();
+
+        if (cellStr === '총원' || cellStr.includes('총원')) {
+          for (let j = i + 1; j < row.length; j++) {
+            const v = parseNumericCell(row[j]);
+            if (v !== null) {
+              totalHeadcount = v;
+              break;
             }
           }
-          if (cellStr === '매출' && !cellStr.includes('순매출') && !cellStr.includes('매입')) {
-            for (let j = i + 1; j < row.length; j++) {
-              const v = Number(row[j]);
-              if (!isNaN(v) && row[j] !== '') { salesAmount = v; break; }
+        }
+
+        if (cellStr === '매출' && !cellStr.includes('순매출') && !cellStr.includes('매입')) {
+          for (let j = i + 1; j < row.length; j++) {
+            const v = parseNumericCell(row[j]);
+            if (v !== null) {
+              salesAmount = v;
+              break;
             }
           }
-          if (cellStr === '매입') {
-            for (let j = i + 1; j < row.length; j++) {
-              const v = Number(row[j]);
-              if (!isNaN(v) && row[j] !== '') { purchaseAmount = v; break; }
+        }
+
+        if (cellStr === '매입') {
+          for (let j = i + 1; j < row.length; j++) {
+            const v = parseNumericCell(row[j]);
+            if (v !== null) {
+              purchaseAmount = v;
+              break;
             }
           }
         }
       }
-
-      if (salesAmount === null && purchaseAmount === null && totalHeadcount === null) {
-        toast.error('엑셀에서 총원, 매출, 매입 라벨을 찾을 수 없습니다. 라벨 옆에 값이 있는지 확인해주세요.');
-        return;
-      }
-
-      // Add a new row with parsed values
-      addRow();
-      // Update the first (newest) row with parsed data
-      setTimeout(() => {
-        const newRow = rows.length > 0 ? undefined : undefined; // We use addRow which prepends
-        // Since addRow prepends, we need to get the tempId after state update
-        // Instead, let's use a different approach: update via the grid editor
-      }, 0);
-
-      // Better approach: manually add the row data
-      const tempId = rows[0]?.tempId; // This won't work since state hasn't updated yet
-      // Use a workaround: we'll set values after addRow via effect
-      // Actually, let's just use updateCell on the newest row after a tick
-
-      toast.success(`엑셀 파싱 완료 - 총원: ${totalHeadcount ?? '-'}, 매출: ${salesAmount ?? '-'}, 매입: ${purchaseAmount ?? '-'}`);
-
-      // We need to store parsed values and apply after the row is added
-      setParsedExcelData({ totalHeadcount, salesAmount, purchaseAmount });
-    } catch (err: any) {
-      toast.error(`엑셀 파싱 실패: ${err.message}`);
     }
-  };
+
+    if (salesAmount === null && purchaseAmount === null && totalHeadcount === null) {
+      toast.error('엑셀에서 총원, 매출, 매입 라벨을 찾을 수 없습니다. 라벨 옆에 숫자 값이 있는지 확인해주세요.');
+      return;
+    }
+
+    addRow();
+    setParsedExcelData({ totalHeadcount, salesAmount, purchaseAmount });
+
+    toast.success(
+      `엑셀 파싱 완료 [시트: ${lastSheetName}] - 총원: ${totalHeadcount ?? '-'}, 매출: ${salesAmount ?? '-'}, 매입: ${purchaseAmount ?? '-'}`
+    );
+  } catch (err: any) {
+    toast.error(`엑셀 파싱 실패: ${err.message}`);
+  }
+};
 
   const [parsedExcelData, setParsedExcelData] = useState<{ totalHeadcount: number | null; salesAmount: number | null; purchaseAmount: number | null } | null>(null);
 
   // Apply parsed Excel data to the newest row
-  useMemo(() => {
+  useEffect(() => {
     if (parsedExcelData && rows.length > 0 && rows[0].status === 'new') {
       const tempId = rows[0].tempId;
-      if (parsedExcelData.totalHeadcount !== null) updateCell(tempId, 'total_headcount' as any, parsedExcelData.totalHeadcount);
-      if (parsedExcelData.salesAmount !== null) updateCell(tempId, 'sales_amount' as any, parsedExcelData.salesAmount);
-      if (parsedExcelData.purchaseAmount !== null) updateCell(tempId, 'purchase_amount' as any, parsedExcelData.purchaseAmount);
+
+      if (parsedExcelData.totalHeadcount !== null) {
+        updateCell(tempId, 'total_headcount' as any, parsedExcelData.totalHeadcount);
+      }
+      if (parsedExcelData.salesAmount !== null) {
+        updateCell(tempId, 'sales_amount' as any, parsedExcelData.salesAmount);
+      }
+      if (parsedExcelData.purchaseAmount !== null) {
+        updateCell(tempId, 'purchase_amount' as any, parsedExcelData.purchaseAmount);
+      }
+
       setParsedExcelData(null);
     }
-  }, [parsedExcelData, rows]);
+  }, [parsedExcelData, rows, updateCell]);
 
   const handleSave = async () => {
     const { inserts, updates, deletes } = getChanges();
