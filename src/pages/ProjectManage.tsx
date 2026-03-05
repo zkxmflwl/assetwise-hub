@@ -95,10 +95,14 @@ export default function ProjectManage() {
 
   const visibleRows = useMemo(() => {
     let filtered = rows;
+
+    // 1. 검색 필터링
     if (search) {
       const s = search.toLowerCase();
       filtered = filtered.filter(r => columns.some(col => getDisplayValue(r, col).toLowerCase().includes(s)));
     }
+
+    // 2. 컬럼별 필터링
     const activeFilters = Object.entries(columnFilters).filter(([, v]) => v.trim() !== '');
     if (activeFilters.length > 0) {
       filtered = filtered.filter(r =>
@@ -109,26 +113,33 @@ export default function ProjectManage() {
         })
       );
     }
-    if (sortKey && sortDir) {
-      const col = columns.find(c => c.key === sortKey);
-      filtered = [...filtered].sort((a, b) => {
+
+    // 3. 정렬 로직 (신규 행 우선 순위 적용)
+    filtered = [...filtered].sort((a, b) => {
+      // ✅ [최우선 순위] 신규 추가된 행('new')은 무조건 위로 보냄
+      if (a.status === 'new' && b.status !== 'new') return -1;
+      if (a.status !== 'new' && b.status === 'new') return 1;
+
+      // ✅ [차순위] 신규 행끼리 혹은 기존 행끼리는 선택된 정렬 기준 적용
+      if (sortKey && sortDir) {
+        const col = columns.find(c => c.key === sortKey);
         const aVal = col ? getDisplayValue(a, col) : '';
         const bVal = col ? getDisplayValue(b, col) : '';
         const cmp = aVal.localeCompare(bVal, 'ko', { numeric: true });
         return sortDir === 'asc' ? cmp : -cmp;
-      });
-    } else {
-      // Default sort: department_code asc, then base_date desc (newest first)
-      filtered = [...filtered].sort((a, b) => {
+      } else {
+        // 기본 정렬: 사업부(asc) -> 기준일(desc)
         const deptA = (a.data as any).department_code || '';
         const deptB = (b.data as any).department_code || '';
         const deptCmp = deptA.localeCompare(deptB, 'ko');
         if (deptCmp !== 0) return deptCmp;
+
         const dateA = (a.data as any).base_date || '';
         const dateB = (b.data as any).base_date || '';
         return dateB.localeCompare(dateA);
-      });
-    }
+      }
+    });
+
     return filtered;
   }, [rows, search, columns, columnFilters, sortKey, sortDir, getDisplayValue]);
 
