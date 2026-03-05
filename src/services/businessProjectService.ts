@@ -69,11 +69,14 @@ export async function fetchMonthlyOrderCount(monthKey: string): Promise<number> 
   return count || 0;
 }
 
-export async function fetchActiveProjectsByDept(): Promise<Record<string, number>> {
+export async function fetchActiveProjectsByDept(monthKey: string): Promise<Record<string, number>> {
+  const [y, m] = monthKey.split('-');
+  const endDate = `${y}-${m}-31`;
   const { data, error } = await supabase
     .from('business_projects')
     .select('department_code')
-    .eq('project_status', '영업 중');
+    .eq('project_status', '영업 중')
+    .lte('base_date', endDate);
   if (error) throw error;
   const counts: Record<string, number> = {};
   (data || []).forEach((r: any) => {
