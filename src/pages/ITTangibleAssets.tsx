@@ -265,9 +265,11 @@ export default function ITTangibleAssets() {
   };
 
   // Build department color map when departments data changes
+  const [colorMapReady, setColorMapReady] = useState(false);
   useEffect(() => {
     if (departments.length > 0) {
       buildDeptColorMap(departments.map(d => d.department_code));
+      setColorMapReady(true); // 컬러맵이 완성되었음을 알림
     }
   }, [departments]);
 
