@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useDepartments } from '@/hooks/useDepartments';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { UserPlus, RotateCcw, Shield, Loader2 } from 'lucide-react';
+import { UserPlus, RotateCcw, Save, Undo2, Loader2 } from 'lucide-react';
 import type { DashUser, RoleCode } from '@/contexts/AuthContext';
+
+type UserRow = DashUser & { departments: { department_name: string } | null };
 
 async function fetchAllUsers() {
   const { data, error } = await supabase
@@ -12,7 +15,7 @@ async function fetchAllUsers() {
     .select('*, departments(department_name)')
     .order('user_name');
   if (error) throw error;
-  return data as (DashUser & { departments: { department_name: string } | null })[];
+  return data as UserRow[];
 }
 
 async function callAdminAction(action: string, params: Record<string, any>) {
@@ -24,13 +27,22 @@ async function callAdminAction(action: string, params: Record<string, any>) {
   return data;
 }
 
+interface EditableUser {
+  auth_user_id: string;
+  role_code: RoleCode;
+  department_code: string | null;
+  is_active: boolean;
+}
+
 export default function AdminUsers() {
   const queryClient = useQueryClient();
+  const { dashUser: currentUser } = useAuth();
   const { data: users = [], isLoading } = useQuery({ queryKey: ['admin-users'], queryFn: fetchAllUsers });
   const { data: departments = [] } = useDepartments();
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [resetPwLoading, setResetPwLoading] = useState<string | null>(null);
 
   // Create form
   const [newEmail, setNewEmail] = useState('');
@@ -38,7 +50,103 @@ export default function AdminUsers() {
   const [newDept, setNewDept] = useState('');
   const [newRole, setNewRole] = useState<RoleCode>('VIEWER');
 
+  // Editable state: map of auth_user_id -> editable fields
+  const [editMap, setEditMap] = useState<Record<string, EditableUser>>({});
+
+  // Build original map from server data
+  const originalMap = useMemo(() => {
+    const m: Record<string, EditableUser> = {};
+    for (const u of users) {
+      m[u.auth_user_id] = {
+        auth_user_id: u.auth_user_id,
+        role_code: u.role_code as RoleCode,
+        department_code: u.department_code,
+        is_active: u.is_active,
+      };
+    }
+    return m;
+  }, [users]);
+
+  // Sync editMap when server data changes
+  useEffect(() => {
+    setEditMap({ ...originalMap });
+  }, [originalMap]);
+
+  // Dirty tracking
+  const dirtyUsers = useMemo(() => {
+    const dirty: string[] = [];
+    for (const uid of Object.keys(editMap)) {
+      const orig = originalMap[uid];
+      const edit = editMap[uid];
+      if (!orig || !edit) continue;
+      if (orig.role_code !== edit.role_code || orig.department_code !== edit.department_code || orig.is_active !== edit.is_active) {
+        dirty.push(uid);
+      }
+    }
+    return dirty;
+  }, [editMap, originalMap]);
+
+  const hasDirty = dirtyUsers.length > 0;
+
+  const updateField = useCallback((uid: string, field: keyof EditableUser, value: any) => {
+    setEditMap(prev => ({
+      ...prev,
+      [uid]: { ...prev[uid], [field]: value },
+    }));
+  }, []);
+
+  const resetEdits = useCallback(() => {
+    setEditMap({ ...originalMap });
+  }, [originalMap]);
+
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+
+  // Check which fields changed for a user
+  const getChangedFields = (uid: string) => {
+    const orig = originalMap[uid];
+    const edit = editMap[uid];
+    if (!orig || !edit) return { role: false, dept: false, active: false };
+    return {
+      role: orig.role_code !== edit.role_code,
+      dept: orig.department_code !== edit.department_code,
+      active: orig.is_active !== edit.is_active,
+    };
+  };
+
+  const handleSaveAll = async () => {
+    if (!hasDirty) return;
+    setSaving(true);
+    const errors: string[] = [];
+    try {
+      for (const uid of dirtyUsers) {
+        const changed = getChangedFields(uid);
+        const edit = editMap[uid];
+        if (changed.role) {
+          try {
+            await callAdminAction('change-role', { auth_user_id: uid, role_code: edit.role_code });
+          } catch (e: any) { errors.push(`권한 변경(${uid}): ${e.message}`); }
+        }
+        if (changed.dept) {
+          try {
+            await callAdminAction('change-department', { auth_user_id: uid, department_code: edit.department_code });
+          } catch (e: any) { errors.push(`부서 변경(${uid}): ${e.message}`); }
+        }
+        if (changed.active) {
+          try {
+            await callAdminAction('toggle-active', { auth_user_id: uid, is_active: edit.is_active });
+          } catch (e: any) { errors.push(`상태 변경(${uid}): ${e.message}`); }
+        }
+      }
+      if (errors.length > 0) {
+        toast.error(`일부 저장 실패:\n${errors.join('\n')}`);
+      } else {
+        toast.success(`${dirtyUsers.length}건 저장 완료`);
+      }
+      refresh();
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,20 +169,21 @@ export default function AdminUsers() {
     }
   };
 
-  const handleAction = async (action: string, params: Record<string, any>, successMsg: string) => {
-    const key = `${action}-${params.auth_user_id}`;
-    setActionLoading(key);
+  const handleResetPassword = async (auth_user_id: string) => {
+    setResetPwLoading(auth_user_id);
     try {
-      const res = await callAdminAction(action, params);
-      const msg = res?.defaultPassword ? `${successMsg} (비밀번호: ${res.defaultPassword})` : successMsg;
+      const res = await callAdminAction('reset-password', { auth_user_id });
+      const msg = res?.defaultPassword ? `비밀번호 초기화 완료 (비밀번호: ${res.defaultPassword})` : '비밀번호 초기화 완료';
       toast.success(msg);
       refresh();
     } catch (err: any) {
       toast.error(err.message);
     } finally {
-      setActionLoading(null);
+      setResetPwLoading(null);
     }
   };
+
+  const isSelf = (uid: string) => currentUser?.auth_user_id === uid;
 
   if (isLoading) return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
@@ -134,6 +243,30 @@ export default function AdminUsers() {
         </div>
       )}
 
+      {/* Save/Reset toolbar */}
+      <div className="glass-card rounded-xl p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {hasDirty && (
+            <span className="inline-flex items-center rounded-md bg-accent px-2.5 py-1 text-xs font-medium text-accent-foreground">
+              수정 {dirtyUsers.length}건
+            </span>
+          )}
+          {!hasDirty && (
+            <span className="text-xs text-muted-foreground">변경사항 없음</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={resetEdits} disabled={!hasDirty}
+            className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+            <Undo2 className="h-4 w-4" /> 되돌리기
+          </button>
+          <button onClick={handleSaveAll} disabled={!hasDirty || saving}
+            className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} 저장
+          </button>
+        </div>
+      </div>
+
       {/* Users Table */}
       <div className="glass-card overflow-hidden rounded-xl">
         <div className="overflow-x-auto scrollbar-thin">
@@ -149,45 +282,57 @@ export default function AdminUsers() {
               </tr>
             </thead>
             <tbody>
-              {users.map((u) => (
-                <tr key={u.auth_user_id} className={`border-b border-border/30 transition-colors ${!u.is_active ? 'opacity-50' : ''}`}>
-                  <td className="px-4 py-3 text-foreground">{u.user_email}</td>
-                  <td className="px-4 py-3 text-foreground">{u.user_name}</td>
-                  <td className="px-4 py-3">
-                    <select value={u.role_code}
-                      onChange={(e) => handleAction('change-role', { auth_user_id: u.auth_user_id, role_code: e.target.value }, '권한 변경 완료')}
-                      disabled={actionLoading === `change-role-${u.auth_user_id}`}
-                      className="rounded border border-border bg-secondary/50 px-2 py-1 text-xs text-foreground focus:border-primary focus:outline-none">
-                      <option value="ADMIN">ADMIN</option>
-                      <option value="MANAGER">MANAGER</option>
-                      <option value="VIEWER">VIEWER</option>
-                    </select>
-                  </td>
-                  <td className="px-4 py-3">
-                    <select value={u.department_code || ''}
-                      onChange={(e) => handleAction('change-department', { auth_user_id: u.auth_user_id, department_code: e.target.value }, '부서 변경 완료')}
-                      disabled={actionLoading === `change-department-${u.auth_user_id}`}
-                      className="rounded border border-border bg-secondary/50 px-2 py-1 text-xs text-foreground focus:border-primary focus:outline-none">
-                      <option value="">-</option>
-                      {departments.map(d => <option key={d.department_code} value={d.department_code}>{d.department_name}</option>)}
-                    </select>
-                  </td>
-                  <td className="px-4 py-3">
-                    <button onClick={() => handleAction('toggle-active', { auth_user_id: u.auth_user_id, is_active: !u.is_active }, u.is_active ? '비활성화 완료' : '활성화 완료')}
-                      disabled={actionLoading === `toggle-active-${u.auth_user_id}`}
-                      className={`rounded px-2 py-1 text-xs font-medium ${u.is_active ? 'bg-emerald-900/50 text-emerald-400' : 'bg-red-900/50 text-red-400'}`}>
-                      {u.is_active ? '활성' : '비활성'}
-                    </button>
-                  </td>
-                  <td className="px-4 py-3">
-                    <button onClick={() => handleAction('reset-password', { auth_user_id: u.auth_user_id }, '비밀번호 초기화 완료')}
-                      disabled={actionLoading === `reset-password-${u.auth_user_id}`}
-                      className="flex items-center gap-1 rounded border border-border bg-secondary/50 px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                      <RotateCcw className="h-3 w-3" /> 비밀번호 초기화
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {users.map((u) => {
+                const edit = editMap[u.auth_user_id];
+                if (!edit) return null;
+                const changed = getChangedFields(u.auth_user_id);
+                const isDirty = changed.role || changed.dept || changed.active;
+                const self = isSelf(u.auth_user_id);
+
+                return (
+                  <tr key={u.auth_user_id}
+                    className={`border-b border-border/30 transition-colors ${!edit.is_active ? 'opacity-50' : ''} ${isDirty ? 'bg-accent/20' : ''}`}
+                    title={self ? '현재 접속 중인 본인 계정은 권한/상태를 변경할 수 없습니다.' : undefined}>
+                    <td className="px-4 py-3 text-foreground">{u.user_email}</td>
+                    <td className="px-4 py-3 text-foreground">
+                      {u.user_name}
+                      {self && <span className="ml-1.5 text-xs text-muted-foreground">(본인)</span>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <select value={edit.role_code}
+                        onChange={(e) => updateField(u.auth_user_id, 'role_code', e.target.value)}
+                        disabled={self}
+                        className={`rounded border border-border bg-secondary/50 px-2 py-1 text-xs text-foreground focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 ${changed.role ? 'ring-2 ring-primary/50' : ''}`}>
+                        <option value="ADMIN">ADMIN</option>
+                        <option value="MANAGER">MANAGER</option>
+                        <option value="VIEWER">VIEWER</option>
+                      </select>
+                    </td>
+                    <td className="px-4 py-3">
+                      <select value={edit.department_code || ''}
+                        onChange={(e) => updateField(u.auth_user_id, 'department_code', e.target.value || null)}
+                        className={`rounded border border-border bg-secondary/50 px-2 py-1 text-xs text-foreground focus:border-primary focus:outline-none ${changed.dept ? 'ring-2 ring-primary/50' : ''}`}>
+                        <option value="">-</option>
+                        {departments.map(d => <option key={d.department_code} value={d.department_code}>{d.department_name}</option>)}
+                      </select>
+                    </td>
+                    <td className="px-4 py-3">
+                      <button onClick={() => !self && updateField(u.auth_user_id, 'is_active', !edit.is_active)}
+                        disabled={self}
+                        className={`rounded px-2 py-1 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-60 ${edit.is_active ? 'bg-emerald-900/50 text-emerald-400' : 'bg-red-900/50 text-red-400'} ${changed.active ? 'ring-2 ring-primary/50' : ''}`}>
+                        {edit.is_active ? '활성' : '비활성'}
+                      </button>
+                    </td>
+                    <td className="px-4 py-3">
+                      <button onClick={() => handleResetPassword(u.auth_user_id)}
+                        disabled={resetPwLoading === u.auth_user_id}
+                        className="flex items-center gap-1 rounded border border-border bg-secondary/50 px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                        {resetPwLoading === u.auth_user_id ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCcw className="h-3 w-3" />} 비밀번호 초기화
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
