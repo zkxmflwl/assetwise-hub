@@ -50,7 +50,7 @@ export async function fetchDeptSummary(monthKey: string): Promise<DeptSummaryRow
     fetchSalesSummary(monthKey),
     fetchYtdByDepartment(year, monthKey),
     fetchSameMonthLastYear(monthKey),
-    fetchActiveProjectsByDept(),
+    fetchActiveProjectsByDept(monthKey),
   ]);
 
   // Build department map
