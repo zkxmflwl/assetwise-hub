@@ -74,6 +74,7 @@ export default function Dashboard() {
     { key: 'ytdNetSales', label: '누적순매출' },
     { key: 'yoyChange', label: '전년동기대비' },
     { key: 'activeProjects', label: '영업 중인 건' },
+    { key: 'monthlyOrders', label: '당월 수주 건' },
   ];
 
   return (
@@ -100,24 +101,9 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <StatCard title="당월 매출" value={formatKRWShort(stats?.monthlySales ?? 0)} icon={<TrendingUp className="h-5 w-5" />}
-          subText={stats?.prevMonthlySales !== null && stats?.prevMonthlySales !== undefined ? (() => {
-            const diff = (stats?.monthlySales ?? 0) - stats.prevMonthlySales;
-            if (diff === 0) return <span className="text-[11px] text-muted-foreground">전월 대비 -</span>;
-            return <span className={`text-[11px] ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>전월 대비 {diff > 0 ? '+' : ''}{formatKRWShort(diff)}</span>;
-          })() : undefined} />
-        <StatCard title="당월 매입" value={formatKRWShort(stats?.monthlyPurchase ?? 0)} icon={<TrendingDown className="h-5 w-5" />}
-          subText={stats?.prevMonthlyPurchase !== null && stats?.prevMonthlyPurchase !== undefined ? (() => {
-            const diff = (stats?.monthlyPurchase ?? 0) - stats.prevMonthlyPurchase;
-            if (diff === 0) return <span className="text-[11px] text-muted-foreground">전월 대비 -</span>;
-            return <span className={`text-[11px] ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>전월 대비 {diff > 0 ? '+' : ''}{formatKRWShort(diff)}</span>;
-          })() : undefined} />
-        <StatCard title="당월 순매출" value={formatKRWShort(stats?.monthlyNetSales ?? 0)} icon={<DollarSign className="h-5 w-5" />}
-          subText={stats?.prevMonthlyNetSales !== null && stats?.prevMonthlyNetSales !== undefined ? (() => {
-            const diff = (stats?.monthlyNetSales ?? 0) - stats.prevMonthlyNetSales;
-            if (diff === 0) return <span className="text-[11px] text-muted-foreground">전월 대비 -</span>;
-            return <span className={`text-[11px] ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>전월 대비 {diff > 0 ? '+' : ''}{formatKRWShort(diff)}</span>;
-          })() : undefined} />
+        <StatCard title="누적 매출" value={formatKRWShort(stats?.ytdSales ?? 0)} icon={<TrendingUp className="h-5 w-5" />} />
+        <StatCard title="누적 매입" value={formatKRWShort(stats?.ytdPurchase ?? 0)} icon={<TrendingDown className="h-5 w-5" />} />
+        <StatCard title="누적 순매출" value={formatKRWShort(stats?.ytdNetSales ?? 0)} icon={<DollarSign className="h-5 w-5" />} />
         <StatCard title="영업 중인 건" value={`${stats?.activeProjectCount ?? 0}건`} icon={<Briefcase className="h-5 w-5" />} />
         <StatCard title="당월 수주 건" value={`${stats?.monthlyOrderCount ?? 0}건`} icon={<CheckCircle className="h-5 w-5" />} />
       </div>
@@ -159,7 +145,8 @@ export default function Dashboard() {
                       </span>
                     )}
                   </td>
-                  <td className="px-3 py-2 text-center text-foreground">{row.activeProjects}건</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-center text-foreground">{row.activeProjects}건</td>
+                  <td className="px-3 py-2 text-center text-foreground">{row.monthlyOrders}건</td>
                 </tr>
               ))}
             </tbody>
