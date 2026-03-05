@@ -3,7 +3,7 @@ import { useDashboardStats, useDeptSummary } from '@/hooks/useDashboardStats';
 import { useAvailableMonths } from '@/hooks/useSalesData';
 import { useTangibleAssets } from '@/hooks/useTangibleAssets';
 import { useIntangibleAssets } from '@/hooks/useIntangibleAssets';
-import { formatKRW } from '@/data/mockData';
+import { formatKRW, formatKRWShort } from '@/data/mockData';
 import StatCard from '@/components/StatCard';
 import { TrendingUp, TrendingDown, DollarSign, Briefcase, CheckCircle, AlertTriangle, Clock, Loader2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 
@@ -95,9 +95,9 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <StatCard title="당월 매출" value={formatKRW(stats?.monthlySales ?? 0)} icon={<TrendingUp className="h-5 w-5" />} />
-        <StatCard title="당월 매입" value={formatKRW(stats?.monthlyPurchase ?? 0)} icon={<TrendingDown className="h-5 w-5" />} />
-        <StatCard title="당월 순매출" value={formatKRW(stats?.monthlyNetSales ?? 0)} icon={<DollarSign className="h-5 w-5" />} />
+        <StatCard title="당월 매출" value={formatKRWShort(stats?.monthlySales ?? 0)} icon={<TrendingUp className="h-5 w-5" />} />
+        <StatCard title="당월 매입" value={formatKRWShort(stats?.monthlyPurchase ?? 0)} icon={<TrendingDown className="h-5 w-5" />} />
+        <StatCard title="당월 순매출" value={formatKRWShort(stats?.monthlyNetSales ?? 0)} icon={<DollarSign className="h-5 w-5" />} />
         <StatCard title="영업 중인 건" value={`${stats?.activeProjectCount ?? 0}건`} icon={<Briefcase className="h-5 w-5" />} />
         <StatCard title="당월 수주 건" value={`${stats?.monthlyOrderCount ?? 0}건`} icon={<CheckCircle className="h-5 w-5" />} />
       </div>

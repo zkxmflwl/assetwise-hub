@@ -41,15 +41,20 @@ export async function fetchBusinessProjects() {
   return data as unknown as BusinessProjectRow[];
 }
 
-export async function fetchActiveProjectCount(): Promise<number> {
+/** 영업 중인 건: project_status='영업 중' AND base_date <= monthKey 마지막날 */
+export async function fetchActiveProjectCount(monthKey: string): Promise<number> {
+  const [y, m] = monthKey.split('-');
+  const endDate = `${y}-${m}-31`;
   const { count, error } = await supabase
     .from('business_projects')
     .select('id', { count: 'exact', head: true })
-    .eq('project_status', '영업 중');
+    .eq('project_status', '영업 중')
+    .lte('base_date', endDate);
   if (error) throw error;
   return count || 0;
 }
 
+/** 당월 수주 건: status in (수주 완료, 프로젝트 중, 프로젝트 완료) AND order_date within monthKey */
 export async function fetchMonthlyOrderCount(monthKey: string): Promise<number> {
   const [y, m] = monthKey.split('-');
   const startDate = `${y}-${m}-01`;
@@ -57,7 +62,7 @@ export async function fetchMonthlyOrderCount(monthKey: string): Promise<number> 
   const { count, error } = await supabase
     .from('business_projects')
     .select('id', { count: 'exact', head: true })
-    .eq('project_status', '수주 완료')
+    .in('project_status', ['수주 완료', '프로젝트 중', '프로젝트 완료'])
     .gte('order_date', startDate)
     .lte('order_date', endDate);
   if (error) throw error;
