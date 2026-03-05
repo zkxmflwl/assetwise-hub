@@ -16,6 +16,9 @@ export interface DeptSummaryRow {
   monthlySales: number;
   monthlyPurchase: number;
   monthlyNetSales: number;
+  prevMonthlySales: number | null;
+  prevMonthlyPurchase: number | null;
+  prevMonthlyNetSales: number | null;
   ytdSales: number;
   ytdPurchase: number;
   ytdNetSales: number;
@@ -45,13 +48,25 @@ export async function fetchDashboardStats(monthKey: string): Promise<DashboardSt
 
 export async function fetchDeptSummary(monthKey: string): Promise<DeptSummaryRow[]> {
   const year = monthKey.split('-')[0];
+  const [y, m] = monthKey.split('-').map(Number);
+  const prevMonthKey = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
 
-  const [monthlyData, ytdData, lastYearData, activeByDept] = await Promise.all([
+  const [monthlyData, prevMonthData, ytdData, lastYearData, activeByDept] = await Promise.all([
     fetchSalesSummary(monthKey),
-    fetchYtdByDepartment(year, monthKey),
+    fetchSalesSummary(prevMonthKey),
+    fetchYtdByDepartment(year.toString(), monthKey),
     fetchSameMonthLastYear(monthKey),
     fetchActiveProjectsByDept(monthKey),
   ]);
+
+  // Previous month map
+  const prevMap = new Map<string, { sales: number; purchase: number }>();
+  for (const r of prevMonthData) {
+    prevMap.set(r.department_code, {
+      sales: Number(r.sales_amount || 0),
+      purchase: Number(r.purchase_amount || 0),
+    });
+  }
 
   // Build department map
   const depts = new Map<string, DeptSummaryRow>();
@@ -59,12 +74,16 @@ export async function fetchDeptSummary(monthKey: string): Promise<DeptSummaryRow
   // Monthly
   for (const r of monthlyData) {
     const name = r.departments?.department_name || r.department_code;
+    const prev = prevMap.get(r.department_code);
     depts.set(r.department_code, {
       departmentCode: r.department_code,
       departmentName: name,
       monthlySales: Number(r.sales_amount || 0),
       monthlyPurchase: Number(r.purchase_amount || 0),
       monthlyNetSales: Number(r.sales_amount || 0) - Number(r.purchase_amount || 0),
+      prevMonthlySales: prev ? prev.sales : null,
+      prevMonthlyPurchase: prev ? prev.purchase : null,
+      prevMonthlyNetSales: prev ? prev.sales - prev.purchase : null,
       ytdSales: 0,
       ytdPurchase: 0,
       ytdNetSales: 0,
@@ -77,10 +96,14 @@ export async function fetchDeptSummary(monthKey: string): Promise<DeptSummaryRow
   for (const r of ytdData) {
     const name = r.departments?.department_name || r.department_code;
     if (!depts.has(r.department_code)) {
+      const prev = prevMap.get(r.department_code);
       depts.set(r.department_code, {
         departmentCode: r.department_code,
         departmentName: name,
         monthlySales: 0, monthlyPurchase: 0, monthlyNetSales: 0,
+        prevMonthlySales: prev ? prev.sales : null,
+        prevMonthlyPurchase: prev ? prev.purchase : null,
+        prevMonthlyNetSales: prev ? prev.sales - prev.purchase : null,
         ytdSales: 0, ytdPurchase: 0, ytdNetSales: 0,
         yoyChange: null, activeProjects: 0,
       });

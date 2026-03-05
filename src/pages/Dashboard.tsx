@@ -123,25 +123,50 @@ export default function Dashboard() {
                 <tr><td colSpan={summaryColumns.length} className="py-8 text-center"><Loader2 className="h-5 w-5 animate-spin mx-auto text-primary" /></td></tr>
               ) : sortedDeptRows.length === 0 ? (
                 <tr><td colSpan={summaryColumns.length} className="py-8 text-center text-muted-foreground">데이터 없음</td></tr>
-              ) : sortedDeptRows.map((row) => (
+              ) : sortedDeptRows.map((row) => {
+                const momSales = row.prevMonthlySales !== null ? row.monthlySales - row.prevMonthlySales : null;
+                const momPurchase = row.prevMonthlyPurchase !== null ? row.monthlyPurchase - row.prevMonthlyPurchase : null;
+                const momNetSales = row.prevMonthlyNetSales !== null ? row.monthlyNetSales - row.prevMonthlyNetSales : null;
+
+                const MomBadge = ({ diff }: { diff: number | null }) => {
+                  if (diff === null) return null;
+                  if (diff === 0) return <span className="text-[10px] text-muted-foreground">-</span>;
+                  return (
+                    <span className={`text-[10px] ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>
+                      {diff > 0 ? '+' : ''}{formatKRWShort(diff)}
+                    </span>
+                  );
+                };
+
+                return (
                 <tr key={row.departmentCode} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
                   <td className="border-r border-border/50 px-3 py-2 text-foreground font-medium">{row.departmentName}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRW(row.monthlySales)}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRW(row.monthlyPurchase)}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRW(row.monthlyNetSales)}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRW(row.ytdSales)}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRW(row.ytdPurchase)}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRW(row.ytdNetSales)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">
+                    <div>{formatKRWShort(row.monthlySales)}</div>
+                    <MomBadge diff={momSales} />
+                  </td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">
+                    <div>{formatKRWShort(row.monthlyPurchase)}</div>
+                    <MomBadge diff={momPurchase} />
+                  </td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">
+                    <div>{formatKRWShort(row.monthlyNetSales)}</div>
+                    <MomBadge diff={momNetSales} />
+                  </td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.ytdSales)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.ytdPurchase)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.ytdNetSales)}</td>
                   <td className="border-r border-border/50 px-3 py-2 text-right">
                     {row.yoyChange === null ? <span className="text-muted-foreground">-</span> : (
-                      <span className={row.yoyChange > 0 ? 'text-emerald-600' : row.yoyChange < 0 ? 'text-red-500' : 'text-foreground'}>
-                        {row.yoyChange > 0 ? '+' : ''}{formatKRW(row.yoyChange)}
+                      <span className={row.yoyChange > 0 ? 'text-red-500' : row.yoyChange < 0 ? 'text-blue-500' : 'text-foreground'}>
+                        {row.yoyChange > 0 ? '+' : ''}{formatKRWShort(row.yoyChange)}
                       </span>
                     )}
                   </td>
                   <td className="px-3 py-2 text-center text-foreground">{row.activeProjects}건</td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
