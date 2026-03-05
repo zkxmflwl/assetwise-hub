@@ -1,6 +1,6 @@
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutDashboard, Monitor, Cloud, BarChart3, LogOut, Menu, X, Shield, UserCog, Building2 } from 'lucide-react';
+import { LayoutDashboard, Monitor, Cloud, BarChart3, LogOut, Menu, X, Shield, UserCog, Building2, FolderKanban, FileText } from 'lucide-react';
 import { useState } from 'react';
 import PasswordChangeModal from '@/components/PasswordChangeModal';
 
@@ -8,11 +8,13 @@ const commonNavItems = [
   { title: '대시보드', url: '/', icon: LayoutDashboard },
   { title: 'IT 유형자산', url: '/it-tangible', icon: Monitor },
   { title: 'IT 무형자산', url: '/it-intangible', icon: Cloud },
-  { title: '사업부 BI', url: '/department-bi', icon: BarChart3 },
+  { title: '프로젝트 관리', url: '/projects', icon: FolderKanban },
+  { title: '사업부 관리', url: '/department-bi', icon: BarChart3 },
+  { title: '사업부 월간 보고', url: '/department-report', icon: FileText },
 ];
 
 const adminNavItems = [
-  { title: '사업부 관리', url: '/admin/departments', icon: Building2 },
+  { title: '부서 관리', url: '/admin/departments', icon: Building2 },
   { title: '사용자 관리', url: '/admin/users', icon: UserCog },
 ];
 
