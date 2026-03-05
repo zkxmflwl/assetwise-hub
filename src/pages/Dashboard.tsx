@@ -22,6 +22,20 @@ export default function Dashboard() {
   const { data: tangibleAssets, isLoading: tangibleLoading } = useTangibleAssets();
   const { data: intangibleAssets, isLoading: intangibleLoading } = useIntangibleAssets();
 
+  const [selectedDeptCode, setSelectedDeptCode] = useState<string | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  // Click outside grid to deselect
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (gridRef.current && !gridRef.current.contains(e.target as Node)) {
+        setSelectedDeptCode(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
 
