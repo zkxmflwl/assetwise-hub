@@ -32,6 +32,14 @@ export const PROJECT_STATUSES = [
   '기타',
 ];
 
+/** 해당 월의 마지막 날짜를 구하는 유틸리티 함수 */
+const getEndOfMonth = (monthKey: string) => {
+  const [y, m] = monthKey.split('-').map(Number);
+  // month는 1-indexed이므로, (y, m, 0)은 해당 월의 마지막 날을 의미합니다.
+  const lastDay = new Date(y, m, 0).getDate();
+  return `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+};
+
 export async function fetchBusinessProjects() {
   const { data, error } = await supabase
     .from('business_projects')
@@ -41,10 +49,9 @@ export async function fetchBusinessProjects() {
   return data as unknown as BusinessProjectRow[];
 }
 
-/** 영업 중인 건: project_status='영업 중' AND base_date <= monthKey 마지막날 */
+/** 영업 중인 건 수정 */
 export async function fetchActiveProjectCount(monthKey: string): Promise<number> {
-  const [y, m] = monthKey.split('-');
-  const endDate = `${y}-${m}-31`;
+  const endDate = getEndOfMonth(monthKey); // ✅ 동적 날짜 계산
   const { count, error } = await supabase
     .from('business_projects')
     .select('id', { count: 'exact', head: true })
@@ -54,11 +61,11 @@ export async function fetchActiveProjectCount(monthKey: string): Promise<number>
   return count || 0;
 }
 
-/** 당월 수주 건: status in (수주 완료, 프로젝트 중, 프로젝트 완료) AND order_date within monthKey */
+/** 당월 수주 건 수정 */
 export async function fetchMonthlyOrderCount(monthKey: string): Promise<number> {
   const [y, m] = monthKey.split('-');
   const startDate = `${y}-${m}-01`;
-  const endDate = `${y}-${m}-31`;
+  const endDate = getEndOfMonth(monthKey); // ✅ 동적 날짜 계산
   const { count, error } = await supabase
     .from('business_projects')
     .select('id', { count: 'exact', head: true })
@@ -69,9 +76,9 @@ export async function fetchMonthlyOrderCount(monthKey: string): Promise<number> 
   return count || 0;
 }
 
+/** 사업부별 영업 중인 건 수정 */
 export async function fetchActiveProjectsByDept(monthKey: string): Promise<Record<string, number>> {
-  const [y, m] = monthKey.split('-');
-  const endDate = `${y}-${m}-31`;
+  const endDate = getEndOfMonth(monthKey); // ✅ 동적 날짜 계산
   const { data, error } = await supabase
     .from('business_projects')
     .select('department_code')

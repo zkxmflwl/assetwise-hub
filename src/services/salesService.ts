@@ -70,10 +70,11 @@ export async function fetchYtdByDepartment(year: string, upToMonth: string) {
   return data as unknown as { department_code: string; sales_amount: number; purchase_amount: number; departments: { department_name: string } | null }[];
 }
 
-/** Fetch same month of previous year for YoY comparison */
+/** 전년 동월 데이터 조회 시 월(Month) 포맷 보완 */
 export async function fetchSameMonthLastYear(monthKey: string) {
   const [y, m] = monthKey.split('-');
-  const lastYearMonth = `${Number(y) - 1}-${m}`;
+  // m이 "2"일 경우 "02"로 맞춰줘야 DB의 month_key와 일치합니다.
+  const lastYearMonth = `${Number(y) - 1}-${String(m).padStart(2, '0')}`;
   const { data, error } = await supabase
     .from('department_sales_summary')
     .select('department_code, sales_amount, purchase_amount')
