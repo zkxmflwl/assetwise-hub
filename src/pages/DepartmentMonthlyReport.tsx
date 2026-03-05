@@ -25,7 +25,7 @@ function ChangeIndicator({ current, previous }: { current: number; previous: num
   const diff = current - previous;
   if (diff === 0) return <span className="text-xs text-muted-foreground ml-1"><Minus className="h-3 w-3 inline" /></span>;
   return (
-    <span className={`text-xs ml-1 ${diff > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+    <span className={`text-xs ml-1 ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>
       ({diff > 0 ? '+' : ''}{formatKRW(diff)})
     </span>
   );
