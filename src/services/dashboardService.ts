@@ -1,14 +1,11 @@
 import { supabase } from '@/integrations/supabase/client';
-import { fetchActiveProjectCount, fetchMonthlyOrderCount, fetchActiveProjectsByDept } from './businessProjectService';
-import { fetchSalesSummary, fetchYtdByDepartment, fetchSameMonthLastYear } from './salesService';
+import { fetchActiveProjectCount, fetchMonthlyOrderCount, fetchActiveProjectsByDept, fetchMonthlyOrdersByDept } from './businessProjectService';
+import { fetchSalesSummary, fetchYtdByDepartment, fetchYtdSummary, fetchSameMonthLastYear } from './salesService';
 
 export interface DashboardStats {
-  monthlySales: number;
-  monthlyPurchase: number;
-  monthlyNetSales: number;
-  prevMonthlySales: number | null;
-  prevMonthlyPurchase: number | null;
-  prevMonthlyNetSales: number | null;
+  ytdSales: number;
+  ytdPurchase: number;
+  ytdNetSales: number;
   activeProjectCount: number;
   monthlyOrderCount: number;
 }

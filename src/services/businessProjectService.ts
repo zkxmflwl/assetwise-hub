@@ -92,6 +92,25 @@ export async function fetchActiveProjectsByDept(monthKey: string): Promise<Recor
   return counts;
 }
 
+/** 사업부별 당월 수주 건 */
+export async function fetchMonthlyOrdersByDept(monthKey: string): Promise<Record<string, number>> {
+  const [y, m] = monthKey.split('-');
+  const startDate = `${y}-${m}-01`;
+  const endDate = getEndOfMonth(monthKey);
+  const { data, error } = await supabase
+    .from('business_projects')
+    .select('department_code')
+    .in('project_status', ['수주 완료', '프로젝트 중', '프로젝트 완료'])
+    .gte('order_date', startDate)
+    .lte('order_date', endDate);
+  if (error) throw error;
+  const counts: Record<string, number> = {};
+  (data || []).forEach((r: any) => {
+    counts[r.department_code] = (counts[r.department_code] || 0) + 1;
+  });
+  return counts;
+}
+
 export async function fetchProjectsByDeptAndStatus(departmentCode: string, status: string) {
   const { data, error } = await supabase
     .from('business_projects')
