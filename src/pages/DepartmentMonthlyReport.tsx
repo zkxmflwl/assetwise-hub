@@ -191,7 +191,7 @@ export default function DepartmentMonthlyReport() {
                 </tr>
               </thead>
               <tbody>
-                {ongoingProjects.map((proj) => {
+                {[...ongoingProjects].sort((a, b) => (a.category || '').localeCompare(b.category || '', 'ko')).map((proj) => {
                   const startDate = proj.start_date ? new Date(proj.start_date) : null;
                   const endDate = proj.end_date ? new Date(proj.end_date) : null;
                   const cat = proj.category || '기타';
