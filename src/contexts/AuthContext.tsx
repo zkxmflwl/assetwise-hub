@@ -1,4 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef, useMemo } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User as AuthUser } from "@supabase/supabase-js";
 
@@ -32,50 +41,72 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [dashUser, setDashUser] = useState<DashUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
   const mountedRef = useRef(true);
 
-  const syncDashUser = useCallback(async (user: AuthUser | null) => {
-    if (!user) {
-      if (mountedRef.current) setDashUser(null);
-      return;
-    }
-
+  // dash_users 조회 (공통)
+  const fetchDashUser = useCallback(async (uid: string): Promise<DashUser | null> => {
     try {
       const { data, error } = await supabase
         .from("dash_users")
         .select("*")
-        .eq("auth_user_id", user.id)
+        .eq("auth_user_id", uid)
         .maybeSingle();
 
       if (error) throw error;
-      if (mountedRef.current) setDashUser(data as DashUser | null);
+      return (data as DashUser | null) ?? null;
     } catch (err) {
       console.error("fetchDashUser error:", err);
-      if (mountedRef.current) setDashUser(null);
+      return null;
     }
   }, []);
 
-  // ✅ 먼저 선언 (호이스팅 이슈 방지)
-  const syncUserWithLoading = useCallback(
+  // ✅ 초기 진입/로그인 직후에만 호출하는 동기화 (전체 스피너 켜도 됨)
+  const syncDashUserWithLoading = useCallback(
     async (user: AuthUser | null) => {
       if (!mountedRef.current) return;
+
+      if (!user) {
+        setDashUser(null);
+        return;
+      }
+
       setIsLoading(true);
-      await syncDashUser(user);
-      if (mountedRef.current) setIsLoading(false);
+      const du = await fetchDashUser(user.id);
+      if (!mountedRef.current) return;
+
+      setDashUser(du);
+      setIsLoading(false);
     },
-    [syncDashUser]
+    [fetchDashUser]
   );
 
+  // ✅ 일반적인 "새로고침/부분 갱신" 용 (전체 스피너 안 켜고 업데이트)
+  const syncDashUserSilent = useCallback(
+    async (user: AuthUser | null) => {
+      if (!mountedRef.current) return;
+
+      if (!user) {
+        setDashUser(null);
+        return;
+      }
+
+      const du = await fetchDashUser(user.id);
+      if (!mountedRef.current) return;
+
+      setDashUser(du);
+    },
+    [fetchDashUser]
+  );
+
+  // 1) 최초 진입: 세션 복원 + dashUser 조회 (여기서만 전체 로딩)
   useEffect(() => {
     mountedRef.current = true;
 
-    let unsub: (() => void) | null = null;
+    const init = async () => {
+      setIsLoading(true);
 
-    const run = async () => {
       try {
-        setIsLoading(true);
-
-        // 1) 새로고침/초기 진입 시 세션 복원
         const { data, error } = await supabase.auth.getSession();
         if (error) console.error("getSession error:", error);
 
@@ -84,49 +115,91 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (!mountedRef.current) return;
 
         setAuthUser(user);
-        await syncDashUser(user);
-      } catch (e) {
-        console.error("Auth initialization error:", e);
+
+        if (user) {
+          const du = await fetchDashUser(user.id);
+          if (!mountedRef.current) return;
+          setDashUser(du);
+        } else {
+          setDashUser(null);
+        }
       } finally {
         if (mountedRef.current) setIsLoading(false);
       }
-
-      // 2) 구독은 init 이후에 등록하되, cleanup에서 즉시 해제 가능하게
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (!mountedRef.current) return;
-
-        const user = session?.user ?? null;
-
-        if (event === "SIGNED_OUT") {
-          setAuthUser(null);
-          setDashUser(null);
-          setIsLoading(false);
-          return;
-        }
-
-        // INITIAL_SESSION 포함해서 안전하게 처리
-        if (event === "SIGNED_IN" || event === "USER_UPDATED" || event === "INITIAL_SESSION") {
-          setAuthUser(user);
-          await syncUserWithLoading(user);
-          return;
-        }
-
-        // TOKEN_REFRESHED는 보통 dashUser 재조회 불필요 (원하면 user id 변경시에만)
-        setAuthUser(user);
-      });
-
-      unsub = () => subscription.unsubscribe();
     };
 
-    void run();
+    void init();
 
     return () => {
       mountedRef.current = false;
-      if (unsub) unsub();
     };
-  }, [syncDashUser, syncUserWithLoading]);
+  }, [fetchDashUser]);
+
+  // 2) auth 변화 구독: "전체 로딩"은 SIGNED_IN 에서만
+  //    Alt+Tab / TOKEN_REFRESHED 등으로 스피너 뜨는 문제 방지
+  useEffect(() => {
+    let lastUserId: string | null = null;
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mountedRef.current) return;
+
+      const user = session?.user ?? null;
+      const userId = user?.id ?? null;
+
+      if (event === "SIGNED_OUT") {
+        setAuthUser(null);
+        setDashUser(null);
+        setIsLoading(false);
+        lastUserId = null;
+        return;
+      }
+
+      // authUser는 항상 최신으로 반영
+      setAuthUser(user);
+
+      // 로그인 직후: dashUser를 로딩 포함해서 동기화
+      if (event === "SIGNED_IN") {
+        lastUserId = userId;
+        await syncDashUserWithLoading(user);
+        return;
+      }
+
+      // 초기 세션 이벤트가 들어오는 환경 대비 (일부 브라우저/환경)
+      if (event === "INITIAL_SESSION") {
+        // 이미 init에서 처리했더라도, 혹시 userId가 바뀐 경우만 조용히 동기화
+        if (userId && userId !== lastUserId) {
+          lastUserId = userId;
+          await syncDashUserSilent(user);
+        }
+        return;
+      }
+
+      // USER_UPDATED: dash_users 정보가 바뀔 수 있으니 조용히 동기화 (스피너 X)
+      if (event === "USER_UPDATED") {
+        if (userId) {
+          lastUserId = userId;
+          await syncDashUserSilent(user);
+        }
+        return;
+      }
+
+      // TOKEN_REFRESHED 등은 대개 dashUser 재조회 불필요 (스피너 절대 X)
+      // 단, userId가 바뀌는 특이 케이스만 방어
+      if (userId && userId !== lastUserId) {
+        lastUserId = userId;
+        await syncDashUserSilent(user);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [syncDashUserWithLoading, syncDashUserSilent]);
 
   const login = async (email: string, password: string): Promise<string | null> => {
+    // 여기서 isLoading(true) 안 켜도 됨: SIGNED_IN 이벤트에서 syncDashUserWithLoading이 켬
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return error ? error.message : null;
   };
@@ -134,7 +207,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.error("signOut error:", error);
-    // 상태 정리는 onAuthStateChange(SIGNED_OUT)에서도 되지만, 즉시 반영 원하면 아래 유지 가능
+
+    // 즉시 반영 원하면 유지 (SIGNED_OUT에서도 정리됨)
     setAuthUser(null);
     setDashUser(null);
     setIsLoading(false);
@@ -147,9 +221,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshDashUser = async () => {
     if (!authUser) return;
-    setIsLoading(true);
-    await syncDashUser(authUser);
-    if (mountedRef.current) setIsLoading(false);
+    // ✅ 수동 새로고침은 전체 스피너 안 띄우는 게 UX 좋음
+    await syncDashUserSilent(authUser);
   };
 
   const isLoggedIn = useMemo(
