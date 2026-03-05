@@ -6,11 +6,11 @@ import PasswordChangeModal from '@/components/PasswordChangeModal';
 
 const commonNavItems = [
   { title: '대시보드', url: '/', icon: LayoutDashboard },
+  { title: '사업부 월간 보고', url: '/department-report', icon: FileText },
   { title: 'IT 유형자산', url: '/it-tangible', icon: Monitor },
   { title: 'IT 무형자산', url: '/it-intangible', icon: Cloud },
-  { title: '프로젝트 관리', url: '/projects', icon: FolderKanban },
   { title: '사업부 관리', url: '/department-bi', icon: BarChart3 },
-  { title: '사업부 월간 보고', url: '/department-report', icon: FileText },
+  { title: '프로젝트 관리', url: '/projects', icon: FolderKanban },
 ];
 
 const adminNavItems = [
