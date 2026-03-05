@@ -268,8 +268,11 @@ export default function DepartmentBI() {
     selectedIds.size === visibleRows.length ? setSelectedIds(new Set()) : setSelectedIds(new Set(visibleRows.map(r => r.tempId)));
   };
 
+  const [editingCell, setEditingCell] = useState<string | null>(null);
+
   const renderCell = (row: GridRow<SalesSummaryRow>, col: ColDef) => {
     const disabled = !canEdit || row.status === 'deleted';
+    const cellKey = `${row.tempId}__${col.key}`;
 
     if (col.key === 'computed_net_sales') {
       const s = Number((row.data as any).sales_amount || 0);
@@ -285,9 +288,25 @@ export default function DepartmentBI() {
     }
 
     if (col.type === 'number') {
+      const isEditing = editingCell === cellKey;
+      if (!isEditing) {
+        return (
+          <span className="text-xs text-foreground text-right block cursor-text px-1 py-0.5"
+            onClick={() => !disabled && setEditingCell(cellKey)}>
+            {formatKRW(Number(val || 0))}
+          </span>
+        );
+      }
       return (
-        <input type="number" value={val ?? ''} disabled={disabled}
-          onChange={(e) => updateCell(row.tempId, col.key as any, Number(e.target.value))}
+        <input type="text" inputMode="numeric" autoFocus
+          value={val ?? ''}
+          disabled={disabled}
+          onChange={(e) => {
+            const raw = e.target.value.replace(/[^0-9\-]/g, '');
+            updateCell(row.tempId, col.key as any, raw === '' ? 0 : Number(raw));
+          }}
+          onBlur={() => setEditingCell(null)}
+          onKeyDown={(e) => { if (e.key === 'Enter') setEditingCell(null); }}
           className="w-full min-w-[80px] bg-transparent px-1 py-0.5 text-xs text-foreground text-right disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary rounded" />
       );
     }
