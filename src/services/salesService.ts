@@ -59,14 +59,18 @@ export async function fetchYtdSummary(year: string, upToMonth: string) {
 }
 
 /** Fetch monthly totals for all 12 months of a given year */
-export async function fetchYearlyMonthlySummary(year: string) {
+export async function fetchYearlyMonthlySummary(year: string, departmentCode?: string) {
   const startMonth = `${year}-01`;
   const endMonth = `${year}-12`;
-  const { data, error } = await supabase
+  let query = supabase
     .from('department_sales_summary')
     .select('month_key, sales_amount, purchase_amount')
     .gte('month_key', startMonth)
     .lte('month_key', endMonth);
+  if (departmentCode) {
+    query = query.eq('department_code', departmentCode);
+  }
+  const { data, error } = await query;
   if (error) throw error;
 
   // Aggregate by month

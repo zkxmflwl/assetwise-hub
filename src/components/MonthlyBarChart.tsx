@@ -5,10 +5,11 @@ import { Loader2 } from 'lucide-react';
 
 interface Props {
   year: string;
+  departmentCode?: string;
 }
 
-export default function MonthlyBarChart({ year }: Props) {
-  const { data, isLoading } = useYearlyMonthlySummary(year);
+export default function MonthlyBarChart({ year, departmentCode }: Props) {
+  const { data, isLoading } = useYearlyMonthlySummary(year, departmentCode);
 
   if (isLoading) {
     return (
