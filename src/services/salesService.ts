@@ -7,15 +7,15 @@ export interface SalesSummaryRow {
   total_headcount: number;
   sales_amount: number;
   purchase_amount: number;
-  net_sales_amount: number;
   note: string | null;
+  headcount_note: string | null;
   departments: { department_name: string } | null;
 }
 
 export async function fetchSalesSummary(monthKey?: string) {
   let query = supabase
     .from('department_sales_summary')
-    .select('*, departments(department_name)')
+    .select('id, department_code, month_key, total_headcount, sales_amount, purchase_amount, note, headcount_note, departments(department_name)')
     .order('department_code');
 
   if (monthKey) {
@@ -23,6 +23,16 @@ export async function fetchSalesSummary(monthKey?: string) {
   }
 
   const { data, error } = await query;
+  if (error) throw error;
+  return data as unknown as SalesSummaryRow[];
+}
+
+export async function fetchSalesByDepartment(departmentCode: string) {
+  const { data, error } = await supabase
+    .from('department_sales_summary')
+    .select('id, department_code, month_key, total_headcount, sales_amount, purchase_amount, note, headcount_note, departments(department_name)')
+    .eq('department_code', departmentCode)
+    .order('month_key', { ascending: false });
   if (error) throw error;
   return data as unknown as SalesSummaryRow[];
 }
@@ -41,9 +51,33 @@ export async function fetchYtdSummary(year: string, upToMonth: string) {
   const startMonth = `${year}-01`;
   const { data, error } = await supabase
     .from('department_sales_summary')
-    .select('sales_amount, purchase_amount, net_sales_amount')
+    .select('department_code, sales_amount, purchase_amount')
     .gte('month_key', startMonth)
     .lte('month_key', upToMonth);
+  if (error) throw error;
+  return data || [];
+}
+
+/** Fetch YTD by department */
+export async function fetchYtdByDepartment(year: string, upToMonth: string) {
+  const startMonth = `${year}-01`;
+  const { data, error } = await supabase
+    .from('department_sales_summary')
+    .select('department_code, sales_amount, purchase_amount, departments(department_name)')
+    .gte('month_key', startMonth)
+    .lte('month_key', upToMonth);
+  if (error) throw error;
+  return data as unknown as { department_code: string; sales_amount: number; purchase_amount: number; departments: { department_name: string } | null }[];
+}
+
+/** Fetch same month of previous year for YoY comparison */
+export async function fetchSameMonthLastYear(monthKey: string) {
+  const [y, m] = monthKey.split('-');
+  const lastYearMonth = `${Number(y) - 1}-${m}`;
+  const { data, error } = await supabase
+    .from('department_sales_summary')
+    .select('department_code, sales_amount, purchase_amount')
+    .eq('month_key', lastYearMonth);
   if (error) throw error;
   return data || [];
 }

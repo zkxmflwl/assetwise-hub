@@ -73,8 +73,6 @@ export default function DepartmentManage() {
 
   const handleSave = async () => {
     const { inserts, updates, deletes } = getChanges();
-
-    // Validate
     for (const r of inserts) {
       if (!r.department_code?.trim() || !r.department_name?.trim()) {
         toast.error('부서코드와 부서명은 필수입니다.');
@@ -131,7 +129,6 @@ export default function DepartmentManage() {
   const renderCell = (row: GridRow<Department>, col: ColDef) => {
     const val = (row.data as any)[col.key];
     const disabled = !canEdit || row.status === 'deleted';
-    // department_code is not editable for existing rows
     const isCodeField = col.key === 'department_code' && row.status !== 'new';
 
     if (!canEdit || isCodeField) {
@@ -157,7 +154,7 @@ export default function DepartmentManage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">사업부 관리</h1>
+        <h1 className="text-2xl font-bold text-foreground">부서 관리</h1>
         <p className="mt-1 text-sm text-muted-foreground">부서 코드 및 부서명 관리</p>
       </div>
 
