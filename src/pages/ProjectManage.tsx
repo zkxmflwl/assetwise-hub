@@ -270,7 +270,7 @@ export default function ProjectManage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">프로젝트 관리</h1>
+        <h1 className="text-2xl font-bold text-foreground">프로젝트 데이터</h1>
         <p className="mt-1 text-sm text-muted-foreground">영업/수주/프로젝트 현황 관리</p>
       </div>
 
