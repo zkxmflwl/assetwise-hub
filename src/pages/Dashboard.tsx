@@ -5,6 +5,7 @@ import { useTangibleAssets } from '@/hooks/useTangibleAssets';
 import { useIntangibleAssets } from '@/hooks/useIntangibleAssets';
 import { formatKRW, formatKRWShort } from '@/data/mockData';
 import StatCard from '@/components/StatCard';
+import MonthlyBarChart from '@/components/MonthlyBarChart';
 import { TrendingUp, TrendingDown, DollarSign, Briefcase, CheckCircle, AlertTriangle, Clock, Loader2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 
 type SortDir = 'asc' | 'desc' | null;
@@ -152,6 +153,12 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* 월별 매출/매입/순매출 막대 그래프 */}
+      <div className="glass-card rounded-xl p-6 animate-fade-in">
+        <h2 className="text-lg font-semibold text-foreground mb-4">{activeMonth.split('-')[0]}년 월별 매출·매입·순매출</h2>
+        <MonthlyBarChart year={activeMonth.split('-')[0]} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
