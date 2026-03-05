@@ -97,6 +97,72 @@ export default function ITTangibleAssets() {
     return String(val);
   }, []);
 
+  // 1. 붙여넣기 시 텍스트를 코드로 변환하기 위한 헬퍼 함수
+  const mapPastedValue = useCallback((col: ColDef, value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    if (col.key === 'department_code') {
+      const dept = departments.find(d => d.department_name === trimmed || d.department_code === trimmed);
+      return dept ? dept.department_code : null;
+    }
+
+    if (col.key === 'asset_type_code') {
+      const lower = trimmed.toLowerCase();
+      // 이전에 정의한 매핑 로직 적용
+      if (lower === 'laptop') return 'T_NOTEBOOK';
+      if (lower === 'monitor' || trimmed === '모니터') return 'T_MONITOR';
+      if (lower === 'desktop' || trimmed === '데스크탑') return 'T_PC';
+      
+      const type = assetTypes.find(t => t.sub_category === trimmed || t.asset_type_code === trimmed);
+      return type ? type.asset_type_code : null;
+    }
+
+    if (col.type === 'number') {
+      const num = Number(trimmed.replace(/[^0-9.-]/g, '')); // 숫자 외 문자 제거
+      return isNaN(num) ? 0 : num;
+    }
+
+    return trimmed;
+  }, [departments, assetTypes]);
+
+  // 2. 클립보드 데이터 처리 함수
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    // 입력창 내부에서 개별적으로 붙여넣는 경우는 브라우저 기본 동작 허용
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) {
+      return;
+    }
+
+    e.preventDefault();
+    const clipboardData = e.clipboardData.getData('text');
+    if (!clipboardData) return;
+
+    // 엑셀 데이터는 보통 줄바꿈(\n)과 탭(\t)으로 구분됨
+    const rows_data = clipboardData.split(/\r?\n/).filter(line => line.trim() !== '');
+    const newAssets: any[] = [];
+
+    rows_data.forEach(line => {
+      const cells = line.split('\t');
+      const rowData: any = {
+        issued_date: new Date().toISOString().slice(0, 10)
+      };
+
+      // 현재 정의된 columns 순서대로 매핑
+      columns.forEach((col, idx) => {
+        if (cells[idx] !== undefined) {
+          rowData[col.key] = mapPastedValue(col, cells[idx]);
+        }
+      });
+      
+      newAssets.push(rowData);
+    });
+
+    if (newAssets.length > 0) {
+      addRows(newAssets);
+      toast.success(`${newAssets.length}개의 행이 붙여넣기 되었습니다.`);
+    }
+  }, [columns, addRows, mapPastedValue]);
+
   const visibleRows = useMemo(() => {
     let filtered = rows;
 
@@ -342,7 +408,12 @@ export default function ITTangibleAssets() {
 
       <div className="glass-card overflow-hidden rounded-xl">
         <div className="overflow-x-auto scrollbar-thin" style={{ maxHeight: '70vh' }}>
-          <table className="w-full text-xs">
+          {/* 3. 테이블에 onPaste 이벤트 연결 */}
+          <table 
+            className="w-full text-xs" 
+            onPaste={handlePaste}
+            tabIndex={0} // 테이블이 포커스를 받을 수 있게 하여 붙여넣기 감지
+          >
             <thead className="sticky top-0 z-10">
               <tr className="border-b border-border bg-muted">
                 {canEdit && (
