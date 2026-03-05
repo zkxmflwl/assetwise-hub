@@ -30,7 +30,7 @@ export async function fetchDashboardStats(monthKey: string): Promise<DashboardSt
   const monthlyPurchase = salesData.reduce((s, r) => s + Number(r.purchase_amount || 0), 0);
 
   const [activeProjectCount, monthlyOrderCount] = await Promise.all([
-    fetchActiveProjectCount(),
+    fetchActiveProjectCount(monthKey),
     fetchMonthlyOrderCount(monthKey),
   ]);
 

@@ -88,12 +88,14 @@ export default function DepartmentMonthlyReport() {
     enabled: !!activeDept,
   });
 
-  // Filter completed orders relevant to selected year/month
+  // Filter completed orders: order_date <= selected month end
   const filteredOrders = useMemo(() => {
+    if (!activeMonth) return completedOrders;
+    const [y, m] = activeMonth.split('-');
+    const endDate = `${y}-${m}-31`;
     return completedOrders.filter(p => {
-      const base = p.base_date || p.order_date;
-      if (!base) return true;
-      return base.startsWith(activeMonth.split('-')[0]);
+      if (!p.order_date) return false;
+      return p.order_date <= endDate;
     });
   }, [completedOrders, activeMonth]);
 
