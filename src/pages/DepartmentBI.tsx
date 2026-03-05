@@ -383,7 +383,7 @@ export default function DepartmentBI() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">사업부 관리</h1>
+        <h1 className="text-2xl font-bold text-foreground">사업부 월별 데이터</h1>
         <p className="mt-1 text-sm text-muted-foreground">부서별 월별 매출/매입 데이터 관리</p>
       </div>
 
