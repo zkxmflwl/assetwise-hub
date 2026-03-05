@@ -117,6 +117,17 @@ export default function ProjectManage() {
         const cmp = aVal.localeCompare(bVal, 'ko', { numeric: true });
         return sortDir === 'asc' ? cmp : -cmp;
       });
+    } else {
+      // Default sort: department_code asc, then base_date desc (newest first)
+      filtered = [...filtered].sort((a, b) => {
+        const deptA = (a.data as any).department_code || '';
+        const deptB = (b.data as any).department_code || '';
+        const deptCmp = deptA.localeCompare(deptB, 'ko');
+        if (deptCmp !== 0) return deptCmp;
+        const dateA = (a.data as any).base_date || '';
+        const dateB = (b.data as any).base_date || '';
+        return dateB.localeCompare(dateA);
+      });
     }
     return filtered;
   }, [rows, search, columns, columnFilters, sortKey, sortDir, getDisplayValue]);
