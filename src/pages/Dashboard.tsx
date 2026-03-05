@@ -78,16 +78,21 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      {/* 헤더 영역: justify-between을 제거하고 gap을 추가하여 왼쪽으로 정렬 */}
+      <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-10">
         <div>
           <h1 className="text-2xl font-bold text-foreground">대시보드</h1>
           <p className="mt-1 text-sm text-muted-foreground">CSPI 사업부 현황 요약</p>
         </div>
+
         {months.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">기준 년월</span>
-            <select value={activeMonth} onChange={(e) => setSelectedMonth(e.target.value)}
-              className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none">
+          <div className="flex items-center gap-3 pb-0.5">
+            <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">기준 년월</span>
+            <select 
+              value={activeMonth} 
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none transition-colors cursor-pointer hover:border-muted-foreground/50"
+            >
               {months.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>
