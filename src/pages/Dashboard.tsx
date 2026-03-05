@@ -95,9 +95,24 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <StatCard title="당월 매출" value={formatKRWShort(stats?.monthlySales ?? 0)} icon={<TrendingUp className="h-5 w-5" />} />
-        <StatCard title="당월 매입" value={formatKRWShort(stats?.monthlyPurchase ?? 0)} icon={<TrendingDown className="h-5 w-5" />} />
-        <StatCard title="당월 순매출" value={formatKRWShort(stats?.monthlyNetSales ?? 0)} icon={<DollarSign className="h-5 w-5" />} />
+        <StatCard title="당월 매출" value={formatKRWShort(stats?.monthlySales ?? 0)} icon={<TrendingUp className="h-5 w-5" />}
+          subText={stats?.prevMonthlySales !== null && stats?.prevMonthlySales !== undefined ? (() => {
+            const diff = (stats?.monthlySales ?? 0) - stats.prevMonthlySales;
+            if (diff === 0) return <span className="text-[11px] text-muted-foreground">전월 대비 -</span>;
+            return <span className={`text-[11px] ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>전월 대비 {diff > 0 ? '+' : ''}{formatKRWShort(diff)}</span>;
+          })() : undefined} />
+        <StatCard title="당월 매입" value={formatKRWShort(stats?.monthlyPurchase ?? 0)} icon={<TrendingDown className="h-5 w-5" />}
+          subText={stats?.prevMonthlyPurchase !== null && stats?.prevMonthlyPurchase !== undefined ? (() => {
+            const diff = (stats?.monthlyPurchase ?? 0) - stats.prevMonthlyPurchase;
+            if (diff === 0) return <span className="text-[11px] text-muted-foreground">전월 대비 -</span>;
+            return <span className={`text-[11px] ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>전월 대비 {diff > 0 ? '+' : ''}{formatKRWShort(diff)}</span>;
+          })() : undefined} />
+        <StatCard title="당월 순매출" value={formatKRWShort(stats?.monthlyNetSales ?? 0)} icon={<DollarSign className="h-5 w-5" />}
+          subText={stats?.prevMonthlyNetSales !== null && stats?.prevMonthlyNetSales !== undefined ? (() => {
+            const diff = (stats?.monthlyNetSales ?? 0) - stats.prevMonthlyNetSales;
+            if (diff === 0) return <span className="text-[11px] text-muted-foreground">전월 대비 -</span>;
+            return <span className={`text-[11px] ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>전월 대비 {diff > 0 ? '+' : ''}{formatKRWShort(diff)}</span>;
+          })() : undefined} />
         <StatCard title="영업 중인 건" value={`${stats?.activeProjectCount ?? 0}건`} icon={<Briefcase className="h-5 w-5" />} />
         <StatCard title="당월 수주 건" value={`${stats?.monthlyOrderCount ?? 0}건`} icon={<CheckCircle className="h-5 w-5" />} />
       </div>
@@ -123,36 +138,12 @@ export default function Dashboard() {
                 <tr><td colSpan={summaryColumns.length} className="py-8 text-center"><Loader2 className="h-5 w-5 animate-spin mx-auto text-primary" /></td></tr>
               ) : sortedDeptRows.length === 0 ? (
                 <tr><td colSpan={summaryColumns.length} className="py-8 text-center text-muted-foreground">데이터 없음</td></tr>
-              ) : sortedDeptRows.map((row) => {
-                const momSales = row.prevMonthlySales !== null ? row.monthlySales - row.prevMonthlySales : null;
-                const momPurchase = row.prevMonthlyPurchase !== null ? row.monthlyPurchase - row.prevMonthlyPurchase : null;
-                const momNetSales = row.prevMonthlyNetSales !== null ? row.monthlyNetSales - row.prevMonthlyNetSales : null;
-
-                const MomBadge = ({ diff }: { diff: number | null }) => {
-                  if (diff === null) return null;
-                  if (diff === 0) return <span className="text-[10px] text-muted-foreground">-</span>;
-                  return (
-                    <span className={`text-[10px] ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>
-                      {diff > 0 ? '+' : ''}{formatKRWShort(diff)}
-                    </span>
-                  );
-                };
-
-                return (
+              ) : sortedDeptRows.map((row) => (
                 <tr key={row.departmentCode} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
                   <td className="border-r border-border/50 px-3 py-2 text-foreground font-medium">{row.departmentName}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">
-                    <div>{formatKRWShort(row.monthlySales)}</div>
-                    <MomBadge diff={momSales} />
-                  </td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">
-                    <div>{formatKRWShort(row.monthlyPurchase)}</div>
-                    <MomBadge diff={momPurchase} />
-                  </td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">
-                    <div>{formatKRWShort(row.monthlyNetSales)}</div>
-                    <MomBadge diff={momNetSales} />
-                  </td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.monthlySales)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.monthlyPurchase)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.monthlyNetSales)}</td>
                   <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.ytdSales)}</td>
                   <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.ytdPurchase)}</td>
                   <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.ytdNetSales)}</td>
@@ -165,8 +156,7 @@ export default function Dashboard() {
                   </td>
                   <td className="px-3 py-2 text-center text-foreground">{row.activeProjects}건</td>
                 </tr>
-                );
-              })}
+              ))}
             </tbody>
           </table>
         </div>
