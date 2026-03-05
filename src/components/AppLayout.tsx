@@ -9,8 +9,8 @@ const commonNavItems = [
   { title: '사업부 월간 보고', url: '/department-report', icon: FileText },
   { title: 'IT 유형자산', url: '/it-tangible', icon: Monitor },
   { title: 'IT 무형자산', url: '/it-intangible', icon: Cloud },
-  { title: '사업부 관리', url: '/department-bi', icon: BarChart3 },
-  { title: '프로젝트 관리', url: '/projects', icon: FolderKanban },
+  { title: '사업부 월별 데이터', url: '/department-bi', icon: BarChart3 },
+  { title: '프로젝트 데이터', url: '/projects', icon: FolderKanban },
 ];
 
 const adminNavItems = [
@@ -48,7 +48,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           ))}
           {hasPermission('ADMIN') && (
             <>
-              {!collapsed && <div className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">관리</div>}
+              {!collapsed && <div className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">관리자 전용</div>}
               {adminNavItems.map((item) => (
                 <NavLink key={item.url} to={item.url} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all" activeClassName="bg-primary/10 text-primary font-medium">
                   <item.icon className="h-5 w-5 shrink-0" />
