@@ -10,6 +10,8 @@ import { TrendingUp, TrendingDown, DollarSign, Briefcase, CheckCircle, AlertTria
 
 type SortDir = 'asc' | 'desc' | null;
 
+import { useRef, useEffect, useCallback } from 'react';
+
 export default function Dashboard() {
   const { data: months = [] } = useAvailableMonths();
   const [selectedMonth, setSelectedMonth] = useState('');
