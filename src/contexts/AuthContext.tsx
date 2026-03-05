@@ -18,13 +18,11 @@ interface AuthContextType {
   authUser: AuthUser | null;
   dashUser: DashUser | null;
   isLoggedIn: boolean;
-  isLoading: boolean; // (UI용 합성)
-  isAuthLoading: boolean;
-  isDashUserLoading: boolean;
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<string | null>;
   logout: () => Promise<void>;
   hasPermission: (required: RoleCode) => boolean;
-  refreshDashUser: (opts?: { silent?: boolean }) => Promise<void>;
+  refreshDashUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,106 +31,100 @@ const roleLevel: Record<RoleCode, number> = { VIEWER: 1, MANAGER: 2, ADMIN: 3 };
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [dashUser, setDashUser] = useState<DashUser | null>(null);
-
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [isDashUserLoading, setIsDashUserLoading] = useState(false);
-
+  const [isLoading, setIsLoading] = useState(true);
   const mountedRef = useRef(true);
 
-  const fetchDashUser = useCallback(async (uid: string): Promise<DashUser | null> => {
-    const { data, error } = await supabase
-      .from("dash_users")
-      .select("*")
-      .eq("auth_user_id", uid)
-      .maybeSingle();
-
-    if (error) {
-      console.error("fetchDashUser error:", error);
-      // 여기서 null로 보내면 "미등록"으로 오인될 수 있으니
-      // 필요하면 throw 하거나 별도 상태로 구분하세요.
-      return null;
+  const syncDashUser = useCallback(async (user: AuthUser | null) => {
+    if (!user) {
+      if (mountedRef.current) setDashUser(null);
+      return;
     }
-    return (data as DashUser | null) ?? null;
+
+    try {
+      const { data, error } = await supabase
+        .from("dash_users")
+        .select("*")
+        .eq("auth_user_id", user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (mountedRef.current) setDashUser(data as DashUser | null);
+    } catch (err) {
+      console.error("fetchDashUser error:", err);
+      if (mountedRef.current) setDashUser(null);
+    }
   }, []);
 
-  const syncDashUserByUid = useCallback(
-    async (uid: string, opts?: { silent?: boolean }) => {
-      if (!opts?.silent) setIsDashUserLoading(true);
-      const du = await fetchDashUser(uid);
+  // ✅ 먼저 선언 (호이스팅 이슈 방지)
+  const syncUserWithLoading = useCallback(
+    async (user: AuthUser | null) => {
       if (!mountedRef.current) return;
-      setDashUser(du);
-      setIsDashUserLoading(false);
+      setIsLoading(true);
+      await syncDashUser(user);
+      if (mountedRef.current) setIsLoading(false);
     },
-    [fetchDashUser]
+    [syncDashUser]
   );
 
-  const refreshDashUser = useCallback(
-    async (opts?: { silent?: boolean }) => {
-      if (!authUser) return;
-      await syncDashUserByUid(authUser.id, opts);
-    },
-    [authUser, syncDashUserByUid]
-  );
-
-  // 초기 세션 복원
   useEffect(() => {
     mountedRef.current = true;
 
-    const init = async () => {
-      setIsAuthLoading(true);
-      const { data, error } = await supabase.auth.getSession();
-      if (error) console.error("getSession error:", error);
+    let unsub: (() => void) | null = null;
 
-      if (!mountedRef.current) return;
+    const run = async () => {
+      try {
+        setIsLoading(true);
 
-      const user = data.session?.user ?? null;
-      setAuthUser(user);
+        // 1) 새로고침/초기 진입 시 세션 복원
+        const { data, error } = await supabase.auth.getSession();
+        if (error) console.error("getSession error:", error);
 
-      if (user) {
-        await syncDashUserByUid(user.id, { silent: true });
-      } else {
-        setDashUser(null);
+        const user = data.session?.user ?? null;
+
+        if (!mountedRef.current) return;
+
+        setAuthUser(user);
+        await syncDashUser(user);
+      } catch (e) {
+        console.error("Auth initialization error:", e);
+      } finally {
+        if (mountedRef.current) setIsLoading(false);
       }
 
-      if (mountedRef.current) setIsAuthLoading(false);
+      // 2) 구독은 init 이후에 등록하되, cleanup에서 즉시 해제 가능하게
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (!mountedRef.current) return;
+
+        const user = session?.user ?? null;
+
+        if (event === "SIGNED_OUT") {
+          setAuthUser(null);
+          setDashUser(null);
+          setIsLoading(false);
+          return;
+        }
+
+        // INITIAL_SESSION 포함해서 안전하게 처리
+        if (event === "SIGNED_IN" || event === "USER_UPDATED" || event === "INITIAL_SESSION") {
+          setAuthUser(user);
+          await syncUserWithLoading(user);
+          return;
+        }
+
+        // TOKEN_REFRESHED는 보통 dashUser 재조회 불필요 (원하면 user id 변경시에만)
+        setAuthUser(user);
+      });
+
+      unsub = () => subscription.unsubscribe();
     };
 
-    void init();
+    void run();
 
     return () => {
       mountedRef.current = false;
+      if (unsub) unsub();
     };
-  }, [syncDashUserByUid]);
-
-  // auth state change 구독
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mountedRef.current) return;
-
-      const user = session?.user ?? null;
-
-      if (event === "SIGNED_OUT") {
-        setAuthUser(null);
-        setDashUser(null);
-        return;
-      }
-
-      if (event === "SIGNED_IN" || event === "USER_UPDATED") {
-        setAuthUser(user);
-        if (user) await syncDashUserByUid(user.id, { silent: true });
-        return;
-      }
-
-      // TOKEN_REFRESHED 등은 굳이 전역 로딩을 켤 필요 없음
-      // 필요하면 user id가 바뀌었을 때만 동기화
-      if (user?.id && user.id !== authUser?.id) {
-        setAuthUser(user);
-        await syncDashUserByUid(user.id, { silent: true });
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [authUser?.id, syncDashUserByUid]);
+  }, [syncDashUser, syncUserWithLoading]);
 
   const login = async (email: string, password: string): Promise<string | null> => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -142,7 +134,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.error("signOut error:", error);
-    // 상태 초기화는 onAuthStateChange(SIGNED_OUT)에서만 처리
+    // 상태 정리는 onAuthStateChange(SIGNED_OUT)에서도 되지만, 즉시 반영 원하면 아래 유지 가능
+    setAuthUser(null);
+    setDashUser(null);
+    setIsLoading(false);
   };
 
   const hasPermission = (required: RoleCode): boolean => {
@@ -150,12 +145,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return roleLevel[dashUser.role_code] >= roleLevel[required];
   };
 
+  const refreshDashUser = async () => {
+    if (!authUser) return;
+    setIsLoading(true);
+    await syncDashUser(authUser);
+    if (mountedRef.current) setIsLoading(false);
+  };
+
   const isLoggedIn = useMemo(
     () => !!authUser && !!dashUser && dashUser.is_active,
     [authUser, dashUser]
   );
-
-  const isLoading = isAuthLoading || isDashUserLoading;
 
   return (
     <AuthContext.Provider
@@ -164,8 +164,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         dashUser,
         isLoggedIn,
         isLoading,
-        isAuthLoading,
-        isDashUserLoading,
         login,
         logout,
         hasPermission,
