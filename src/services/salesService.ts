@@ -58,6 +58,40 @@ export async function fetchYtdSummary(year: string, upToMonth: string) {
   return data || [];
 }
 
+/** Fetch monthly totals for all 12 months of a given year */
+export async function fetchYearlyMonthlySummary(year: string) {
+  const startMonth = `${year}-01`;
+  const endMonth = `${year}-12`;
+  const { data, error } = await supabase
+    .from('department_sales_summary')
+    .select('month_key, sales_amount, purchase_amount')
+    .gte('month_key', startMonth)
+    .lte('month_key', endMonth);
+  if (error) throw error;
+
+  // Aggregate by month
+  const monthMap = new Map<string, { sales: number; purchase: number }>();
+  for (let m = 1; m <= 12; m++) {
+    const key = `${year}-${String(m).padStart(2, '0')}`;
+    monthMap.set(key, { sales: 0, purchase: 0 });
+  }
+  for (const r of (data || [])) {
+    const existing = monthMap.get(r.month_key);
+    if (existing) {
+      existing.sales += Number(r.sales_amount || 0);
+      existing.purchase += Number(r.purchase_amount || 0);
+    }
+  }
+
+  return Array.from(monthMap.entries()).map(([month_key, vals]) => ({
+    month_key,
+    label: `${Number(month_key.split('-')[1])}월`,
+    sales: vals.sales,
+    purchase: vals.purchase,
+    netSales: vals.sales - vals.purchase,
+  }));
+}
+
 /** Fetch YTD by department */
 export async function fetchYtdByDepartment(year: string, upToMonth: string) {
   const startMonth = `${year}-01`;
