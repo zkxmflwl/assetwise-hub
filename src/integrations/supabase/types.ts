@@ -46,50 +46,65 @@ export type Database = {
       }
       business_projects: {
         Row: {
+          base_date: string | null
+          category: string | null
           client_name: string | null
+          created_at: string
           department_code: string
+          effort: string | null
           end_date: string | null
           id: number
           last_modified_by_auth_user_id: string | null
-          net_sales_amount: number | null
           note: string | null
           order_date: string | null
           project_name: string
           project_status: string
-          purchase_amount: number | null
-          sales_amount: number | null
+          project_summary: string | null
+          purchase_amount: number
+          sales_amount: number
+          schedule_note: string | null
           start_date: string | null
           updated_at: string
         }
         Insert: {
+          base_date?: string | null
+          category?: string | null
           client_name?: string | null
+          created_at?: string
           department_code: string
+          effort?: string | null
           end_date?: string | null
           id?: never
           last_modified_by_auth_user_id?: string | null
-          net_sales_amount?: number | null
           note?: string | null
           order_date?: string | null
           project_name: string
           project_status: string
-          purchase_amount?: number | null
-          sales_amount?: number | null
+          project_summary?: string | null
+          purchase_amount?: number
+          sales_amount?: number
+          schedule_note?: string | null
           start_date?: string | null
           updated_at?: string
         }
         Update: {
+          base_date?: string | null
+          category?: string | null
           client_name?: string | null
+          created_at?: string
           department_code?: string
+          effort?: string | null
           end_date?: string | null
           id?: never
           last_modified_by_auth_user_id?: string | null
-          net_sales_amount?: number | null
           note?: string | null
           order_date?: string | null
           project_name?: string
           project_status?: string
-          purchase_amount?: number | null
-          sales_amount?: number | null
+          project_summary?: string | null
+          purchase_amount?: number
+          sales_amount?: number
+          schedule_note?: string | null
           start_date?: string | null
           updated_at?: string
         }
@@ -157,10 +172,10 @@ export type Database = {
       department_sales_summary: {
         Row: {
           department_code: string
+          headcount_note: string | null
           id: number
           last_modified_by_auth_user_id: string | null
           month_key: string
-          net_sales_amount: number
           note: string | null
           purchase_amount: number
           sales_amount: number
@@ -169,10 +184,10 @@ export type Database = {
         }
         Insert: {
           department_code: string
+          headcount_note?: string | null
           id?: never
           last_modified_by_auth_user_id?: string | null
           month_key: string
-          net_sales_amount?: number
           note?: string | null
           purchase_amount?: number
           sales_amount?: number
@@ -181,10 +196,10 @@ export type Database = {
         }
         Update: {
           department_code?: string
+          headcount_note?: string | null
           id?: never
           last_modified_by_auth_user_id?: string | null
           month_key?: string
-          net_sales_amount?: number
           note?: string | null
           purchase_amount?: number
           sales_amount?: number
