@@ -15,7 +15,7 @@ type SortDir = 'asc' | 'desc' | null;
 interface ColDef {
   key: string;
   label: string;
-  type: 'text' | 'number' | 'date' | 'select' | 'computed';
+  type: 'text' | 'number' | 'date' | 'select' | 'computed' | 'month';
   options?: { value: string; label: string }[];
   readOnly?: boolean;
 }
@@ -56,8 +56,8 @@ export default function DepartmentBI() {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
 
-  const columns: ColDef[] = useMemo(() => [
-    { key: 'month_key', label: '연월', type: 'text' },
+   const columns: ColDef[] = useMemo(() => [
+    { key: 'month_key', label: '연월', type: 'month' },
     { key: 'sales_amount', label: '매출', type: 'number' },
     { key: 'purchase_amount', label: '매입', type: 'number' },
     { key: 'computed_net_sales', label: '순매출', type: 'computed', readOnly: true },
@@ -353,6 +353,13 @@ export default function DepartmentBI() {
           onBlur={() => setEditingCell(null)}
           onKeyDown={(e) => { if (e.key === 'Enter') setEditingCell(null); }}
           className="w-full min-w-[80px] bg-transparent px-1 py-0.5 text-xs text-foreground text-right disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary rounded" />
+      );
+    }
+    if (col.type === 'month') {
+      return (
+        <input type="month" value={val ?? ''} disabled={disabled}
+          onChange={(e) => updateCell(row.tempId, col.key as any, e.target.value)}
+          className="w-full min-w-[120px] bg-transparent px-1 py-0.5 text-xs text-foreground disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary rounded" />
       );
     }
     return (
