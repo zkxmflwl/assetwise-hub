@@ -10,6 +10,8 @@ import { TrendingUp, TrendingDown, DollarSign, Briefcase, CheckCircle, AlertTria
 
 type SortDir = 'asc' | 'desc' | null;
 
+import { useRef, useEffect, useCallback } from 'react';
+
 export default function Dashboard() {
   const { data: months = [] } = useAvailableMonths();
   const [selectedMonth, setSelectedMonth] = useState('');
@@ -19,6 +21,20 @@ export default function Dashboard() {
   const { data: deptRows = [], isLoading: deptLoading } = useDeptSummary(activeMonth);
   const { data: tangibleAssets, isLoading: tangibleLoading } = useTangibleAssets();
   const { data: intangibleAssets, isLoading: intangibleLoading } = useIntangibleAssets();
+
+  const [selectedDeptCode, setSelectedDeptCode] = useState<string | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  // Click outside grid to deselect
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (gridRef.current && !gridRef.current.contains(e.target as Node)) {
+        setSelectedDeptCode(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
@@ -110,8 +126,11 @@ export default function Dashboard() {
       </div>
 
       {/* 사업부 별 실적 요약 */}
-      <div className="glass-card rounded-xl p-6 animate-fade-in">
-        <h2 className="text-lg font-semibold text-foreground mb-4">사업부 별 실적 요약</h2>
+      <div ref={gridRef} className="glass-card rounded-xl p-6 animate-fade-in">
+        <h2 className="text-lg font-semibold text-foreground mb-4">
+          사업부 별 실적 요약
+          {selectedDeptCode && <span className="ml-2 text-sm font-normal text-primary">(그래프 필터 적용 중 — 행 외부 클릭 시 해제)</span>}
+        </h2>
         <div className="overflow-x-auto scrollbar-thin">
           <table className="w-full text-xs">
             <thead>
@@ -131,7 +150,11 @@ export default function Dashboard() {
               ) : sortedDeptRows.length === 0 ? (
                 <tr><td colSpan={summaryColumns.length} className="py-8 text-center text-muted-foreground">데이터 없음</td></tr>
               ) : sortedDeptRows.map((row) => (
-                <tr key={row.departmentCode} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                <tr
+                  key={row.departmentCode}
+                  onClick={() => setSelectedDeptCode(prev => prev === row.departmentCode ? null : row.departmentCode)}
+                  className={`border-b border-border/50 cursor-pointer transition-colors ${selectedDeptCode === row.departmentCode ? 'bg-primary/10 hover:bg-primary/15' : 'hover:bg-muted/30'}`}
+                >
                   <td className="border-r border-border/50 px-3 py-2 text-foreground font-medium">{row.departmentName}</td>
                   <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.monthlySales)}</td>
                   <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.monthlyPurchase)}</td>
@@ -157,8 +180,13 @@ export default function Dashboard() {
 
       {/* 월별 매출/매입/순매출 막대 그래프 */}
       <div className="glass-card rounded-xl p-6 animate-fade-in">
-        <h2 className="text-lg font-semibold text-foreground mb-4">{activeMonth.split('-')[0]}년 월별 매출·매입·순매출</h2>
-        <MonthlyBarChart year={activeMonth.split('-')[0]} />
+        <h2 className="text-lg font-semibold text-foreground mb-4">
+          {activeMonth.split('-')[0]}년 월별 매출·매입·순매출
+          {selectedDeptCode && sortedDeptRows.find(r => r.departmentCode === selectedDeptCode) && (
+            <span className="ml-2 text-sm text-primary">— {sortedDeptRows.find(r => r.departmentCode === selectedDeptCode)?.departmentName}</span>
+          )}
+        </h2>
+        <MonthlyBarChart year={activeMonth.split('-')[0]} departmentCode={selectedDeptCode ?? undefined} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
