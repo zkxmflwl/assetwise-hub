@@ -6,6 +6,9 @@ export interface DashboardStats {
   monthlySales: number;
   monthlyPurchase: number;
   monthlyNetSales: number;
+  prevMonthlySales: number | null;
+  prevMonthlyPurchase: number | null;
+  prevMonthlyNetSales: number | null;
   activeProjectCount: number;
   monthlyOrderCount: number;
 }
@@ -27,20 +30,30 @@ export interface DeptSummaryRow {
 }
 
 export async function fetchDashboardStats(monthKey: string): Promise<DashboardStats> {
-  const salesData = await fetchSalesSummary(monthKey);
+  const [y, m] = monthKey.split('-').map(Number);
+  const prevMonthKey = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
+
+  const [salesData, prevSalesData, activeProjectCount, monthlyOrderCount] = await Promise.all([
+    fetchSalesSummary(monthKey),
+    fetchSalesSummary(prevMonthKey),
+    fetchActiveProjectCount(monthKey),
+    fetchMonthlyOrderCount(monthKey),
+  ]);
 
   const monthlySales = salesData.reduce((s, r) => s + Number(r.sales_amount || 0), 0);
   const monthlyPurchase = salesData.reduce((s, r) => s + Number(r.purchase_amount || 0), 0);
 
-  const [activeProjectCount, monthlyOrderCount] = await Promise.all([
-    fetchActiveProjectCount(monthKey),
-    fetchMonthlyOrderCount(monthKey),
-  ]);
+  const hasPrev = prevSalesData.length > 0;
+  const prevMonthlySales = hasPrev ? prevSalesData.reduce((s, r) => s + Number(r.sales_amount || 0), 0) : null;
+  const prevMonthlyPurchase = hasPrev ? prevSalesData.reduce((s, r) => s + Number(r.purchase_amount || 0), 0) : null;
 
   return {
     monthlySales,
     monthlyPurchase,
     monthlyNetSales: monthlySales - monthlyPurchase,
+    prevMonthlySales,
+    prevMonthlyPurchase,
+    prevMonthlyNetSales: prevMonthlySales !== null && prevMonthlyPurchase !== null ? prevMonthlySales - prevMonthlyPurchase : null,
     activeProjectCount,
     monthlyOrderCount,
   };

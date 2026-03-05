@@ -6,17 +6,19 @@ interface StatCardProps {
   value: string | number;
   change?: number;
   changeLabel?: string;
+  subText?: ReactNode;
   icon?: ReactNode;
   className?: string;
 }
 
-export default function StatCard({ title, value, change, changeLabel, icon, className = '' }: StatCardProps) {
+export default function StatCard({ title, value, change, changeLabel, subText, icon, className = '' }: StatCardProps) {
   return (
     <div className={`glass-card rounded-xl p-5 animate-fade-in ${className}`}>
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <p className="text-sm text-muted-foreground">{title}</p>
           <p className="text-2xl font-bold text-foreground">{value}</p>
+          {subText && <div>{subText}</div>}
           {change !== undefined && (
             <div className="flex items-center gap-1.5">
               {change > 0 ? (
