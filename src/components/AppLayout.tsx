@@ -34,7 +34,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <aside
         className={`fixed left-0 top-0 z-40 h-screen flex flex-col border-r border-border bg-card transition-all duration-300 ${collapsed ? 'w-16' : 'w-60'}`}>
         <div className="flex h-16 items-center justify-between border-b border-border px-4">
-          {!collapsed && <span className="text-gradient text-lg font-bold tracking-tight">AssetBI</span>}
+          {!collapsed && <span className="text-gradient text-lg font-bold tracking-tight">BizDashboard</span>}
           <button onClick={() => setCollapsed(!collapsed)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
             {collapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
           </button>
