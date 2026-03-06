@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useYearlyMonthlySummary } from '@/hooks/useYearlyMonthlySummary';
 import { formatKRWShort } from '@/data/mockData';
@@ -10,6 +11,18 @@ interface Props {
 
 export default function MonthlyBarChart({ year, departmentCode }: Props) {
   const { data, isLoading } = useYearlyMonthlySummary(year, departmentCode);
+  const { data: allData } = useYearlyMonthlySummary(year, undefined);
+
+  const yDomain = useMemo<[number, number]>(() => {
+    if (!allData || allData.length === 0) return [0, 0];
+    let min = 0;
+    let max = 0;
+    for (const d of allData) {
+      min = Math.min(min, d.sales, d.purchase, d.netSales);
+      max = Math.max(max, d.sales, d.purchase, d.netSales);
+    }
+    return [Math.min(min, 0), max * 1.1];
+  }, [allData]);
 
   if (isLoading) {
     return (
@@ -29,6 +42,7 @@ export default function MonthlyBarChart({ year, departmentCode }: Props) {
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
         <XAxis dataKey="label" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
         <YAxis
+          domain={yDomain}
           tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
           tickFormatter={(v: number) => formatKRWShort(v)}
           width={70}
