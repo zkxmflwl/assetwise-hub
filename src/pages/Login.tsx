@@ -25,7 +25,7 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
         <div className="mb-10 text-center">
-          <h1 className="text-gradient text-4xl font-extrabold tracking-tight">AssetBI</h1>
+          <h1 className="text-gradient text-4xl font-extrabold tracking-tight">BizDashboard</h1>
           <p className="mt-2 text-sm text-muted-foreground">for CSPI</p>
         </div>
         <div className="glass-card rounded-2xl p-8">
