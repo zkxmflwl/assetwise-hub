@@ -162,7 +162,7 @@ export default function SectorProjectManage() {
         if (error) throw error;
       }
       for (const r of updates as any[]) {
-        const { id, created_at, updated_at, departments: _d, ...rest } = r;
+        const { id, created_at, updated_at, ...rest } = r;
         const { error } = await supabase.from('sector_project')
           .update({
             sector_project_name: rest.sector_project_name,
