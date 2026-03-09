@@ -27,6 +27,8 @@ export default function DepartmentManage() {
       newRowTemplate: () => ({
         department_code: '',
         department_name: '',
+        sector_code: '',
+        sector_name: '',
         is_active: true,
       }),
     },
@@ -39,6 +41,8 @@ export default function DepartmentManage() {
   const [sortDir, setSortDir] = useState<SortDir>(null);
 
   const columns: ColDef[] = [
+    { key: 'sector_code', label: '부문코드', type: 'text' },
+    { key: 'sector_name', label: '부문명', type: 'text' },
     { key: 'department_code', label: '부서코드', type: 'text' },
     { key: 'department_name', label: '부서명', type: 'text' },
   ];
@@ -79,6 +83,12 @@ export default function DepartmentManage() {
         return;
       }
     }
+    for (const r of updates) {
+      if (!r.department_code?.trim() || !r.department_name?.trim()) {
+        toast.error('부서코드와 부서명은 필수입니다.');
+        return;
+      }
+    }
 
     setSaving(true);
     try {
@@ -86,21 +96,36 @@ export default function DepartmentManage() {
         const insertData = inserts.map(r => ({
           department_code: r.department_code,
           department_name: r.department_name,
+          sector_code: r.sector_code || null,
+          sector_name: r.sector_name || null,
           is_active: true,
         }));
         const { error } = await supabase.from('departments').insert(insertData);
         if (error) throw error;
       }
       for (const r of updates) {
+        // tempId holds the original department_code
+        const originalCode = rows.find(row => row.data === r)?.tempId;
+        const updatePayload: any = {
+          department_name: r.department_name,
+          sector_code: r.sector_code || null,
+          sector_name: r.sector_name || null,
+        };
+        // If department_code changed, update it too (CASCADE will propagate)
+        if (originalCode && originalCode !== r.department_code) {
+          updatePayload.department_code = r.department_code;
+        }
         const { error } = await supabase.from('departments')
-          .update({ department_name: r.department_name })
-          .eq('department_code', r.department_code);
+          .update(updatePayload)
+          .eq('department_code', originalCode || r.department_code);
         if (error) throw error;
       }
       if (deletes.length > 0) {
-        const codes = deletes.map(r => r.department_code);
-        const { error } = await supabase.from('departments').delete().in('department_code', codes);
-        if (error) throw error;
+        for (const r of deletes) {
+          const originalCode = rows.find(row => row.data === r)?.tempId;
+          const { error } = await supabase.from('departments').delete().eq('department_code', originalCode || r.department_code);
+          if (error) throw error;
+        }
       }
       toast.success(`저장 완료 (추가 ${inserts.length} / 수정 ${updates.length} / 삭제 ${deletes.length})`);
       setSelectedIds(new Set());
@@ -129,9 +154,8 @@ export default function DepartmentManage() {
   const renderCell = (row: GridRow<Department>, col: ColDef) => {
     const val = (row.data as any)[col.key];
     const disabled = !canEdit || row.status === 'deleted';
-    const isCodeField = col.key === 'department_code' && row.status !== 'new';
 
-    if (!canEdit || isCodeField) {
+    if (!canEdit) {
       return <span className="text-xs text-foreground">{val || '-'}</span>;
     }
 
@@ -155,7 +179,7 @@ export default function DepartmentManage() {
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-foreground">부서 관리</h1>
-        <p className="mt-1 text-sm text-muted-foreground">부서 코드 및 부서명 관리</p>
+        <p className="mt-1 text-sm text-muted-foreground">부문/부서 코드 및 명칭 관리</p>
       </div>
 
       {canEdit && (

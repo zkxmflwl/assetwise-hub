@@ -13,6 +13,8 @@ import DepartmentBI from "./pages/DepartmentBI";
 import DepartmentManage from "./pages/DepartmentManage";
 import DepartmentMonthlyReport from "./pages/DepartmentMonthlyReport";
 import ProjectManage from "./pages/ProjectManage";
+import SectorProjectManage from "./pages/SectorProjectManage";
+import SectorProjectView from "./pages/SectorProjectView";
 import AdminUsers from "./pages/AdminUsers";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
@@ -92,78 +94,17 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 
 const AppRoutes = () => (
   <Routes>
-    <Route
-      path="/login"
-      element={
-        <AuthRoute>
-          <Login />
-        </AuthRoute>
-      }
-    />
-    <Route
-      path="/"
-      element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/it-tangible"
-      element={
-        <ProtectedRoute>
-          <ITTangibleAssets />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/it-intangible"
-      element={
-        <ProtectedRoute>
-          <ITIntangibleAssets />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/projects"
-      element={
-        <ProtectedRoute>
-          <ProjectManage />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/department-bi"
-      element={
-        <ProtectedRoute>
-          <DepartmentBI />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/department-report"
-      element={
-        <ProtectedRoute>
-          <DepartmentMonthlyReport />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/admin/departments"
-      element={
-        <ProtectedRoute adminOnly>
-          <DepartmentManage />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/admin/users"
-      element={
-        <ProtectedRoute adminOnly>
-          <AdminUsers />
-        </ProtectedRoute>
-      }
-    />
+    <Route path="/login" element={<AuthRoute><Login /></AuthRoute>} />
+    <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+    <Route path="/it-tangible" element={<ProtectedRoute><ITTangibleAssets /></ProtectedRoute>} />
+    <Route path="/it-intangible" element={<ProtectedRoute><ITIntangibleAssets /></ProtectedRoute>} />
+    <Route path="/projects" element={<ProtectedRoute><ProjectManage /></ProtectedRoute>} />
+    <Route path="/sector-projects" element={<ProtectedRoute><SectorProjectManage /></ProtectedRoute>} />
+    <Route path="/sector-projects-view" element={<ProtectedRoute><SectorProjectView /></ProtectedRoute>} />
+    <Route path="/department-bi" element={<ProtectedRoute><DepartmentBI /></ProtectedRoute>} />
+    <Route path="/department-report" element={<ProtectedRoute><DepartmentMonthlyReport /></ProtectedRoute>} />
+    <Route path="/admin/departments" element={<ProtectedRoute adminOnly><DepartmentManage /></ProtectedRoute>} />
+    <Route path="/admin/users" element={<ProtectedRoute adminOnly><AdminUsers /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
