@@ -10,15 +10,15 @@ export interface SectorProjectRow {
   note: string | null;
   created_at: string;
   updated_at: string;
-  departments: { department_name: string; sector_name: string | null } | null;
 }
 
 export async function fetchSectorProjects() {
   const { data, error } = await supabase
     .from('sector_project')
-    .select('*, departments(department_name, sector_name)')
-    .order('sector_code')
+    .select('*')
+    .order('sector_code', { ascending: true })
     .order('updated_at', { ascending: false });
+
   if (error) throw error;
-  return data as unknown as SectorProjectRow[];
+  return data as SectorProjectRow[];
 }
