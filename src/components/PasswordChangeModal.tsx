@@ -28,17 +28,41 @@ export default function PasswordChangeModal() {
     setLoading(true);
     setError('');
 
-    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
-    if (updateError) { setError(updateError.message); setLoading(false); return; }
+    try {
+      // 1. 먼저 dash_users의 must_change_password를 false로 변경
+      const { error: dbError } = await supabase
+        .from('dash_users')
+        .update({ must_change_password: false })
+        .eq('auth_user_id', dashUser.auth_user_id);
+      
+      if (dbError) {
+        console.error('DB update error:', dbError);
+        setError('비밀번호 상태 업데이트에 실패했습니다.');
+        setLoading(false);
+        return;
+      }
 
-    const { error: dbError } = await supabase
-      .from('dash_users')
-      .update({ must_change_password: false } as any)
-      .eq('auth_user_id', dashUser.auth_user_id);
-    if (dbError) { setError(dbError.message); setLoading(false); return; }
+      // 2. 그 다음 Auth 비밀번호 변경 (세션 갱신 발생 가능)
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+      if (updateError) {
+        // 롤백: must_change_password를 다시 true로
+        await supabase
+          .from('dash_users')
+          .update({ must_change_password: true })
+          .eq('auth_user_id', dashUser.auth_user_id);
+        setError(updateError.message);
+        setLoading(false);
+        return;
+      }
 
-    await refreshDashUser();
-    setLoading(false);
+      // 3. dashUser 상태 새로고침
+      await refreshDashUser();
+    } catch (err) {
+      console.error('Password change error:', err);
+      setError('비밀번호 변경 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
