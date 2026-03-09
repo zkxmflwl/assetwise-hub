@@ -229,6 +229,8 @@ export type Database = {
           department_code: string
           department_name: string
           is_active: boolean
+          sector_code: string | null
+          sector_name: string | null
           updated_at: string
         }
         Insert: {
@@ -236,6 +238,8 @@ export type Database = {
           department_code: string
           department_name: string
           is_active?: boolean
+          sector_code?: string | null
+          sector_name?: string | null
           updated_at?: string
         }
         Update: {
@@ -243,6 +247,8 @@ export type Database = {
           department_code?: string
           department_name?: string
           is_active?: boolean
+          sector_code?: string | null
+          sector_name?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -308,6 +314,50 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "dash_users"
             referencedColumns: ["auth_user_id"]
+          },
+        ]
+      }
+      sector_project: {
+        Row: {
+          created_at: string
+          department_code: string
+          id: number
+          note: string | null
+          progress: number
+          sector_code: string
+          sector_project_name: string
+          updated_at: string
+          user_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          department_code: string
+          id?: never
+          note?: string | null
+          progress?: number
+          sector_code: string
+          sector_project_name: string
+          updated_at?: string
+          user_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          department_code?: string
+          id?: never
+          note?: string | null
+          progress?: number
+          sector_code?: string
+          sector_project_name?: string
+          updated_at?: string
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sector_project_department_code_fkey"
+            columns: ["department_code"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["department_code"]
           },
         ]
       }
