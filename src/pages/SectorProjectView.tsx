@@ -55,7 +55,7 @@ export default function SectorProjectView() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-foreground">부문 프로젝트 현황</h1>
-        <div className="flex h-40 items-center justify-center text-muted-foreground">등록된 부문이 없습니다.</div>
+        <div className="flex h-40 items-center justify-center text-muted-foreground">등록된 부문 프로젝트가 없습니다.</div>
       </div>
     );
   }
