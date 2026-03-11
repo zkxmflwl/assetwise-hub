@@ -116,7 +116,19 @@ export default function DepartmentMonthlyReport() {
     return map;
   }, [ongoingProjects]);
 
-  const monthLabels = Array.from({ length: 12 }, (_, i) => `${i + 1}월`);
+  // 18-month Gantt: prev July to current December
+  const ganttMonths = useMemo(() => {
+    const months: { year: number; month: number; label: string }[] = [];
+    for (let m = 7; m <= 12; m++) {
+      months.push({ year: activeYear - 1, month: m, label: `${String(activeYear - 1).slice(2)}.${m}월` });
+    }
+    for (let m = 1; m <= 12; m++) {
+      months.push({ year: activeYear, month: m, label: `${m}월` });
+    }
+    return months;
+  }, [activeYear]);
+
+  const monthLabels = ganttMonths.map(g => g.label);
 
   return (
     <div className="space-y-6">
