@@ -182,9 +182,9 @@ export default function ProjectManage() {
   const handleStatusChange = (tempId: string, newStatus: string) => {
     updateCell(tempId, 'project_status' as any, newStatus);
     if (newStatus === '비활성') {
-      updateCell(tempId, 'use' as any, false);
+      updateCell(tempId, 'is_active' as any, false);
     } else {
-      updateCell(tempId, 'use' as any, true);
+      updateCell(tempId, 'is_active' as any, true);
     }
   };
 

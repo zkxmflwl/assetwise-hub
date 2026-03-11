@@ -19,7 +19,7 @@ export interface BusinessProjectRow {
   effort: string | null;
   sort_order: number;
   visible: boolean;
-  use: boolean;
+  is_active: boolean;
   last_modified_by_auth_user_id: string | null;
   created_at: string;
   updated_at: string;
