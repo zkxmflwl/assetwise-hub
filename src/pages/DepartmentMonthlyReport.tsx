@@ -208,7 +208,7 @@ export default function DepartmentMonthlyReport() {
                 </tr>
               </thead>
               <tbody>
-                {[...ongoingProjects].sort((a, b) => (a.category || '').localeCompare(b.category || '', 'ko')).map((proj) => {
+                {[...ongoingProjects].map((proj) => {
                   const startDate = proj.start_date ? new Date(proj.start_date) : null;
                   const endDate = proj.end_date ? new Date(proj.end_date) : null;
                   const cat = proj.category || '기타';
@@ -218,10 +218,9 @@ export default function DepartmentMonthlyReport() {
                     <tr key={proj.id} className="border-b border-border/50">
                       <td className="px-2 py-2 text-foreground">{proj.client_name || '-'}</td>
                       <td className="px-2 py-2 text-foreground">{proj.project_summary || proj.project_name}</td>
-                      {Array.from({ length: 12 }, (_, monthIdx) => {
-                        const monthNum = monthIdx + 1;
-                        const cellStart = new Date(activeYear, monthIdx, 1);
-                        const cellEnd = new Date(activeYear, monthIdx + 1, 0);
+                      {ganttMonths.map((gm, idx) => {
+                        const cellStart = new Date(gm.year, gm.month - 1, 1);
+                        const cellEnd = new Date(gm.year, gm.month, 0);
 
                         let active = false;
                         if (startDate && startDate <= cellEnd) {
@@ -231,7 +230,7 @@ export default function DepartmentMonthlyReport() {
                         }
 
                         return (
-                          <td key={monthIdx} className="px-0.5 py-2">
+                          <td key={idx} className="px-0.5 py-2">
                             {active ? (
                               <div className={`h-4 rounded ${barColor} opacity-80`} title={`${proj.project_name} (${cat})`} />
                             ) : null}
