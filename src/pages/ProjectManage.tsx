@@ -9,13 +9,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatKRW } from '@/data/mockData';
 import { toast } from 'sonner';
 import { Plus, Trash2, Save, RotateCcw, Loader2, Search, ArrowUp, ArrowDown, ArrowUpDown, Filter, X } from 'lucide-react';
+import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
 
 type SortDir = 'asc' | 'desc' | null;
 
 interface ColDef {
   key: string;
   label: string;
-  type: 'text' | 'number' | 'date' | 'select';
+  type: 'text' | 'number' | 'date' | 'select' | 'boolean';
   options?: { value: string; label: string }[];
   readOnly?: boolean;
   minWidth?: string;
@@ -47,9 +48,14 @@ export default function ProjectManage() {
         purchase_amount: 0,
         note: '',
         effort: '',
+        sort_order: 0,
+        visible: true,
+        use: true,
       } as any),
     },
   );
+
+  useUnsavedChangesGuard(hasDirty);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
@@ -58,6 +64,8 @@ export default function ProjectManage() {
   const [sortDir, setSortDir] = useState<SortDir>(null);
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [activeFilterCol, setActiveFilterCol] = useState<string | null>(null);
+  const [deptFilter, setDeptFilter] = useState('');
+  const [useFilter, setUseFilter] = useState<'all' | 'active' | 'inactive'>('active');
 
   useEffect(() => {
     if (departments.length > 0) {
@@ -66,6 +74,8 @@ export default function ProjectManage() {
   }, [departments]);
 
   const columns: ColDef[] = useMemo(() => [
+    { key: 'sort_order', label: '정렬 순서', type: 'number', minWidth: '70px' },
+    { key: 'visible', label: '노출여부', type: 'boolean' },
     { key: 'project_name', label: '프로젝트명', type: 'text', minWidth: '150px' },
     { key: 'project_summary', label: '프로젝트 내용', type: 'text', minWidth: '150px' },
     { key: 'department_code', label: '사업부', type: 'select', options: departments.map(d => ({ value: d.department_code, label: d.department_name })) },
@@ -90,19 +100,32 @@ export default function ProjectManage() {
       const opt = col.options.find(o => o.value === val);
       return opt?.label || String(val);
     }
+    if (col.type === 'boolean') return val ? 'Y' : 'N';
     return String(val);
   }, []);
 
   const visibleRows = useMemo(() => {
     let filtered = rows;
 
-    // 1. 검색 필터링
+    // Department filter
+    if (deptFilter) {
+      filtered = filtered.filter(r => (r.data as any).department_code === deptFilter);
+    }
+
+    // Use filter
+    if (useFilter === 'active') {
+      filtered = filtered.filter(r => (r.data as any).use !== false);
+    } else if (useFilter === 'inactive') {
+      filtered = filtered.filter(r => (r.data as any).use === false);
+    }
+
+    // Search
     if (search) {
       const s = search.toLowerCase();
       filtered = filtered.filter(r => columns.some(col => getDisplayValue(r, col).toLowerCase().includes(s)));
     }
 
-    // 2. 컬럼별 필터링
+    // Column filters
     const activeFilters = Object.entries(columnFilters).filter(([, v]) => v.trim() !== '');
     if (activeFilters.length > 0) {
       filtered = filtered.filter(r =>
@@ -114,13 +137,11 @@ export default function ProjectManage() {
       );
     }
 
-    // 3. 정렬 로직 (신규 행 우선 순위 적용)
+    // Sort
     filtered = [...filtered].sort((a, b) => {
-      // ✅ [최우선 순위] 신규 추가된 행('new')은 무조건 위로 보냄
       if (a.status === 'new' && b.status !== 'new') return -1;
       if (a.status !== 'new' && b.status === 'new') return 1;
 
-      // ✅ [차순위] 신규 행끼리 혹은 기존 행끼리는 선택된 정렬 기준 적용
       if (sortKey && sortDir) {
         const col = columns.find(c => c.key === sortKey);
         const aVal = col ? getDisplayValue(a, col) : '';
@@ -128,12 +149,10 @@ export default function ProjectManage() {
         const cmp = aVal.localeCompare(bVal, 'ko', { numeric: true });
         return sortDir === 'asc' ? cmp : -cmp;
       } else {
-        // 기본 정렬: 사업부(asc) -> 기준일(desc)
         const deptA = (a.data as any).department_code || '';
         const deptB = (b.data as any).department_code || '';
         const deptCmp = deptA.localeCompare(deptB, 'ko');
         if (deptCmp !== 0) return deptCmp;
-
         const dateA = (a.data as any).base_date || '';
         const dateB = (b.data as any).base_date || '';
         return dateB.localeCompare(dateA);
@@ -141,7 +160,7 @@ export default function ProjectManage() {
     });
 
     return filtered;
-  }, [rows, search, columns, columnFilters, sortKey, sortDir, getDisplayValue]);
+  }, [rows, search, columns, columnFilters, sortKey, sortDir, getDisplayValue, deptFilter, useFilter]);
 
   const handleSort = (key: string) => {
     if (sortKey !== key) { setSortKey(key); setSortDir('asc'); }
@@ -160,9 +179,17 @@ export default function ProjectManage() {
 
   const activeFilterCount = Object.values(columnFilters).filter(v => v.trim() !== '').length;
 
+  const handleStatusChange = (tempId: string, newStatus: string) => {
+    updateCell(tempId, 'project_status' as any, newStatus);
+    if (newStatus === '영업 실패') {
+      updateCell(tempId, 'use' as any, false);
+    } else {
+      updateCell(tempId, 'use' as any, true);
+    }
+  };
+
   const handleSave = async () => {
     const { inserts, updates, deletes } = getChanges();
-    // Validate inserts and updates
     for (const r of [...inserts, ...updates]) {
       if (!(r as any).project_name?.trim()) { toast.error('프로젝트명은 필수입니다.'); return; }
       if (!(r as any).department_code?.trim()) { toast.error('사업부는 필수입니다.'); return; }
@@ -224,11 +251,29 @@ export default function ProjectManage() {
         const opt = col.options?.find(o => o.value === val);
         return <span className="text-xs text-foreground">{opt?.label || val || '-'}</span>;
       }
-      if (col.type === 'number') return <span className="text-xs text-foreground text-right block">{formatKRW(Number(val || 0))}</span>;
+      if (col.type === 'number') return <span className="text-xs text-foreground text-right block">{col.key === 'sort_order' ? (val ?? 0) : formatKRW(Number(val || 0))}</span>;
+      if (col.type === 'boolean') return <span className="text-xs text-foreground">{val ? 'Y' : 'N'}</span>;
       return <span className="text-xs text-foreground">{val || '-'}</span>;
     }
 
+    if (col.type === 'boolean') {
+      return (
+        <input type="checkbox" checked={!!val} disabled={disabled}
+          onChange={(e) => updateCell(row.tempId, col.key as any, e.target.checked)}
+          className="h-3.5 w-3.5 rounded border-border accent-primary" />
+      );
+    }
+
     if (col.type === 'select') {
+      if (col.key === 'project_status') {
+        return (
+          <select value={val || ''} disabled={disabled} onChange={(e) => handleStatusChange(row.tempId, e.target.value)}
+            className="w-full min-w-[80px] bg-transparent px-1 py-0.5 text-xs text-foreground disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary rounded">
+            <option value="">-</option>
+            {col.options?.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        );
+      }
       return (
         <select value={val || ''} disabled={disabled} onChange={(e) => updateCell(row.tempId, col.key as any, e.target.value || null)}
           className="w-full min-w-[80px] bg-transparent px-1 py-0.5 text-xs text-foreground disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary rounded">
@@ -299,6 +344,23 @@ export default function ProjectManage() {
       )}
 
       <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">사업부</span>
+          <select value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)}
+            className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none">
+            <option value="">전체</option>
+            {departments.map(d => <option key={d.department_code} value={d.department_code}>{d.department_name}</option>)}
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">프로젝트</span>
+          <select value={useFilter} onChange={(e) => setUseFilter(e.target.value as any)}
+            className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none">
+            <option value="active">활성 프로젝트</option>
+            <option value="inactive">비활성 프로젝트</option>
+            <option value="all">전체</option>
+          </select>
+        </div>
         <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="전체 검색..."
