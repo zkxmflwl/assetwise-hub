@@ -1,0 +1,1 @@
+ALTER TABLE public.business_projects RENAME COLUMN "use" TO is_active;

@@ -50,7 +50,7 @@ export default function ProjectManage() {
         effort: '',
         sort_order: 0,
         visible: true,
-        use: true,
+        is_active: true,
       } as any),
     },
   );
@@ -114,9 +114,9 @@ export default function ProjectManage() {
 
     // Use filter
     if (useFilter === 'active') {
-      filtered = filtered.filter(r => (r.data as any).use !== false);
+      filtered = filtered.filter(r => (r.data as any).is_active !== false);
     } else if (useFilter === 'inactive') {
-      filtered = filtered.filter(r => (r.data as any).use === false);
+      filtered = filtered.filter(r => (r.data as any).is_active === false);
     }
 
     // Search
@@ -182,9 +182,9 @@ export default function ProjectManage() {
   const handleStatusChange = (tempId: string, newStatus: string) => {
     updateCell(tempId, 'project_status' as any, newStatus);
     if (newStatus === '비활성') {
-      updateCell(tempId, 'use' as any, false);
+      updateCell(tempId, 'is_active' as any, false);
     } else {
-      updateCell(tempId, 'use' as any, true);
+      updateCell(tempId, 'is_active' as any, true);
     }
   };
 

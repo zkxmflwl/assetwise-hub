@@ -54,6 +54,7 @@ export type Database = {
           effort: string | null
           end_date: string | null
           id: number
+          is_active: boolean
           last_modified_by_auth_user_id: string | null
           note: string | null
           order_date: string | null
@@ -66,7 +67,6 @@ export type Database = {
           sort_order: number
           start_date: string | null
           updated_at: string
-          use: boolean
           visible: boolean
         }
         Insert: {
@@ -78,6 +78,7 @@ export type Database = {
           effort?: string | null
           end_date?: string | null
           id?: never
+          is_active?: boolean
           last_modified_by_auth_user_id?: string | null
           note?: string | null
           order_date?: string | null
@@ -90,7 +91,6 @@ export type Database = {
           sort_order?: number
           start_date?: string | null
           updated_at?: string
-          use?: boolean
           visible?: boolean
         }
         Update: {
@@ -102,6 +102,7 @@ export type Database = {
           effort?: string | null
           end_date?: string | null
           id?: never
+          is_active?: boolean
           last_modified_by_auth_user_id?: string | null
           note?: string | null
           order_date?: string | null
@@ -114,7 +115,6 @@ export type Database = {
           sort_order?: number
           start_date?: string | null
           updated_at?: string
-          use?: boolean
           visible?: boolean
         }
         Relationships: [
