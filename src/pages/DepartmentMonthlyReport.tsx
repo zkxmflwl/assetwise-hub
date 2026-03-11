@@ -203,7 +203,7 @@ export default function DepartmentMonthlyReport() {
                   <th className="text-left px-2 py-2 min-w-[100px] text-foreground">고객사</th>
                   <th className="text-left px-2 py-2 min-w-[150px] text-foreground">프로젝트 내용</th>
                   {monthLabels.map((m, i) => (
-                    <th key={i} className="text-center px-1 py-2 min-w-[40px] text-muted-foreground">{m}</th>
+                    <th key={i} className="text-center px-0.5 py-2 min-w-[32px] text-muted-foreground text-[10px]">{m}</th>
                   ))}
                 </tr>
               </thead>
