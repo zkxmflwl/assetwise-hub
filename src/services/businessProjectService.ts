@@ -17,6 +17,9 @@ export interface BusinessProjectRow {
   purchase_amount: number;
   note: string | null;
   effort: string | null;
+  sort_order: number;
+  visible: boolean;
+  use: boolean;
   last_modified_by_auth_user_id: string | null;
   created_at: string;
   updated_at: string;
