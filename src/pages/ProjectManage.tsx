@@ -35,7 +35,7 @@ export default function ProjectManage() {
       newRowTemplate: () => ({
         project_name: '',
         project_summary: '',
-        department_code: departments[0]?.department_code || '',
+        department_code: deptFilter || departments[0]?.department_code || '',
         client_name: '',
         project_status: '영업 전',
         schedule_note: '',
