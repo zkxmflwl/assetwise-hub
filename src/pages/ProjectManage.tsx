@@ -50,7 +50,7 @@ export default function ProjectManage() {
         effort: '',
         sort_order: 0,
         visible: true,
-        use: true,
+        is_active: true,
       } as any),
     },
   );
