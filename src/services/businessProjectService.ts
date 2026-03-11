@@ -29,6 +29,7 @@ export const PROJECT_STATUSES = [
   '수주 완료',
   '프로젝트 중',
   '프로젝트 완료',
+  '영업 실패',
   '기타',
 ];
 
