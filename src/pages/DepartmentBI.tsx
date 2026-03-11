@@ -50,6 +50,8 @@ export default function DepartmentBI() {
       } as any),
     },
   );
+  
+  useUnsavedChangesGuard(hasDirty);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
