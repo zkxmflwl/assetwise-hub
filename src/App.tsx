@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import AppLayout from "@/components/AppLayout";
 import Login from "./pages/Login";
@@ -92,22 +92,100 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-const AppRoutes = () => (
-  <Routes>
-    <Route path="/login" element={<AuthRoute><Login /></AuthRoute>} />
-    <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-    <Route path="/it-tangible" element={<ProtectedRoute><ITTangibleAssets /></ProtectedRoute>} />
-    <Route path="/it-intangible" element={<ProtectedRoute><ITIntangibleAssets /></ProtectedRoute>} />
-    <Route path="/projects" element={<ProtectedRoute><ProjectManage /></ProtectedRoute>} />
-    <Route path="/sector-projects" element={<ProtectedRoute><SectorProjectManage /></ProtectedRoute>} />
-    <Route path="/sector-projects-view" element={<ProtectedRoute><SectorProjectView /></ProtectedRoute>} />
-    <Route path="/department-bi" element={<ProtectedRoute><DepartmentBI /></ProtectedRoute>} />
-    <Route path="/department-report" element={<ProtectedRoute><DepartmentMonthlyReport /></ProtectedRoute>} />
-    <Route path="/admin/departments" element={<ProtectedRoute adminOnly><DepartmentManage /></ProtectedRoute>} />
-    <Route path="/admin/users" element={<ProtectedRoute adminOnly><AdminUsers /></ProtectedRoute>} />
-    <Route path="*" element={<NotFound />} />
-  </Routes>
-);
+const router = createBrowserRouter([
+  {
+    path: "/login",
+    element: (
+      <AuthRoute>
+        <Login />
+      </AuthRoute>
+    ),
+  },
+  {
+    path: "/",
+    element: (
+      <ProtectedRoute>
+        <Dashboard />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/it-tangible",
+    element: (
+      <ProtectedRoute>
+        <ITTangibleAssets />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/it-intangible",
+    element: (
+      <ProtectedRoute>
+        <ITIntangibleAssets />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/projects",
+    element: (
+      <ProtectedRoute>
+        <ProjectManage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/sector-projects",
+    element: (
+      <ProtectedRoute>
+        <SectorProjectManage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/sector-projects-view",
+    element: (
+      <ProtectedRoute>
+        <SectorProjectView />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/department-bi",
+    element: (
+      <ProtectedRoute>
+        <DepartmentBI />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/department-report",
+    element: (
+      <ProtectedRoute>
+        <DepartmentMonthlyReport />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/admin/departments",
+    element: (
+      <ProtectedRoute adminOnly>
+        <DepartmentManage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/admin/users",
+    element: (
+      <ProtectedRoute adminOnly>
+        <AdminUsers />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "*",
+    element: <NotFound />,
+  },
+]);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -115,9 +193,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <RouterProvider router={router} />
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
