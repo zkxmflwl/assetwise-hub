@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGridEditor, GridRow } from '@/hooks/useGridEditor';
