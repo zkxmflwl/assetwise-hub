@@ -63,8 +63,11 @@ export type Database = {
           purchase_amount: number
           sales_amount: number
           schedule_note: string | null
+          sort_order: number
           start_date: string | null
           updated_at: string
+          use: boolean
+          visible: boolean
         }
         Insert: {
           base_date?: string | null
@@ -84,8 +87,11 @@ export type Database = {
           purchase_amount?: number
           sales_amount?: number
           schedule_note?: string | null
+          sort_order?: number
           start_date?: string | null
           updated_at?: string
+          use?: boolean
+          visible?: boolean
         }
         Update: {
           base_date?: string | null
@@ -105,8 +111,11 @@ export type Database = {
           purchase_amount?: number
           sales_amount?: number
           schedule_note?: string | null
+          sort_order?: number
           start_date?: string | null
           updated_at?: string
+          use?: boolean
+          visible?: boolean
         }
         Relationships: [
           {
