@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGridEditor, GridRow } from '@/hooks/useGridEditor';
