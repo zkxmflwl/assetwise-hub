@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
 import { useTangibleAssets } from '@/hooks/useTangibleAssets';
 import { buildDeptColorMap, getDeptRowColor } from '@/utils/departmentColors';
 import { useDepartments } from '@/hooks/useDepartments';
