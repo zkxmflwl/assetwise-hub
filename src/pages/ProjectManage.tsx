@@ -48,7 +48,7 @@ export default function ProjectManage() {
         purchase_amount: 0,
         note: '',
         effort: '',
-        sort_order: 0,
+        sort_order: 100,
         visible: true,
         is_active: true,
       } as any),
