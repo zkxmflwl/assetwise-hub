@@ -114,9 +114,9 @@ export default function ProjectManage() {
 
     // Use filter
     if (useFilter === 'active') {
-      filtered = filtered.filter(r => (r.data as any).use !== false);
+      filtered = filtered.filter(r => (r.data as any).is_active !== false);
     } else if (useFilter === 'inactive') {
-      filtered = filtered.filter(r => (r.data as any).use === false);
+      filtered = filtered.filter(r => (r.data as any).is_active === false);
     }
 
     // Search
