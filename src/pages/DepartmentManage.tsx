@@ -35,6 +35,8 @@ export default function DepartmentManage() {
     },
   );
 
+  useUnsavedChangesGuard(hasDirty);
+
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
   const [saving, setSaving] = useState(false);

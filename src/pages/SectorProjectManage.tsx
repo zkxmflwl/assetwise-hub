@@ -51,6 +51,8 @@ export default function SectorProjectManage() {
     },
   );
 
+  useUnsavedChangesGuard(hasDirty);
+
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
   const [saving, setSaving] = useState(false);
