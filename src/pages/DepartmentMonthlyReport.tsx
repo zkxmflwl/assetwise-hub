@@ -116,7 +116,19 @@ export default function DepartmentMonthlyReport() {
     return map;
   }, [ongoingProjects]);
 
-  const monthLabels = Array.from({ length: 12 }, (_, i) => `${i + 1}월`);
+  // 18-month Gantt: prev July to current December
+  const ganttMonths = useMemo(() => {
+    const months: { year: number; month: number; label: string }[] = [];
+    for (let m = 7; m <= 12; m++) {
+      months.push({ year: activeYear - 1, month: m, label: `${String(activeYear - 1).slice(2)}.${m}월` });
+    }
+    for (let m = 1; m <= 12; m++) {
+      months.push({ year: activeYear, month: m, label: `${m}월` });
+    }
+    return months;
+  }, [activeYear]);
+
+  const monthLabels = ganttMonths.map(g => g.label);
 
   return (
     <div className="space-y-6">
@@ -191,12 +203,12 @@ export default function DepartmentMonthlyReport() {
                   <th className="text-left px-2 py-2 min-w-[100px] text-foreground">고객사</th>
                   <th className="text-left px-2 py-2 min-w-[150px] text-foreground">프로젝트 내용</th>
                   {monthLabels.map((m, i) => (
-                    <th key={i} className="text-center px-1 py-2 min-w-[40px] text-muted-foreground">{m}</th>
+                    <th key={i} className="text-center px-0.5 py-2 min-w-[32px] text-muted-foreground text-[10px]">{m}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {[...ongoingProjects].sort((a, b) => (a.category || '').localeCompare(b.category || '', 'ko')).map((proj) => {
+                {[...ongoingProjects].map((proj) => {
                   const startDate = proj.start_date ? new Date(proj.start_date) : null;
                   const endDate = proj.end_date ? new Date(proj.end_date) : null;
                   const cat = proj.category || '기타';
@@ -206,10 +218,9 @@ export default function DepartmentMonthlyReport() {
                     <tr key={proj.id} className="border-b border-border/50">
                       <td className="px-2 py-2 text-foreground">{proj.client_name || '-'}</td>
                       <td className="px-2 py-2 text-foreground">{proj.project_summary || proj.project_name}</td>
-                      {Array.from({ length: 12 }, (_, monthIdx) => {
-                        const monthNum = monthIdx + 1;
-                        const cellStart = new Date(activeYear, monthIdx, 1);
-                        const cellEnd = new Date(activeYear, monthIdx + 1, 0);
+                      {ganttMonths.map((gm, idx) => {
+                        const cellStart = new Date(gm.year, gm.month - 1, 1);
+                        const cellEnd = new Date(gm.year, gm.month, 0);
 
                         let active = false;
                         if (startDate && startDate <= cellEnd) {
@@ -219,7 +230,7 @@ export default function DepartmentMonthlyReport() {
                         }
 
                         return (
-                          <td key={monthIdx} className="px-0.5 py-2">
+                          <td key={idx} className="px-0.5 py-2">
                             {active ? (
                               <div className={`h-4 rounded ${barColor} opacity-80`} title={`${proj.project_name} (${cat})`} />
                             ) : null}

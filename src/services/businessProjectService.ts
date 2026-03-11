@@ -17,6 +17,9 @@ export interface BusinessProjectRow {
   purchase_amount: number;
   note: string | null;
   effort: string | null;
+  sort_order: number;
+  visible: boolean;
+  use: boolean;
   last_modified_by_auth_user_id: string | null;
   created_at: string;
   updated_at: string;
@@ -29,6 +32,7 @@ export const PROJECT_STATUSES = [
   '수주 완료',
   '프로젝트 중',
   '프로젝트 완료',
+  '영업 실패',
   '기타',
 ];
 
@@ -128,15 +132,17 @@ export async function fetchOngoingProjectsByDept(departmentCode: string, year: n
     .select('*, departments(department_name)')
     .eq('department_code', departmentCode)
     .eq('project_status', '프로젝트 중')
-    .not('start_date', 'is', null);
+    .eq('visible', true)
+    .not('start_date', 'is', null)
+    .order('sort_order', { ascending: true });
   if (error) throw error;
-  // Filter projects that overlap with the given year
+  // Filter projects that overlap with prev July ~ current December (18 months)
+  const rangeStart = new Date(`${year - 1}-07-01`);
+  const rangeEnd = new Date(`${year}-12-31`);
   return (data as unknown as BusinessProjectRow[]).filter(p => {
     const start = p.start_date ? new Date(p.start_date) : null;
     const end = p.end_date ? new Date(p.end_date) : null;
     if (!start) return false;
-    const yearStart = new Date(`${year}-01-01`);
-    const yearEnd = new Date(`${year}-12-31`);
-    return start <= yearEnd && (!end || end >= yearStart);
+    return start <= rangeEnd && (!end || end >= rangeStart);
   });
 }
