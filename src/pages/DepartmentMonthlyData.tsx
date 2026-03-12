@@ -347,7 +347,9 @@ export default function DepartmentBI() {
   const renderCollapsedMultilineText = (value: any) => {
     return (
       <div
-        className="block w-full overflow-hidden text-ellipsis whitespace-nowrap px-1 py-0.5 text-xs text-foreground"
+        // truncate는 overflow-hidden, text-ellipsis, whitespace-nowrap의 합축입니다.
+        // max-w-[240px]를 넣어 칸이 늘어나는 것을 방지합니다.
+        className="w-full max-w-[240px] truncate px-1 py-0.5 text-xs text-foreground"
         title={String(value || '')}
       >
         {value || '-'}
@@ -370,11 +372,10 @@ export default function DepartmentBI() {
       if (col.type === 'number') {
         return <span className="block text-right text-xs text-foreground">{formatKRW(Number(val || 0))}</span>;
       }
-
+      // 수정: 비고, 인원비고 컬럼은 항상 말줄임 함수 호출
       if (isMultilineColumn(col.key)) {
         return renderCollapsedMultilineText(val);
       }
-
       return <span className="text-xs text-foreground">{val || '-'}</span>;
     }
 
@@ -425,21 +426,22 @@ export default function DepartmentBI() {
     }
 
     if (isMultilineColumn(col.key)) {
-      const isEditing = editingCell === cellKey;
+        const isEditing = editingCell === cellKey;
 
       if (!isEditing) {
-        return (
-          <div
-            className={`block w-full cursor-text overflow-hidden text-ellipsis whitespace-nowrap px-1 py-0.5 text-xs text-foreground ${
-              disabled ? 'opacity-40 cursor-default' : ''
-            }`}
-            title={String(val || '')}
-            onClick={() => !disabled && setEditingCell(cellKey)}
-          >
-            {val || '-'}
-          </div>
-        );
-      }
+          return (
+            <div
+              // 수정: 클릭 전에는 너비가 고정된 말줄임 처리
+              className={`w-full max-w-[240px] cursor-text truncate px-1 py-0.5 text-xs text-foreground ${
+                disabled ? 'opacity-40 cursor-default' : ''
+              }`}
+              title={String(val || '')}
+              onClick={() => !disabled && setEditingCell(cellKey)}
+            >
+              {val || '-'}
+            </div>
+          );
+        }
 
       return (
         <textarea
@@ -599,7 +601,7 @@ export default function DepartmentBI() {
                     col.key === 'month_key' || col.key === 'total_headcount'
                       ? { width: '90px', minWidth: '90px' }
                       : col.key === 'note' || col.key === 'headcount_note'
-                      ? { width: '240px', minWidth: '240px' }
+                      ? { width: '240px', maxWidth: '240px' }
                       : undefined;
 
                   return (
