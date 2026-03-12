@@ -31,6 +31,7 @@ export default function DepartmentManage() {
         sector_code: '',
         sector_name: '',
         is_active: true,
+        sort_order: 100,
       }),
     },
   );
