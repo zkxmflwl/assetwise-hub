@@ -240,6 +240,7 @@ export type Database = {
           is_active: boolean
           sector_code: string | null
           sector_name: string | null
+          sort_order: number
           updated_at: string
         }
         Insert: {
@@ -249,6 +250,7 @@ export type Database = {
           is_active?: boolean
           sector_code?: string | null
           sector_name?: string | null
+          sort_order?: number
           updated_at?: string
         }
         Update: {
@@ -258,6 +260,7 @@ export type Database = {
           is_active?: boolean
           sector_code?: string | null
           sector_name?: string | null
+          sort_order?: number
           updated_at?: string
         }
         Relationships: []

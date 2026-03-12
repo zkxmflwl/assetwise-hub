@@ -31,6 +31,7 @@ export default function DepartmentManage() {
         sector_code: '',
         sector_name: '',
         is_active: true,
+        sort_order: 100,
       }),
     },
   );
@@ -44,6 +45,7 @@ export default function DepartmentManage() {
   const [sortDir, setSortDir] = useState<SortDir>(null);
 
   const columns: ColDef[] = [
+    { key: 'sort_order', label: '정렬순서', type: 'text' },
     { key: 'sector_code', label: '부문코드', type: 'text' },
     { key: 'sector_name', label: '부문명', type: 'text' },
     { key: 'department_code', label: '부서코드', type: 'text' },
@@ -87,10 +89,11 @@ export default function DepartmentManage() {
       const originalCode = rows.find(row => row.data === r)?.tempId;
       console.log('originalCode:', originalCode);
 
-      const updatePayload: any = {
+    const updatePayload: any = {
         department_name: r.department_name,
         sector_code: r.sector_code || null,
         sector_name: r.sector_name || null,
+        sort_order: r.sort_order ?? 100,
       };
 
       if (originalCode && originalCode !== r.department_code) {
@@ -133,6 +136,7 @@ export default function DepartmentManage() {
           sector_code: r.sector_code || null,
           sector_name: r.sector_name || null,
           is_active: true,
+          sort_order: r.sort_order ?? 100,
         }));
         const { error } = await supabase.from('departments').insert(insertData);
         if (error) throw error;
@@ -140,10 +144,11 @@ export default function DepartmentManage() {
       for (const r of updates) {
         // tempId holds the original department_code
         const originalCode = rows.find(row => row.data === r)?.tempId;
-        const updatePayload: any = {
+      const updatePayload: any = {
           department_name: r.department_name,
           sector_code: r.sector_code || null,
           sector_name: r.sector_name || null,
+          sort_order: r.sort_order ?? 100,
         };
         // If department_code changed, update it too (CASCADE will propagate)
         if (originalCode && originalCode !== r.department_code) {
