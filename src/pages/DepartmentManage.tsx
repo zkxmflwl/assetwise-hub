@@ -80,6 +80,14 @@ export default function DepartmentManage() {
 
   const handleSave = async () => {
     const { inserts, updates, deletes } = getChanges();
+    console.log('changes:', {
+      inserts,
+      updates,
+      deletes,
+      hasDirty,
+      selectedIds: Array.from(selectedIds),
+      rows,
+    });
     for (const r of inserts) {
       if (!r.department_code?.trim() || !r.department_name?.trim()) {
         toast.error('부서코드와 부서명은 필수입니다.');
