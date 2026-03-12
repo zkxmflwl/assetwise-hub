@@ -598,12 +598,11 @@ export default function DepartmentBI() {
 
                 {columns.map((col) => {
                   const widthStyle =
-                    const widthStyle =
-                      col.key === 'month_key' || col.key === 'total_headcount'
-                        ? { width: '90px', minWidth: '90px' }
-                        : col.key === 'note' || col.key === 'headcount_note'
-                        ? { width: '240px', maxWidth: '240px' }
-                        : undefined;
+                    col.key === 'month_key' || col.key === 'total_headcount'
+                      ? { width: '90px', minWidth: '90px' }
+                      : col.key === 'note' || col.key === 'headcount_note'
+                      ? { width: '240px', maxWidth: '240px' }
+                      : undefined;
 
                   return (
                     <th
