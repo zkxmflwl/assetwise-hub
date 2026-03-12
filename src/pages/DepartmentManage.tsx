@@ -103,7 +103,8 @@ export default function DepartmentManage() {
       const { error } = await supabase
         .from('departments')
         .update(updatePayload)
-        .eq('department_code', originalCode || r.department_code);
+        .eq('department_code', originalCode || r.department_code)
+        .select('department_code');
 
       console.log('after update query', error);
 
