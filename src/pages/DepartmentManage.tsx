@@ -89,10 +89,11 @@ export default function DepartmentManage() {
       const originalCode = rows.find(row => row.data === r)?.tempId;
       console.log('originalCode:', originalCode);
 
-      const updatePayload: any = {
+    const updatePayload: any = {
         department_name: r.department_name,
         sector_code: r.sector_code || null,
         sector_name: r.sector_name || null,
+        sort_order: r.sort_order ?? 100,
       };
 
       if (originalCode && originalCode !== r.department_code) {
