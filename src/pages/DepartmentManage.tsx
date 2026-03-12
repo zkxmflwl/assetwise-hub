@@ -142,10 +142,11 @@ export default function DepartmentManage() {
       for (const r of updates) {
         // tempId holds the original department_code
         const originalCode = rows.find(row => row.data === r)?.tempId;
-        const updatePayload: any = {
+      const updatePayload: any = {
           department_name: r.department_name,
           sector_code: r.sector_code || null,
           sector_name: r.sector_name || null,
+          sort_order: r.sort_order ?? 100,
         };
         // If department_code changed, update it too (CASCADE will propagate)
         if (originalCode && originalCode !== r.department_code) {
