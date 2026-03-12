@@ -35,7 +35,7 @@ const dashboardItem: NavItem = {
 
 const businessNavItems: NavItem[] = [
   { title: '월간 보고', url: '/department-report', icon: FileText },
-  { title: '월별 데이터', url: '/department-bi', icon: BarChart3 },
+  { title: '월별 데이터', url: '/DepartmentMonthlyData', icon: BarChart3 },
   { title: '프로젝트 데이터', url: '/projects', icon: FolderKanban },
 ];
 

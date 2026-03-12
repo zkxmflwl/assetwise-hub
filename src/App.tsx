@@ -9,7 +9,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ITTangibleAssets from "./pages/ITTangibleAssets";
 import ITIntangibleAssets from "./pages/ITIntangibleAssets";
-import DepartmentBI from "./pages/DepartmentBI";
+import DepartmentMonthlyData from "./pages/DepartmentMonthlyData";
 import DepartmentManage from "./pages/DepartmentManage";
 import DepartmentMonthlyReport from "./pages/DepartmentMonthlyReport";
 import ProjectManage from "./pages/ProjectManage";
@@ -150,10 +150,10 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/department-bi",
+    path: "/DepartmentMonthlyData",
     element: (
       <ProtectedRoute>
-        <DepartmentBI />
+        <DepartmentMonthlyData />
       </ProtectedRoute>
     ),
   },
