@@ -264,18 +264,29 @@ export default function DepartmentManage() {
                       className="h-3.5 w-3.5 rounded border-border accent-primary" />
                   </th>
                 )}
-                {columns.map(col => (
-                  <th key={col.key} className="whitespace-nowrap border-r border-border/50 last:border-r-0 px-3 py-2.5 text-left font-semibold text-foreground">
-                    <button onClick={() => handleSort(col.key)} className="flex items-center gap-1 hover:text-primary transition-colors">
-                      {col.label}
-                      {sortKey === col.key ? (
-                        sortDir === 'asc' ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
-                      ) : (
-                        <ArrowUpDown className="h-3 w-3 opacity-30" />
-                      )}
-                    </button>
-                  </th>
-                ))}
+                {columns.map(col => {
+                  const widthStyle =
+                    col.key === 'sort_order'
+                      ? { width: '90px'}
+                      : undefined;
+
+                  return (
+                    <th
+                      key={col.key}
+                      style={widthStyle}
+                      className="whitespace-nowrap border-r border-border/50 last:border-r-0 px-3 py-2.5 text-left font-semibold text-foreground"
+                    >
+                      <button onClick={() => handleSort(col.key)} className="flex items-center gap-1 hover:text-primary transition-colors">
+                        {col.label}
+                        {sortKey === col.key ? (
+                          sortDir === 'asc' ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+                        ) : (
+                          <ArrowUpDown className="h-3 w-3 opacity-30" />
+                        )}
+                      </button>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
