@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { fetchActiveProjectCount, fetchMonthlyOrderCount, fetchActiveProjectsByDept, fetchMonthlyOrdersByDept } from './businessProjectService';
-import { fetchSalesSummary, fetchYtdByDepartment, fetchYtdSummary, fetchSameMonthLastYear } from './salesService';
+import { fetchSalesSummary, fetchYtdByDepartment, fetchYtdSummary } from './salesService';
 
 export interface DashboardStats {
   ytdSales: number;
@@ -52,12 +52,13 @@ export async function fetchDeptSummary(monthKey: string): Promise<DeptSummaryRow
   const year = monthKey.split('-')[0];
   const [y, m] = monthKey.split('-').map(Number);
   const prevMonthKey = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
+  const prevYearSameMonthKey = `${y - 1}-${String(m).padStart(2, '0')}`;
 
-  const [monthlyData, prevMonthData, ytdData, lastYearData, activeByDept, ordersByDept] = await Promise.all([
+  const [monthlyData, prevMonthData, ytdData, prevYearYtdData, activeByDept, ordersByDept] = await Promise.all([
     fetchSalesSummary(monthKey),
     fetchSalesSummary(prevMonthKey),
     fetchYtdByDepartment(year.toString(), monthKey),
-    fetchSameMonthLastYear(monthKey),
+    fetchYtdByDepartment(String(y - 1), prevYearSameMonthKey),
     fetchActiveProjectsByDept(monthKey),
     fetchMonthlyOrdersByDept(monthKey),
   ]);
@@ -118,15 +119,17 @@ export async function fetchDeptSummary(monthKey: string): Promise<DeptSummaryRow
     d.ytdNetSales = d.ytdSales - d.ytdPurchase;
   }
 
-  // YoY
-  const lastYearMap = new Map<string, number>();
-  for (const r of lastYearData) {
-    lastYearMap.set(r.department_code, Number(r.sales_amount || 0));
+  // YoY (전년 동기 누적 대비)
+  const prevYearYtdMap = new Map<string, number>();
+  for (const r of prevYearYtdData) {
+    const current = prevYearYtdMap.get(r.department_code) || 0;
+    prevYearYtdMap.set(r.department_code, current + Number(r.sales_amount || 0));
   }
+
   for (const [code, d] of depts) {
-    const ly = lastYearMap.get(code);
-    if (ly !== undefined) {
-      d.yoyChange = d.monthlySales - ly;
+    const prevYtdSales = prevYearYtdMap.get(code);
+    if (prevYtdSales !== undefined) {
+      d.yoyChange = d.ytdSales - prevYtdSales;
     }
   }
 
