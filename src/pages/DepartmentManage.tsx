@@ -45,6 +45,7 @@ export default function DepartmentManage() {
   const [sortDir, setSortDir] = useState<SortDir>(null);
 
   const columns: ColDef[] = [
+    { key: 'sort_order', label: '정렬순서', type: 'text' },
     { key: 'sector_code', label: '부문코드', type: 'text' },
     { key: 'sector_name', label: '부문명', type: 'text' },
     { key: 'department_code', label: '부서코드', type: 'text' },
