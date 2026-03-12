@@ -135,6 +135,7 @@ export default function DepartmentManage() {
           sector_code: r.sector_code || null,
           sector_name: r.sector_name || null,
           is_active: true,
+          sort_order: r.sort_order ?? 100,
         }));
         const { error } = await supabase.from('departments').insert(insertData);
         if (error) throw error;
