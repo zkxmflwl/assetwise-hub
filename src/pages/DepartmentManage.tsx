@@ -80,14 +80,36 @@ export default function DepartmentManage() {
 
   const handleSave = async () => {
     const { inserts, updates, deletes } = getChanges();
-    console.log('changes:', {
-      inserts,
-      updates,
-      deletes,
-      hasDirty,
-      selectedIds: Array.from(selectedIds),
-      rows,
-    });
+    console.log('before save loop');
+    for (const r of updates) {
+      console.log('update row:', r);
+
+      const originalCode = rows.find(row => row.data === r)?.tempId;
+      console.log('originalCode:', originalCode);
+
+      const updatePayload: any = {
+        department_name: r.department_name,
+        sector_code: r.sector_code || null,
+        sector_name: r.sector_name || null,
+      };
+
+      if (originalCode && originalCode !== r.department_code) {
+        updatePayload.department_code = r.department_code;
+      }
+
+      console.log('updatePayload:', updatePayload);
+      console.log('eq code:', originalCode || r.department_code);
+
+      const { error } = await supabase
+        .from('departments')
+        .update(updatePayload)
+        .eq('department_code', originalCode || r.department_code);
+
+      console.log('after update query', error);
+
+      if (error) throw error;
+    }
+    console.log('after save loop');
     for (const r of inserts) {
       if (!r.department_code?.trim() || !r.department_name?.trim()) {
         toast.error('부서코드와 부서명은 필수입니다.');
