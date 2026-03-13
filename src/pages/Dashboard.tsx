@@ -156,9 +156,6 @@ export default function Dashboard() {
                   className={`border-b border-border/50 cursor-pointer transition-colors ${selectedDeptCode === row.departmentCode ? 'bg-primary/10 hover:bg-primary/15' : 'hover:bg-muted/30'}`}
                 >
                   <td className="border-r border-border/50 px-3 py-2 text-foreground font-medium">{row.departmentName}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.monthlySales)}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.monthlyPurchase)}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.monthlyNetSales)}</td>
                   <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.ytdSales)}</td>
                   <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.ytdPurchase)}</td>
                   <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.ytdNetSales)}</td>
@@ -169,6 +166,9 @@ export default function Dashboard() {
                       </span>
                     )}
                   </td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.monthlySales)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.monthlyPurchase)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.monthlyNetSales)}</td>
                   <td className="border-r border-border/50 px-3 py-2 text-center text-foreground">{row.activeProjects}건</td>
                   <td className="px-3 py-2 text-center text-foreground">{row.monthlyOrders}건</td>
                 </tr>
