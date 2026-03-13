@@ -190,7 +190,7 @@ export default function Dashboard() {
       </div>
 
 
-      /*
+      {/*
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="glass-card rounded-xl p-6 animate-fade-in">
           <div className="mb-4 flex items-center gap-2">
@@ -255,7 +255,7 @@ export default function Dashboard() {
             </table>
           </div>
         </div>
-        */
+        */}
       </div>
     </div>
   );
