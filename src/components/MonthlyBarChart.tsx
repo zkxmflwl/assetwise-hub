@@ -57,9 +57,9 @@ export default function MonthlyBarChart({ year, departmentCode }: Props) {
           formatter={(value: number, name: string) => [formatKRWShort(value), name]}
         />
         <Legend wrapperStyle={{ fontSize: '12px' }} />
-        <Bar dataKey="sales" name="매출" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
-        <Bar dataKey="purchase" name="매입" fill="hsl(var(--destructive))" radius={[3, 3, 0, 0]} />
-        <Bar dataKey="netSales" name="순매출" fill="hsl(var(--accent))" radius={[3, 3, 0, 0]} />
+        <Bar dataKey="sales" name="매출" fill="#7DA6FF" radius={[3, 3, 0, 0]} />
+        <Bar dataKey="purchase" name="매입" fill="#FF9E9E" radius={[3, 3, 0, 0]} />
+        <Bar dataKey="netSales" name="순매출" fill="#7ED6B2" radius={[3, 3, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
