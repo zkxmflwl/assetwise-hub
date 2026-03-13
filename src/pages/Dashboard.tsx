@@ -83,13 +83,13 @@ export default function Dashboard() {
 
   const summaryColumns = [
     { key: 'departmentName', label: '사업부명' },
-    { key: 'monthlySales', label: '당월 매출' },
-    { key: 'monthlyPurchase', label: '당월 매입' },
-    { key: 'monthlyNetSales', label: '당월 순매출' },
     { key: 'ytdSales', label: '누적매출' },
     { key: 'ytdPurchase', label: '누적매입' },
     { key: 'ytdNetSales', label: '누적순매출' },
     { key: 'yoyChange', label: '전년동기대비매출' },
+    { key: 'monthlySales', label: '당월 매출' },
+    { key: 'monthlyPurchase', label: '당월 매입' },
+    { key: 'monthlyNetSales', label: '당월 순매출' },
     { key: 'activeProjects', label: '영업 중인 건' },
     { key: 'monthlyOrders', label: '당월 수주 건' },
   ];
