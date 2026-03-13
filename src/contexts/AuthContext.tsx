@@ -257,9 +257,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       loginInProgressRef.current = true;
 
-      // 로그인 버튼 직후 너무 멍해 보이지 않게 즉시 로딩 on
-      setIsLoading(true);
-
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
