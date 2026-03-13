@@ -193,17 +193,17 @@ export default function DepartmentMonthlyReport() {
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">당월 매출</p>
-          <p className="mt-1 text-lg font-bold text-foreground">{formatKRW(curSales)}</p>
+          <p className="mt-1 text-lg font-bold text-foreground">{formatKRW(curSales)}원</p>
           <ChangeIndicator current={curSales} previous={prevSales} />
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">당월 매입</p>
-          <p className="mt-1 text-lg font-bold text-foreground">{formatKRW(curPurchase)}</p>
+          <p className="mt-1 text-lg font-bold text-foreground">{formatKRW(curPurchase)}원</p>
           <ChangeIndicator current={curPurchase} previous={prevPurchase} />
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">당월 순매출</p>
-          <p className="mt-1 text-lg font-bold text-foreground">{formatKRW(curNetSales)}</p>
+          <p className="mt-1 text-lg font-bold text-foreground">{formatKRW(curNetSales)}원</p>
           <ChangeIndicator current={curNetSales} previous={prevNetSales} />
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
