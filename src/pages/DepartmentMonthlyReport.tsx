@@ -13,21 +13,37 @@ const CATEGORY_COLORS = [
   'bg-purple-400', 'bg-cyan-400', 'bg-orange-400', 'bg-pink-400',
 ];
 
+/* 전월대비 사용안함
 function getPrevMonthKey(monthKey: string): string {
   if (!monthKey) return '';
   const [y, m] = monthKey.split('-').map(Number);
   if (m === 1) return `${y - 1}-12`;
   return `${y}-${String(m - 1).padStart(2, '0')}`;
 }
+*/
+
+//전년대비 사용
+function getPrevYearSameMonthKey(monthKey: string): string {
+  if (!monthKey) return '';
+  const [y, m] = monthKey.split('-').map(Number);
+  return `${y - 1}-${String(m).padStart(2, '0')}`;
+}
 
 function ChangeIndicator({ current, previous }: { current: number; previous: number | null }) {
-  if (previous === null) return <span className="text-xs text-muted-foreground ml-1">(-)</span>;
+  if (previous === null) {
+    return (
+      <p className="mt-1 text-xs text-muted-foreground">
+        전년동월 데이터 없음
+      </p>
+    );
+  }
+
   const diff = current - previous;
-  if (diff === 0) return <span className="text-xs text-muted-foreground ml-1"><Minus className="h-3 w-3 inline" /></span>;
+
   return (
-    <span className={`text-xs ml-1 ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>
-      ({diff > 0 ? '+' : ''}{formatKRW(diff)})
-    </span>
+    <p className={`mt-1 text-xs ${diff > 0 ? 'text-red-500' : diff < 0 ? 'text-blue-500' : 'text-muted-foreground'}`}>
+      전년동월 대비 {diff > 0 ? '+' : ''}{formatKRW(diff)}
+    </p>
   );
 }
 
@@ -39,7 +55,8 @@ export default function DepartmentMonthlyReport() {
 
   const activeDept = selectedDept || departments[0]?.department_code || '';
   const activeMonth = selectedMonth || months[0] || '';
-  const prevMonth = getPrevMonthKey(activeMonth);
+  //const prevMonth = getPrevMonthKey(activeMonth);
+  const prevYearSameMonth = getPrevYearSameMonthKey(activeMonth);
   const activeYear = activeMonth ? Number(activeMonth.split('-')[0]) : new Date().getFullYear();
 
   const deptName = departments.find(d => d.department_code === activeDept)?.department_name || activeDept;
@@ -50,15 +67,24 @@ export default function DepartmentMonthlyReport() {
     queryFn: () => fetchSalesSummary(activeMonth),
     enabled: !!activeDept && !!activeMonth,
   });
-
+/*
   const { data: prevMonthData = [] } = useQuery({
     queryKey: ['dept-sales', activeDept, prevMonth],
     queryFn: () => fetchSalesSummary(prevMonth),
     enabled: !!prevMonth,
   });
+*/
 
+  const { data: prevYearData = [] } = useQuery({
+    queryKey: ['dept-sales', activeDept, prevYearSameMonth],
+    queryFn: () => fetchSalesSummary(prevYearSameMonth),
+    enabled: !!activeDept && !!prevYearSameMonth,
+  });
+  
   const deptCurrent = currentMonthData.find(r => r.department_code === activeDept);
-  const deptPrev = prevMonthData.find(r => r.department_code === activeDept);
+  
+  //const deptPrev = prevMonthData.find(r => r.department_code === activeDept);
+  const deptPrev = prevYearData.find(r => r.department_code === activeDept);
 
   const curSales = Number(deptCurrent?.sales_amount || 0);
   const curPurchase = Number(deptCurrent?.purchase_amount || 0);
