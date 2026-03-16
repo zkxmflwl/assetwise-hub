@@ -6,7 +6,7 @@ import { useIntangibleAssets } from '@/hooks/useIntangibleAssets';
 import { formatKRW, formatKRWShort, format10MAmount, format1MAmount } from '@/data/mockData';
 import StatCard from '@/components/StatCard';
 import MonthlyBarChart from '@/components/MonthlyBarChart';
-import { TrendingUp, TrendingDown, DollarSign, Briefcase, CheckCircle, AlertTriangle, Clock, Loader2, ArrowUp, ArrowDown, ArrowUpDown, CircleDollarSign, Receipt } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Briefcase, CheckCircle, AlertTriangle, Clock, Loader2, ArrowUp, ArrowDown, ArrowUpDown, CircleDollarSign, Receipt, HandCoins, Banknote, BanknoteArrowDown, BanknoteArrowUp } from 'lucide-react';
 
 type SortDir = 'asc' | 'desc' | null;
 
@@ -121,7 +121,7 @@ export default function Dashboard() {
         <StatCard
           title="누적 매출"
           value={format10MAmount(stats?.ytdSales ?? 0)}
-          icon={<CircleDollarSign className="h-5 w-5" />}
+          icon={<BanknoteArrowDown className="h-5 w-5" />}
           change={stats && stats.prevYtdSales ? stats.ytdSales - stats.prevYtdSales : undefined}
           changeLabel="전년동기대비"
           subText={stats && stats.prevYtdSales ? <span className="text-xs text-muted-foreground">전년: {format10MAmount(stats.prevYtdSales)}</span> : undefined}
@@ -130,7 +130,7 @@ export default function Dashboard() {
         <StatCard
           title="누적 매입"
           value={format10MAmount(stats?.ytdPurchase ?? 0)}
-          icon={<Receipt className="h-5 w-5" />}
+          icon={<BanknoteArrowUp className="h-5 w-5" />}
           change={stats && stats.prevYtdPurchase ? stats.ytdPurchase - stats.prevYtdPurchase : undefined}
           changeLabel="전년동기대비"
           subText={stats && stats.prevYtdPurchase ? <span className="text-xs text-muted-foreground">전년: {format10MAmount(stats.prevYtdPurchase)}</span> : undefined}
@@ -139,7 +139,7 @@ export default function Dashboard() {
         <StatCard
           title="누적 순매출"
           value={format10MAmount(stats?.ytdNetSales ?? 0)}
-          icon={<DollarSign className="h-5 w-5" />}
+          icon={<HandCoins className="h-5 w-5" />}
           change={stats && stats.prevYtdNetSales ? stats.ytdNetSales - stats.prevYtdNetSales : undefined}
           changeLabel="전년동기대비"
           subText={stats && stats.prevYtdNetSales ? <span className="text-xs text-muted-foreground">전년: {format10MAmount(stats.prevYtdNetSales)}</span> : undefined}
