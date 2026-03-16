@@ -3,10 +3,10 @@ import { useDashboardStats, useDeptSummary } from '@/hooks/useDashboardStats';
 import { useAvailableMonths } from '@/hooks/useSalesData';
 import { useTangibleAssets } from '@/hooks/useTangibleAssets';
 import { useIntangibleAssets } from '@/hooks/useIntangibleAssets';
-import { formatKRW, formatKRWShort } from '@/data/mockData';
+import { formatKRW, formatKRWShort, formatSummaryAmount } from '@/data/mockData';
 import StatCard from '@/components/StatCard';
 import MonthlyBarChart from '@/components/MonthlyBarChart';
-import { TrendingUp, TrendingDown, DollarSign, Briefcase, CheckCircle, AlertTriangle, Clock, Loader2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Briefcase, CheckCircle, AlertTriangle, Clock, Loader2, ArrowUp, ArrowDown, ArrowUpDown, CircleDollarSign, Receipt } from 'lucide-react';
 
 type SortDir = 'asc' | 'desc' | null;
 
