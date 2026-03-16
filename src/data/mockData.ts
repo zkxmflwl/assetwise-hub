@@ -34,3 +34,26 @@ export const formatSummaryAmount = (value: number): string => {
   if (man > 0) return `${sign}${man.toLocaleString('ko-KR')}만`;
   return '0';
 };
+
+export function formatRoundedAmount(value: number, unit: number) {
+  const rounded = Math.round(value / unit) * unit;
+  return rounded.toLocaleString('ko-KR');
+}
+
+// 누적: 백만 단위 반올림, 결과가 0이면 십만 단위 반올림
+export function formatYtdAmount(value: number | null | undefined) {
+  const num = value ?? 0;
+
+  const millionRounded = Math.round(num / 1_000_000) * 1_000_000;
+  if (millionRounded !== 0) {
+    return formatRoundedAmount(num, 1_000_000);
+  }
+
+  return formatRoundedAmount(num, 100_000);
+}
+
+// 당월: 십만 단위 반올림
+export function formatMonthlyAmount(value: number | null | undefined) {
+  const num = value ?? 0;
+  return formatRoundedAmount(num, 100_000);
+}
