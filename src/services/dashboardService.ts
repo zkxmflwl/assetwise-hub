@@ -31,21 +31,29 @@ export interface DeptSummaryRow {
 }
 
 export async function fetchDashboardStats(monthKey: string): Promise<DashboardStats> {
-  const year = monthKey.split('-')[0];
+  const [y, m] = monthKey.split('-').map(Number);
+  const year = String(y);
+  const prevYearMonthKey = `${y - 1}-${String(m).padStart(2, '0')}`;
 
-  const [ytdData, activeProjectCount, monthlyOrderCount] = await Promise.all([
+  const [ytdData, prevYtdData, activeProjectCount, monthlyOrderCount] = await Promise.all([
     fetchYtdSummary(year, monthKey),
+    fetchYtdSummary(String(y - 1), prevYearMonthKey),
     fetchActiveProjectCount(monthKey),
     fetchMonthlyOrderCount(monthKey),
   ]);
 
   const ytdSales = ytdData.reduce((s, r) => s + Number(r.sales_amount || 0), 0);
   const ytdPurchase = ytdData.reduce((s, r) => s + Number(r.purchase_amount || 0), 0);
+  const prevYtdSales = prevYtdData.reduce((s, r) => s + Number(r.sales_amount || 0), 0);
+  const prevYtdPurchase = prevYtdData.reduce((s, r) => s + Number(r.purchase_amount || 0), 0);
 
   return {
     ytdSales,
     ytdPurchase,
     ytdNetSales: ytdSales - ytdPurchase,
+    prevYtdSales,
+    prevYtdPurchase,
+    prevYtdNetSales: prevYtdSales - prevYtdPurchase,
     activeProjectCount,
     monthlyOrderCount,
   };
