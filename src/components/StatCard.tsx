@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { formatKRWShort } from '@/data/mockData';
 
 interface StatCardProps {
   title: string;
@@ -22,18 +23,18 @@ export default function StatCard({ title, value, change, changeLabel, subText, i
           {change !== undefined && (
             <div className="flex items-center gap-1.5">
               {change > 0 ? (
-                <TrendingUp className="h-3.5 w-3.5 text-success" />
+                <TrendingUp className="h-3.5 w-3.5 text-red-500" />
               ) : change < 0 ? (
-                <TrendingDown className="h-3.5 w-3.5 text-destructive" />
+                <TrendingDown className="h-3.5 w-3.5 text-blue-500" />
               ) : (
                 <Minus className="h-3.5 w-3.5 text-muted-foreground" />
               )}
               <span
                 className={`text-xs font-medium ${
-                  change > 0 ? 'text-success' : change < 0 ? 'text-destructive' : 'text-muted-foreground'
+                  change > 0 ? 'text-red-500' : change < 0 ? 'text-blue-500' : 'text-muted-foreground'
                 }`}
               >
-                {change > 0 ? '+' : ''}{change} {changeLabel || ''}
+                {change > 0 ? '+' : ''}{typeof change === 'number' && Math.abs(change) >= 10000 ? formatKRWShort(change) : change} {changeLabel || ''}
               </span>
             </div>
           )}
