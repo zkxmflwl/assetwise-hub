@@ -24,7 +24,7 @@ export function formatRoundedAmount(value: number, unit: number): string {
 /** 실적 요약 테이블용
  * 누적 계열: 천만 단위 반올림, 반올림 결과가 0이면 백만 단위 반올림
  */
-export const formatSummaryAmount = (value: number): string => {
+export const format10MAmount = (value: number): string => {
   const millionRounded = Math.round(value / 10_000_000) * 10_000_000;
 
   if (millionRounded !== 0) {
@@ -36,7 +36,7 @@ export const formatSummaryAmount = (value: number): string => {
 };
 
 // 누적: 백만 단위 반올림, 결과가 0이면 십만 단위 반올림
-export function formatYtdAmount(value: number | null | undefined): string {
+export function format1MAmount(value: number | null | undefined): string {
   const num = value ?? 0;
 
   const millionRounded = Math.round(num / 1_000_000) * 1_000_000;
