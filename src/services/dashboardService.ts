@@ -6,6 +6,9 @@ export interface DashboardStats {
   ytdSales: number;
   ytdPurchase: number;
   ytdNetSales: number;
+  prevYtdSales: number;
+  prevYtdPurchase: number;
+  prevYtdNetSales: number;
   activeProjectCount: number;
   monthlyOrderCount: number;
 }
