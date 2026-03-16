@@ -184,11 +184,11 @@ export default function DepartmentMonthlyReport() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">총원</p>
-          <p className="mt-1 text-lg font-bold text-foreground">전월대비 {deptCurrent?.total_headcount ?? 0}명</p>
+          <p className="mt-1 text-lg font-bold text-foreground">{deptCurrent?.total_headcount ?? 0}명</p>
           {deptPrev != null && (() => {
             const diff = (deptCurrent?.total_headcount ?? 0) - (deptPrev?.total_headcount ?? 0);
             if (diff === 0) return null;
-            return <span className={`text-xs ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>({diff > 0 ? '+' : ''}{diff}명)</span>;
+            return <span className={`text-xs ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>({diff > 0 ? '+' : ''}전월대비{diff}명)</span>;
           })()}
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
