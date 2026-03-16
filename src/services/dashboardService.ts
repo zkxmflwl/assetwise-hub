@@ -6,6 +6,9 @@ export interface DashboardStats {
   ytdSales: number;
   ytdPurchase: number;
   ytdNetSales: number;
+  prevYtdSales: number;
+  prevYtdPurchase: number;
+  prevYtdNetSales: number;
   activeProjectCount: number;
   monthlyOrderCount: number;
 }
@@ -28,21 +31,29 @@ export interface DeptSummaryRow {
 }
 
 export async function fetchDashboardStats(monthKey: string): Promise<DashboardStats> {
-  const year = monthKey.split('-')[0];
+  const [y, m] = monthKey.split('-').map(Number);
+  const year = String(y);
+  const prevYearMonthKey = `${y - 1}-${String(m).padStart(2, '0')}`;
 
-  const [ytdData, activeProjectCount, monthlyOrderCount] = await Promise.all([
+  const [ytdData, prevYtdData, activeProjectCount, monthlyOrderCount] = await Promise.all([
     fetchYtdSummary(year, monthKey),
+    fetchYtdSummary(String(y - 1), prevYearMonthKey),
     fetchActiveProjectCount(monthKey),
     fetchMonthlyOrderCount(monthKey),
   ]);
 
   const ytdSales = ytdData.reduce((s, r) => s + Number(r.sales_amount || 0), 0);
   const ytdPurchase = ytdData.reduce((s, r) => s + Number(r.purchase_amount || 0), 0);
+  const prevYtdSales = prevYtdData.reduce((s, r) => s + Number(r.sales_amount || 0), 0);
+  const prevYtdPurchase = prevYtdData.reduce((s, r) => s + Number(r.purchase_amount || 0), 0);
 
   return {
     ytdSales,
     ytdPurchase,
     ytdNetSales: ytdSales - ytdPurchase,
+    prevYtdSales,
+    prevYtdPurchase,
+    prevYtdNetSales: prevYtdSales - prevYtdPurchase,
     activeProjectCount,
     monthlyOrderCount,
   };
@@ -145,5 +156,19 @@ export async function fetchDeptSummary(monthKey: string): Promise<DeptSummaryRow
     }
   }
 
-  return Array.from(depts.values()).sort((a, b) => a.departmentName.localeCompare(b.departmentName, 'ko'));
+  // Sort by department sort_order (ascending) — fetch departments for sort_order
+  const { data: deptList } = await supabase
+    .from('departments')
+    .select('department_code, sort_order')
+    .eq('is_active', true);
+  const sortOrderMap = new Map<string, number>();
+  for (const d of deptList || []) {
+    sortOrderMap.set(d.department_code, d.sort_order);
+  }
+
+  return Array.from(depts.values()).sort((a, b) => {
+    const aOrder = sortOrderMap.get(a.departmentCode) ?? 9999;
+    const bOrder = sortOrderMap.get(b.departmentCode) ?? 9999;
+    return aOrder - bOrder;
+  });
 }

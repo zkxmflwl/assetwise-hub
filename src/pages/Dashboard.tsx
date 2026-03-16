@@ -3,10 +3,10 @@ import { useDashboardStats, useDeptSummary } from '@/hooks/useDashboardStats';
 import { useAvailableMonths } from '@/hooks/useSalesData';
 import { useTangibleAssets } from '@/hooks/useTangibleAssets';
 import { useIntangibleAssets } from '@/hooks/useIntangibleAssets';
-import { formatKRW, formatKRWShort } from '@/data/mockData';
+import { formatKRW, formatKRWShort, formatSummaryAmount } from '@/data/mockData';
 import StatCard from '@/components/StatCard';
 import MonthlyBarChart from '@/components/MonthlyBarChart';
-import { TrendingUp, TrendingDown, DollarSign, Briefcase, CheckCircle, AlertTriangle, Clock, Loader2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Briefcase, CheckCircle, AlertTriangle, Clock, Loader2, ArrowUp, ArrowDown, ArrowUpDown, CircleDollarSign, Receipt } from 'lucide-react';
 
 type SortDir = 'asc' | 'desc' | null;
 
@@ -118,19 +118,34 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <StatCard title="누적 매출" value={formatKRWShort(stats?.ytdSales ?? 0)} icon={<TrendingUp className="h-5 w-5" />} />
-        <StatCard title="누적 매입" value={formatKRWShort(stats?.ytdPurchase ?? 0)} icon={<TrendingDown className="h-5 w-5" />} />
-        <StatCard title="누적 순매출" value={formatKRWShort(stats?.ytdNetSales ?? 0)} icon={<DollarSign className="h-5 w-5" />} />
+        <StatCard title="누적 매출" value={formatKRWShort(stats?.ytdSales ?? 0)} icon={<CircleDollarSign className="h-5 w-5" />}
+          change={stats && stats.prevYtdSales ? stats.ytdSales - stats.prevYtdSales : undefined}
+          changeLabel="전년동기대비"
+          subText={stats && stats.prevYtdSales ? <span className="text-xs text-muted-foreground">전년: {formatKRWShort(stats.prevYtdSales)}</span> : undefined}
+        />
+        <StatCard title="누적 매입" value={formatKRWShort(stats?.ytdPurchase ?? 0)} icon={<Receipt className="h-5 w-5" />}
+          change={stats && stats.prevYtdPurchase ? stats.ytdPurchase - stats.prevYtdPurchase : undefined}
+          changeLabel="전년동기대비"
+          subText={stats && stats.prevYtdPurchase ? <span className="text-xs text-muted-foreground">전년: {formatKRWShort(stats.prevYtdPurchase)}</span> : undefined}
+        />
+        <StatCard title="누적 순매출" value={formatKRWShort(stats?.ytdNetSales ?? 0)} icon={<DollarSign className="h-5 w-5" />}
+          change={stats && stats.prevYtdNetSales ? stats.ytdNetSales - stats.prevYtdNetSales : undefined}
+          changeLabel="전년동기대비"
+          subText={stats && stats.prevYtdNetSales ? <span className="text-xs text-muted-foreground">전년: {formatKRWShort(stats.prevYtdNetSales)}</span> : undefined}
+        />
         <StatCard title="영업 중인 건" value={`${stats?.activeProjectCount ?? 0}건`} icon={<Briefcase className="h-5 w-5" />} />
         <StatCard title="당월 수주 건" value={`${stats?.monthlyOrderCount ?? 0}건`} icon={<CheckCircle className="h-5 w-5" />} />
       </div>
 
       {/* 사업부 별 실적 요약 */}
       <div ref={gridRef} className="glass-card rounded-xl p-6 animate-fade-in">
-        <h2 className="text-lg font-semibold text-foreground mb-4">
-          사업부 별 실적 요약
-          {selectedDeptCode && <span className="ml-2 text-sm font-normal text-primary">(그래프 필터 적용 중 — 행 외부 클릭 시 해제)</span>}
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-foreground">
+            사업부 별 실적 요약
+            {selectedDeptCode && <span className="ml-2 text-sm font-normal text-primary">(그래프 필터 적용 중 — 행 외부 클릭 시 해제)</span>}
+          </h2>
+          <span className="text-xs text-muted-foreground">(단위: 원)</span>
+        </div>
         <div className="overflow-x-auto scrollbar-thin">
           <table className="w-full text-xs">
             <thead>
@@ -156,19 +171,19 @@ export default function Dashboard() {
                   className={`border-b border-border/50 cursor-pointer transition-colors ${selectedDeptCode === row.departmentCode ? 'bg-primary/10 hover:bg-primary/15' : 'hover:bg-muted/30'}`}
                 >
                   <td className="border-r border-border/50 px-3 py-2 text-foreground font-medium">{row.departmentName}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.ytdSales)}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.ytdPurchase)}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.ytdNetSales)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatSummaryAmount(row.ytdSales)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatSummaryAmount(row.ytdPurchase)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatSummaryAmount(row.ytdNetSales)}</td>
                   <td className="border-r border-border/50 px-3 py-2 text-right">
                     {row.yoyChange === null ? <span className="text-muted-foreground">-</span> : (
                       <span className={row.yoyChange > 0 ? 'text-red-500' : row.yoyChange < 0 ? 'text-blue-500' : 'text-foreground'}>
-                        {row.yoyChange > 0 ? '+' : ''}{formatKRWShort(row.yoyChange)}
+                        {row.yoyChange > 0 ? '+' : ''}{formatSummaryAmount(row.yoyChange)}
                       </span>
                     )}
                   </td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.monthlySales)}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.monthlyPurchase)}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.monthlyNetSales)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatSummaryAmount(row.monthlySales)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatSummaryAmount(row.monthlyPurchase)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatSummaryAmount(row.monthlyNetSales)}</td>
                   <td className="border-r border-border/50 px-3 py-2 text-center text-foreground">{row.activeProjects}건</td>
                   <td className="px-3 py-2 text-center text-foreground">{row.monthlyOrders}건</td>
                 </tr>
