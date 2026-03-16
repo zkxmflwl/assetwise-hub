@@ -4,7 +4,7 @@ import { useDepartments } from '@/hooks/useDepartments';
 import { useAvailableMonths } from '@/hooks/useSalesData';
 import { fetchSalesSummary, SalesSummaryRow } from '@/services/salesService';
 import { fetchProjectsByDeptAndStatus, fetchOngoingProjectsByDept, BusinessProjectRow } from '@/services/businessProjectService';
-import { formatKRW } from '@/data/mockData';
+import { formatKRW, formatMonthlyAmount, formatYtdAmount } from '@/data/mockData';
 import { Loader2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 // Gantt bar colors by category
@@ -42,7 +42,7 @@ function ChangeIndicator({ current, previous }: { current: number; previous: num
 
   return (
     <p className={`mt-1 text-xs ${diff > 0 ? 'text-red-500' : diff < 0 ? 'text-blue-500' : 'text-muted-foreground'}`}>
-      전년동월 대비 {diff > 0 ? '+' : ''}{formatKRW(diff)}
+      전년동월 대비 {diff > 0 ? '+' : ''}{formatMonthlyAmount(diff)}
     </p>
   );
 }
@@ -193,17 +193,17 @@ export default function DepartmentMonthlyReport() {
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">당월 매출</p>
-          <p className="mt-1 text-lg font-bold text-foreground">{formatKRW(curSales)}원</p>
+          <p className="mt-1 text-lg font-bold text-foreground">{formatMonthlyAmount(curSales)}원</p>
           <ChangeIndicator current={curSales} previous={prevSales} />
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">당월 매입</p>
-          <p className="mt-1 text-lg font-bold text-foreground">{formatKRW(curPurchase)}원</p>
+          <p className="mt-1 text-lg font-bold text-foreground">{formatMonthlyAmount(curPurchase)}원</p>
           <ChangeIndicator current={curPurchase} previous={prevPurchase} />
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">당월 순매출</p>
-          <p className="mt-1 text-lg font-bold text-foreground">{formatKRW(curNetSales)}원</p>
+          <p className="mt-1 text-lg font-bold text-foreground">{formatMonthlyAmount(curNetSales)}원</p>
           <ChangeIndicator current={curNetSales} previous={prevNetSales} />
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
@@ -303,7 +303,7 @@ export default function DepartmentMonthlyReport() {
                   <td className="px-3 py-2 text-foreground border-r border-border/50">{p.client_name || '-'}</td>
                   <td className="px-3 py-2 text-foreground border-r border-border/50">{p.project_summary || p.project_name}</td>
                   <td className="px-3 py-2 text-foreground border-r border-border/50">{p.schedule_note || '-'}</td>
-                  <td className="px-3 py-2 text-foreground text-right border-r border-border/50">{formatKRW(Number(p.sales_amount || 0))}</td>
+                  <td className="px-3 py-2 text-foreground text-right border-r border-border/50">{formatMonthlyAmount(Number(p.sales_amount || 0))}</td>
                   <td className="px-3 py-2 text-muted-foreground">{p.note || '-'}</td>
                 </tr>
               ))}
