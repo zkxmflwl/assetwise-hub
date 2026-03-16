@@ -171,19 +171,19 @@ export default function Dashboard() {
                   className={`border-b border-border/50 cursor-pointer transition-colors ${selectedDeptCode === row.departmentCode ? 'bg-primary/10 hover:bg-primary/15' : 'hover:bg-muted/30'}`}
                 >
                   <td className="border-r border-border/50 px-3 py-2 text-foreground font-medium">{row.departmentName}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.ytdSales)}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.ytdPurchase)}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.ytdNetSales)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatSummaryAmount(row.ytdSales)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatSummaryAmount(row.ytdPurchase)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatSummaryAmount(row.ytdNetSales)}</td>
                   <td className="border-r border-border/50 px-3 py-2 text-right">
                     {row.yoyChange === null ? <span className="text-muted-foreground">-</span> : (
                       <span className={row.yoyChange > 0 ? 'text-red-500' : row.yoyChange < 0 ? 'text-blue-500' : 'text-foreground'}>
-                        {row.yoyChange > 0 ? '+' : ''}{formatKRWShort(row.yoyChange)}
+                        {row.yoyChange > 0 ? '+' : ''}{formatSummaryAmount(row.yoyChange)}
                       </span>
                     )}
                   </td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.monthlySales)}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.monthlyPurchase)}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatKRWShort(row.monthlyNetSales)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatSummaryAmount(row.monthlySales)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatSummaryAmount(row.monthlyPurchase)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatSummaryAmount(row.monthlyNetSales)}</td>
                   <td className="border-r border-border/50 px-3 py-2 text-center text-foreground">{row.activeProjects}건</td>
                   <td className="px-3 py-2 text-center text-foreground">{row.monthlyOrders}건</td>
                 </tr>
