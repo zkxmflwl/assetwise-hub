@@ -34,7 +34,7 @@ export default function StatCard({ title, value, change, changeLabel, subText, i
                   change > 0 ? 'text-red-500' : change < 0 ? 'text-blue-500' : 'text-muted-foreground'
                 }`}
               >
-                {change > 0 ? '+' : ''}{typeof change === 'number' && Math.abs(change) >= 10000 ? formatKRWShort(change) : change} {changeLabel || ''}
+                {changeLabel || ''} {change > 0 ? '+' : ''}{typeof change === 'number' && Math.abs(change) >= 10000 ? formatKRWShort(change) : change} 
               </span>
             </div>
           )}
