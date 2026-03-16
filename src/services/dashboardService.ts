@@ -156,5 +156,19 @@ export async function fetchDeptSummary(monthKey: string): Promise<DeptSummaryRow
     }
   }
 
-  return Array.from(depts.values()).sort((a, b) => a.departmentName.localeCompare(b.departmentName, 'ko'));
+  // Sort by department sort_order (ascending) — fetch departments for sort_order
+  const { data: deptList } = await supabase
+    .from('departments')
+    .select('department_code, sort_order')
+    .eq('is_active', true);
+  const sortOrderMap = new Map<string, number>();
+  for (const d of deptList || []) {
+    sortOrderMap.set(d.department_code, d.sort_order);
+  }
+
+  return Array.from(depts.values()).sort((a, b) => {
+    const aOrder = sortOrderMap.get(a.departmentCode) ?? 9999;
+    const bOrder = sortOrderMap.get(b.departmentCode) ?? 9999;
+    return aOrder - bOrder;
+  });
 }
