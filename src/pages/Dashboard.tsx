@@ -139,10 +139,13 @@ export default function Dashboard() {
 
       {/* 사업부 별 실적 요약 */}
       <div ref={gridRef} className="glass-card rounded-xl p-6 animate-fade-in">
-        <h2 className="text-lg font-semibold text-foreground mb-4">
-          사업부 별 실적 요약
-          {selectedDeptCode && <span className="ml-2 text-sm font-normal text-primary">(그래프 필터 적용 중 — 행 외부 클릭 시 해제)</span>}
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-foreground">
+            사업부 별 실적 요약
+            {selectedDeptCode && <span className="ml-2 text-sm font-normal text-primary">(그래프 필터 적용 중 — 행 외부 클릭 시 해제)</span>}
+          </h2>
+          <span className="text-xs text-muted-foreground">(단위: 원)</span>
+        </div>
         <div className="overflow-x-auto scrollbar-thin">
           <table className="w-full text-xs">
             <thead>
