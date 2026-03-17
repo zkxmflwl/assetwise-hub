@@ -50,10 +50,10 @@ function ChangeIndicator({ current, previous }: { current: number; previous: num
 export default function DepartmentMonthlyReport() {
   const { data: departments = [] } = useDepartments();
   const { data: months = [] } = useAvailableMonths();
-  const [selectedDept, setSelectedDept] = useState('');
+  const [selectedDept, setSelectedDept] = useState('__none__');
   const [selectedMonth, setSelectedMonth] = useState('');
 
-  const activeDept = selectedDept || departments[0]?.department_code || '';
+  const activeDept = selectedDept === '__none__' ? '' : selectedDept || departments[0]?.department_code || '';
   const activeMonth = selectedMonth || months[0] || '';
   //const prevMonth = getPrevMonthKey(activeMonth);
   const prevYearSameMonth = getPrevYearSameMonthKey(activeMonth);
@@ -166,8 +166,9 @@ export default function DepartmentMonthlyReport() {
       <div className="flex flex-wrap gap-3 items-center">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">사업부</span>
-          <select value={activeDept} onChange={(e) => setSelectedDept(e.target.value)}
+          <select value={selectedDept} onChange={(e) => setSelectedDept(e.target.value)}
             className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none">
+            <option value="__none__">선택</option>
             {departments.map((d) => <option key={d.department_code} value={d.department_code}>{d.department_name}</option>)}
           </select>
         </div>

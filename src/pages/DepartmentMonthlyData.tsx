@@ -21,12 +21,12 @@ interface ColDef {
   readOnly?: boolean;
 }
 
-export default function DepartmentBI() {
+export default function DepartmentMonthlyData() {
   const { hasPermission, authUser } = useAuth();
   const canEdit = hasPermission('MANAGER');
   const { data: departments = [] } = useDepartments();
-  const [selectedDept, setSelectedDept] = useState('');
-  const activeDept = selectedDept || departments[0]?.department_code || '';
+  const [selectedDept, setSelectedDept] = useState('__none__');
+  const activeDept = selectedDept === '__none__' ? '' : selectedDept || departments[0]?.department_code || '';
   const xlsxInputRef = useRef<HTMLInputElement>(null);
 
   const { data: salesData = [], isLoading, refetch } = useQuery({
@@ -496,10 +496,11 @@ export default function DepartmentBI() {
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">사업부 선택</span>
           <select
-            value={activeDept}
+            value={selectedDept}
             onChange={(e) => setSelectedDept(e.target.value)}
             className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
           >
+            <option value="__none__">선택</option>
             {departments.map((d) => (
               <option key={d.department_code} value={d.department_code}>
                 {d.department_name}
