@@ -4,7 +4,7 @@ import { useDepartments } from '@/hooks/useDepartments';
 import { useAvailableMonths } from '@/hooks/useSalesData';
 import { fetchSalesSummary, SalesSummaryRow } from '@/services/salesService';
 import { fetchProjectsByDeptAndStatus, fetchOngoingProjectsByDept, BusinessProjectRow } from '@/services/businessProjectService';
-import { formatKRW, formatMonthlyAmount, formatYtdAmount } from '@/data/mockData';
+import { formatKRW, formatMonthlyAmount } from '@/data/mockData';
 import { Loader2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 // Gantt bar colors by category
