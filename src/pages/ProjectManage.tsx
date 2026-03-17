@@ -130,7 +130,7 @@ export default function ProjectManage() {
     };
 
     const CELL_PADDING = 24;  // px-3 양쪽
-    const ICON_W       = 28;  // 정렬 아이콘(12px) + 필터 아이콘(12px) + gap
+    const ICON_W       = 52;  // 정렬 아이콘(12px) + 필터 아이콘(12px) + gap
     const INPUT_EXTRA  = 12;  // input/select 내부 패딩
 
     return columns.reduce<Record<string, number>>((acc, col) => {
