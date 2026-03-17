@@ -77,7 +77,7 @@ export default function ProjectManage() {
   const columns: ColDef[] = useMemo(() => [
     { key: 'sort_order', label: '월간보고 상 정렬', type: 'number', minWidth: '70px' },
     { key: 'visible', label: '월간보고 상 노출', type: 'boolean' },
-    { key: 'client_name', label: '고객사명', type: 'text', minWidth: '300px' },
+    { key: 'client_name', label: '고객사명', type: 'text'},
     { key: 'project_name', label: '프로젝트명', type: 'text', minWidth: '300px' },
     { key: 'project_summary', label: '프로젝트 내용', type: 'text', minWidth: '300px' },
     { key: 'project_status', label: '상태', type: 'select', minWidth: '300px' , options: PROJECT_STATUSES.map(s => ({ value: s, label: s })) },
@@ -258,11 +258,34 @@ export default function ProjectManage() {
     if (!canEdit || col.readOnly) {
       if (col.type === 'select') {
         const opt = col.options?.find(o => o.value === val);
-        return <span className="text-xs text-foreground whitespace-nowrap">{opt?.label || val || '-'}</span>;
+        return (
+          <span className="block text-xs text-foreground whitespace-normal break-words">
+            {opt?.label || val || '-'}
+          </span>
+        );
       }
-      if (col.type === 'number') return <span className="text-xs text-foreground text-right block whitespace-nowrap">{col.key === 'sort_order' ? (val ?? 0) : formatKRW(Number(val || 0))}</span>;
-      if (col.type === 'boolean') return <span className="text-xs text-foreground whitespace-nowrap">{val ? 'Y' : 'N'}</span>;
-      return <span className="text-xs text-foreground whitespace-nowrap">{val || '-'}</span>;
+
+      if (col.type === 'number') {
+        return (
+          <span className="block text-xs text-foreground text-right whitespace-normal break-words">
+            {col.key === 'sort_order' ? (val ?? 0) : formatKRW(Number(val || 0))}
+          </span>
+        );
+      }
+
+      if (col.type === 'boolean') {
+        return (
+          <span className="block text-xs text-foreground whitespace-normal break-words">
+            {val ? 'Y' : 'N'}
+          </span>
+        );
+      }
+
+      return (
+        <span className="block text-xs text-foreground whitespace-normal break-words">
+          {val || '-'}
+        </span>
+      );
     }
 
     if (col.type === 'boolean') {
@@ -438,7 +461,12 @@ export default function ProjectManage() {
                     </td>
                   )}
                   {columns.map(col => (
-                    <td key={col.key} className="border-r border-border/50 last:border-r-0 px-3 py-1.5">{renderCell(row, col)}</td>
+                    <td
+                      key={col.key}
+                      className="align-top border-r border-border/50 last:border-r-0 px-3 py-1.5"
+                    >
+                      {renderCell(row, col)}
+                    </td>
                   ))}
                 </tr>
               ))}
