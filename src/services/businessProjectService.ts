@@ -28,12 +28,12 @@ export interface BusinessProjectRow {
 }
 
 export const PROJECT_STATUSES = [
-  '영업 전',
+  '기회 식별',
   '영업 중',
   '수주 완료',
   '프로젝트 중',
   '프로젝트 완료',
-  '영업 실패',
+  '영업 종결',
   '기타',
 ];
 
