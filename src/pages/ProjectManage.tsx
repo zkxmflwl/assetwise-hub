@@ -78,11 +78,11 @@ export default function ProjectManage() {
     { key: 'sort_order', label: '월간보고 상 정렬', type: 'number', minWidth: '70px' },
     { key: 'visible', label: '월간보고 상 노출', type: 'boolean' },
     { key: 'client_name', label: '고객사명', type: 'text' },
-    { key: 'project_name', label: '프로젝트명', type: 'text', minWidth: '150px' },
-    { key: 'project_summary', label: '프로젝트 내용', type: 'text', minWidth: '150px' },
+    { key: 'project_name', label: '프로젝트명', type: 'text', minWidth: '300px' },
+    { key: 'project_summary', label: '프로젝트 내용', type: 'text', minWidth: '300px' },
     { key: 'project_status', label: '상태', type: 'select', options: PROJECT_STATUSES.map(s => ({ value: s, label: s })) },
-    { key: 'sales_schedule_note', label: '영업일정', type: 'text', minWidth: '120px' },
-    { key: 'secured_schedule_note', label: '수주일정', type: 'text', minWidth: '120px' },
+    { key: 'sales_schedule_note', label: '영업일정', type: 'text', minWidth: '200px' },
+    { key: 'secured_schedule_note', label: '수주일정', type: 'text', minWidth: '200px' },
     { key: 'category', label: '분류', type: 'text' },
     { key: 'base_date', label: '기회식별일', type: 'date' },
     { key: 'order_date', label: '수주완료일', type: 'date' },
@@ -92,7 +92,7 @@ export default function ProjectManage() {
     { key: 'purchase_amount', label: '매입', type: 'number' },
     { key: 'effort', label: '라이선스 및 공수', type: 'text', minWidth: '120px' },
     { key: 'note', label: '비고', type: 'text' },
-    { key: 'department_code', label: '사업부', type: 'select', readOnly: true, options: departments.map(d => ({ value: d.department_code, label: d.department_name })) },
+    { key: 'department_code', label: '사업부', type: 'select', minWidth: '200px', readOnly: true, options: departments.map(d => ({ value: d.department_code, label: d.department_name })) },
   ], [departments]);
 
   const getDisplayValue = useCallback((row: GridRow<BusinessProjectRow>, col: ColDef): string => {
@@ -398,7 +398,7 @@ export default function ProjectManage() {
                   </th>
                 )}
                 {columns.map(col => (
-                  <th key={col.key} className="whitespace-nowrap border-r border-border/50 last:border-r-0 px-3 py-2.5 text-left font-semibold text-foreground">
+                  <th key={col.key} className="border-r border-border/50 last:border-r-0 px-3 py-2.5 text-left font-semibold text-foreground">
                     <div className="flex items-center gap-1">
                       <button onClick={() => handleSort(col.key)} className="flex items-center gap-1 hover:text-primary transition-colors">
                         {col.label}
