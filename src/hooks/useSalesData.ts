@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchSalesSummary, fetchAvailableMonths } from '@/services/salesService';
+import { fetchSalesSummary, fetchAvailableMonths, fetchAvailableDeptMonths } from '@/services/salesService';
 
 export function useSalesData(monthKey?: string) {
   return useQuery({
@@ -8,10 +8,17 @@ export function useSalesData(monthKey?: string) {
   });
 }
 
-export function useAvailableMonths(departmentCode?: string) {
+export function useAvailableDeptMonths(departmentCode?: string) {
   return useQuery({
     queryKey: ['available-months', departmentCode],
-    queryFn: () => fetchAvailableMonths(departmentCode),
+    queryFn: () => fetchAvailableDeptMonths(departmentCode),
     enabled: !!departmentCode,
+  });
+}
+
+export function useAvailableMonths() {
+  return useQuery({
+    queryKey: ['available-months'],
+    queryFn: fetchAvailableMonths,
   });
 }

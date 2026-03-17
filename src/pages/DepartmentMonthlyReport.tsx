@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect  } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDepartments } from '@/hooks/useDepartments';
-import { useAvailableMonths } from '@/hooks/useSalesData';
+import { useAvailableDeptMonths } from '@/hooks/useSalesData';
 import { fetchSalesSummary, SalesSummaryRow } from '@/services/salesService';
 import { fetchProjectsByDeptAndStatus, fetchOngoingProjectsByDept, BusinessProjectRow } from '@/services/businessProjectService';
 import { formatKRW, formatMonthlyAmount } from '@/data/mockData';
@@ -54,7 +54,7 @@ export default function DepartmentMonthlyReport() {
 
   const activeDept = selectedDept === '__none__' ? '' : selectedDept || departments[0]?.department_code || '';
 
-  const { data: months = [] } = useAvailableMonths(activeDept);
+  const { data: months = [] } = useAvailableDeptMonths(activeDept);
 
   // 사업부가 바뀌면 월 선택 초기화 → 새 목록의 첫 번째(최신)로 자동 설정
   useEffect(() => {
