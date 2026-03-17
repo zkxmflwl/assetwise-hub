@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useBusinessProjects } from '@/hooks/useBusinessProjects';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useAuth } from '@/contexts/AuthContext';
@@ -106,58 +106,31 @@ export default function ProjectManage() {
     return String(val);
   }, []);
 
-  // ─── 컬럼 폭 동적 계산 ────────────────────────────────────────────────────────
-  // 실제 DOM에서 사용 중인 폰트를 읽어 canvas measureText로 측정.
-  // 한글은 canvas가 과대 측정하는 경향이 있어 0.85 보정 계수를 적용.
-  const colWidths = useMemo(() => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+  // ─── 컬럼 폭: th DOM 실측 기반 ───────────────────────────────────────────────
+  // canvas measureText는 실제 렌더링 폰트와 달라 부정확.
+  // 대신 th 요소를 ref로 참조해 렌더링 후 실제 offsetWidth를 읽어 td에 동일하게 적용.
+  const thRefs = useRef<Record<string, HTMLTableCellElement | null>>({});
+  const [measuredWidths, setMeasuredWidths] = useState<Record<string, number>>({});
 
-    // 실제 페이지 폰트 가져오기 (없으면 기본값)
-    const bodyFont = typeof window !== 'undefined'
-      ? window.getComputedStyle(document.body).fontFamily
-      : 'sans-serif';
-
-    const KO_CORRECTION = 0.85; // 한글 과대측정 보정
-
-    const measureText = (text: string, bold = false): number => {
-      if (!ctx) return text.length * 8;
-      ctx.font = `${bold ? 'bold ' : ''}12px ${bodyFont}`;
-      const raw = ctx.measureText(text).width;
-      // 한글 포함 여부 확인
-      const hasKorean = /[\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]/.test(text);
-      return hasKorean ? raw * KO_CORRECTION : raw;
-    };
-
-    const CELL_PADDING = 24;  // px-3 양쪽
-    const ICON_W       = 52;  // 정렬 아이콘(12px) + 필터 아이콘(12px) + gap
-    const INPUT_EXTRA  = 12;  // input/select 내부 패딩
-
-    return columns.reduce<Record<string, number>>((acc, col) => {
-      // ① 헤더 폭
-      const headerPx = measureText(col.label, true) + CELL_PADDING + ICON_W;
-
-      // ② 데이터 폭 (모든 rows 중 최대)
-      let maxDataPx = 0;
-      for (const row of rows) {
-        const display = getDisplayValue(row, col);
-        if (!display) continue;
-        const w = measureText(display) + CELL_PADDING + INPUT_EXTRA;
-        if (w > maxDataPx) maxDataPx = w;
+  // th가 렌더링된 뒤 실제 폭을 측정해 state에 저장
+  useEffect(() => {
+    const next: Record<string, number> = {};
+    let changed = false;
+    for (const col of columns) {
+      const el = thRefs.current[col.key];
+      if (!el) continue;
+      const w = el.offsetWidth;
+      if (w > 0 && w !== measuredWidths[col.key]) {
+        next[col.key] = w;
+        changed = true;
+      } else if (measuredWidths[col.key]) {
+        next[col.key] = measuredWidths[col.key];
       }
-
-      // ③ 타입별 최솟값
-      const typeMin =
-        col.type === 'date'    ? 128 :  // yyyy-mm-dd input
-        col.type === 'boolean' ? 40  :  // 체크박스
-        col.type === 'number'  ? 56  :  // 숫자
-        0;
-
-      // 헤더·데이터·타입 최솟값 중 가장 큰 값 사용
-      acc[col.key] = Math.ceil(Math.max(headerPx, maxDataPx, typeMin));
-      return acc;
-    }, {});
-  }, [rows, columns, getDisplayValue]);
+    }
+    if (changed) setMeasuredWidths(prev => ({ ...prev, ...next }));
+  // columns, rows, activeFilterCol 이 바뀌면 th 크기도 바뀔 수 있으므로 재측정
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [columns, rows, activeFilterCol]);
 
   const visibleRows = useMemo(() => {
     let filtered = rows;
@@ -381,10 +354,7 @@ export default function ProjectManage() {
           value={val ?? ''}
           disabled={disabled}
           onChange={(e) => updateCell(row.tempId, col.key as any, Number(e.target.value))}
-          className={`${inputBase} w-full text-right
-            [appearance:textfield]
-            [&::-webkit-inner-spin-button]:appearance-none
-            [&::-webkit-outer-spin-button]:appearance-none`}
+          className={`${inputBase} w-full text-right`}
         />
       );
     }
@@ -496,7 +466,7 @@ export default function ProjectManage() {
                 {columns.map(col => (
                   <th
                     key={col.key}
-                    style={{ minWidth: colWidths[col.key] ? `${colWidths[col.key]}px` : undefined }}
+                    ref={el => { thRefs.current[col.key] = el; }}
                     className="whitespace-nowrap border-r border-border/50 last:border-r-0 px-3 py-2.5 text-left font-semibold text-foreground"
                   >
                     <div className="flex items-center gap-1">
@@ -557,7 +527,7 @@ export default function ProjectManage() {
                   {columns.map(col => (
                     <td
                       key={col.key}
-                      style={{ minWidth: colWidths[col.key] ? `${colWidths[col.key]}px` : undefined }}
+                      style={{ minWidth: measuredWidths[col.key] ? `${measuredWidths[col.key]}px` : undefined }}
                       className="align-middle border-r border-border/50 last:border-r-0 px-3 py-1.5 whitespace-nowrap"
                     >
                       {renderCell(row, col)}
