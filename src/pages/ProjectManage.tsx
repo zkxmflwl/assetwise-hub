@@ -398,7 +398,7 @@ export default function ProjectManage() {
                   </th>
                 )}
                 {columns.map(col => (
-                  <th key={col.key} className="border-r border-border/50 last:border-r-0 px-3 py-2.5 text-left font-semibold text-foreground">
+                  <th key={col.key} className="whitespace-nowrap border-r border-border/50 last:border-r-0 px-3 py-2.5 text-left font-semibold text-foreground">
                     <div className="flex items-center gap-1">
                       <button onClick={() => handleSort(col.key)} className="flex items-center gap-1 hover:text-primary transition-colors">
                         {col.label}
