@@ -75,24 +75,24 @@ export default function ProjectManage() {
   }, [departments]);
 
   const columns: ColDef[] = useMemo(() => [
-    { key: 'sort_order', label: '월간보고 상 정렬', type: 'number', minWidth: '70px' },
-    { key: 'visible', label: '월간보고 상 노출', type: 'boolean' },
-    { key: 'client_name', label: '고객사명', type: 'text'},
-    { key: 'project_name', label: '프로젝트명', type: 'text', minWidth: '300px' },
-    { key: 'project_summary', label: '프로젝트 내용', type: 'text', minWidth: '300px' },
-    { key: 'project_status', label: '상태', type: 'select', minWidth: '300px' , options: PROJECT_STATUSES.map(s => ({ value: s, label: s })) },
-    { key: 'sales_schedule_note', label: '영업일정', type: 'text', minWidth: '300px' },
-    { key: 'secured_schedule_note', label: '수주일정', type: 'text', minWidth: '300px' },
-    { key: 'category', label: '분류', type: 'text' },
-    { key: 'base_date', label: '기회식별일', type: 'date' },
-    { key: 'order_date', label: '수주완료일', type: 'date' },
-    { key: 'start_date', label: '프로젝트시작일', type: 'date' },
-    { key: 'end_date', label: '프로젝트종료일', type: 'date' },
-    { key: 'sales_amount', label: '매출', type: 'number' },
-    { key: 'purchase_amount', label: '매입', type: 'number' },
-    { key: 'effort', label: '라이선스 및 공수', type: 'text', minWidth: '120px' },
-    { key: 'note', label: '비고', type: 'text' },
-    { key: 'department_code', label: '사업부', type: 'select', minWidth: '200px', readOnly: true, options: departments.map(d => ({ value: d.department_code, label: d.department_name })) },
+    { key: 'sort_order',            label: '월간보고 상 정렬',  type: 'number',  minWidth: '100px' },
+    { key: 'visible',               label: '월간보고 상 노출',  type: 'boolean', minWidth: '100px' },
+    { key: 'client_name',           label: '고객사명',          type: 'text',    minWidth: '120px' },
+    { key: 'project_name',          label: '프로젝트명',        type: 'text',    minWidth: '300px' },
+    { key: 'project_summary',       label: '프로젝트 내용',     type: 'text',    minWidth: '300px' },
+    { key: 'project_status',        label: '상태',              type: 'select',  minWidth: '160px', options: PROJECT_STATUSES.map(s => ({ value: s, label: s })) },
+    { key: 'sales_schedule_note',   label: '영업일정',          type: 'text',    minWidth: '200px' },
+    { key: 'secured_schedule_note', label: '수주일정',          type: 'text',    minWidth: '200px' },
+    { key: 'category',              label: '분류',              type: 'text',    minWidth: '80px'  },
+    { key: 'base_date',             label: '기회식별일',        type: 'date',    minWidth: '130px' },
+    { key: 'order_date',            label: '수주완료일',        type: 'date',    minWidth: '130px' },
+    { key: 'start_date',            label: '프로젝트시작일',    type: 'date',    minWidth: '130px' },
+    { key: 'end_date',              label: '프로젝트종료일',    type: 'date',    minWidth: '130px' },
+    { key: 'sales_amount',          label: '매출',              type: 'number',  minWidth: '110px' },
+    { key: 'purchase_amount',       label: '매입',              type: 'number',  minWidth: '110px' },
+    { key: 'effort',                label: '라이선스 및 공수',  type: 'text',    minWidth: '140px' },
+    { key: 'note',                  label: '비고',              type: 'text',    minWidth: '160px' },
+    { key: 'department_code',       label: '사업부',            type: 'select',  minWidth: '140px', readOnly: true, options: departments.map(d => ({ value: d.department_code, label: d.department_name })) },
   ], [departments]);
 
   const getDisplayValue = useCallback((row: GridRow<BusinessProjectRow>, col: ColDef): string => {
@@ -109,25 +109,21 @@ export default function ProjectManage() {
   const visibleRows = useMemo(() => {
     let filtered = rows;
 
-    // Department filter
     if (deptFilter) {
       filtered = filtered.filter(r => (r.data as any).department_code === deptFilter);
     }
 
-    // Use filter
     if (useFilter === 'active') {
       filtered = filtered.filter(r => (r.data as any).is_active !== false);
     } else if (useFilter === 'inactive') {
       filtered = filtered.filter(r => (r.data as any).is_active === false);
     }
 
-    // Search
     if (search) {
       const s = search.toLowerCase();
       filtered = filtered.filter(r => columns.some(col => getDisplayValue(r, col).toLowerCase().includes(s)));
     }
 
-    // Column filters
     const activeFilters = Object.entries(columnFilters).filter(([, v]) => v.trim() !== '');
     if (activeFilters.length > 0) {
       filtered = filtered.filter(r =>
@@ -139,7 +135,6 @@ export default function ProjectManage() {
       );
     }
 
-    // Sort
     filtered = [...filtered].sort((a, b) => {
       if (a.status === 'new' && b.status !== 'new') return -1;
       if (a.status !== 'new' && b.status === 'new') return 1;
@@ -251,89 +246,102 @@ export default function ProjectManage() {
     }
   }, [addRow, deptFilter, updateCell]);
 
+  // ─── renderCell ──────────────────────────────────────────────────────────────
+  // 핵심 변경: 모든 읽기 전용 span에 whitespace-nowrap 적용
+  //            input/select width는 minWidth 기반으로 고정 → 내용에 따라 열 폭 결정
   const renderCell = (row: GridRow<BusinessProjectRow>, col: ColDef) => {
     const val = (row.data as any)[col.key];
     const disabled = !canEdit || row.status === 'deleted' || !!col.readOnly;
+    const inputBase = 'bg-transparent px-1 py-0.5 text-xs text-foreground disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary rounded whitespace-nowrap';
 
+    // ── 읽기 전용 렌더 ──
     if (!canEdit || col.readOnly) {
       if (col.type === 'select') {
         const opt = col.options?.find(o => o.value === val);
-        return (
-          <span className="block text-xs text-foreground whitespace-normal break-words">
-            {opt?.label || val || '-'}
-          </span>
-        );
+        return <span className="block text-xs text-foreground whitespace-nowrap">{opt?.label || val || '-'}</span>;
       }
-
       if (col.type === 'number') {
         return (
-          <span className="block text-xs text-foreground text-right whitespace-normal break-words">
+          <span className="block text-xs text-foreground text-right whitespace-nowrap">
             {col.key === 'sort_order' ? (val ?? 0) : formatKRW(Number(val || 0))}
           </span>
         );
       }
-
       if (col.type === 'boolean') {
-        return (
-          <span className="block text-xs text-foreground whitespace-normal break-words">
-            {val ? 'Y' : 'N'}
-          </span>
-        );
+        return <span className="block text-xs text-foreground whitespace-nowrap">{val ? 'Y' : 'N'}</span>;
       }
-
-      return (
-        <span className="block text-xs text-foreground whitespace-normal break-words">
-          {val || '-'}
-        </span>
-      );
+      return <span className="block text-xs text-foreground whitespace-nowrap">{val || '-'}</span>;
     }
 
+    // ── 편집 가능 렌더 ──
     if (col.type === 'boolean') {
       return (
-        <div className="flex justify-center items-center"> {/* 가운데 정렬을 위한 래퍼 추가 */}
-          <input type="checkbox" checked={!!val} disabled={disabled}
+        <div className="flex justify-center items-center">
+          <input
+            type="checkbox"
+            checked={!!val}
+            disabled={disabled}
             onChange={(e) => updateCell(row.tempId, col.key as any, e.target.checked)}
-            className="h-3.5 w-3.5 rounded border-border accent-primary" />
+            className="h-3.5 w-3.5 rounded border-border accent-primary"
+          />
         </div>
       );
     }
 
     if (col.type === 'select') {
-      if (col.key === 'project_status') {
-        return (
-          <select value={val || ''} disabled={disabled} onChange={(e) => handleStatusChange(row.tempId, e.target.value)}
-            className="w-full min-w-[80px] bg-transparent px-1 py-0.5 text-xs text-foreground disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary rounded">
-            <option value="">-</option>
-            {col.options?.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-        );
-      }
+      const handler = col.key === 'project_status'
+        ? (e: React.ChangeEvent<HTMLSelectElement>) => handleStatusChange(row.tempId, e.target.value)
+        : (e: React.ChangeEvent<HTMLSelectElement>) => updateCell(row.tempId, col.key as any, e.target.value || null);
       return (
-        <select value={val || ''} disabled={disabled} onChange={(e) => updateCell(row.tempId, col.key as any, e.target.value || null)}
-          className="w-full min-w-[80px] bg-transparent px-1 py-0.5 text-xs text-foreground disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary rounded">
+        <select
+          value={val || ''}
+          disabled={disabled}
+          onChange={handler}
+          style={{ minWidth: col.minWidth || '80px' }}
+          className={`${inputBase} w-full`}
+        >
           <option value="">-</option>
           {col.options?.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       );
     }
+
     if (col.type === 'date') {
       return (
-        <input type="date" value={val || ''} disabled={disabled} onChange={(e) => updateCell(row.tempId, col.key as any, e.target.value || null)}
-          className="w-full min-w-[120px] bg-transparent px-1 py-0.5 text-xs text-foreground disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary rounded" />
+        <input
+          type="date"
+          value={val || ''}
+          disabled={disabled}
+          onChange={(e) => updateCell(row.tempId, col.key as any, e.target.value || null)}
+          style={{ minWidth: col.minWidth || '130px' }}
+          className={`${inputBase} w-full`}
+        />
       );
     }
+
     if (col.type === 'number') {
       return (
-        <input type="number" value={val ?? ''} disabled={disabled}
+        <input
+          type="number"
+          value={val ?? ''}
+          disabled={disabled}
           onChange={(e) => updateCell(row.tempId, col.key as any, Number(e.target.value))}
-          className="w-full min-w-[80px] bg-transparent px-1 py-0.5 text-xs text-foreground text-right disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary rounded" />
+          style={{ minWidth: col.minWidth || '80px' }}
+          className={`${inputBase} w-full text-right`}
+        />
       );
     }
+
+    // text
     return (
-      <input type="text" value={val ?? ''} disabled={disabled}
+      <input
+        type="text"
+        value={val ?? ''}
+        disabled={disabled}
         onChange={(e) => updateCell(row.tempId, col.key as any, e.target.value)}
-        className={`w-full bg-transparent px-1 py-0.5 text-xs text-foreground disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary rounded`}
-        style={{ minWidth: col.minWidth || '60px' }} />
+        style={{ minWidth: col.minWidth || '80px' }}
+        className={`${inputBase} w-full`}
+      />
     );
   };
 
@@ -410,20 +418,33 @@ export default function ProjectManage() {
       <div className="text-xs text-muted-foreground">전체 {projects.length}건 / 표시 {visibleRows.length}건</div>
 
       <div className="glass-card overflow-hidden rounded-xl">
+        {/* overflow-x-auto + 세로 스크롤만 고정 높이로 제한 */}
         <div className="overflow-x-auto scrollbar-thin" style={{ maxHeight: '70vh' }}>
-          <table className="w-full text-xs table-auto"> {/* table-auto 추가 */}
+          {/*
+           * table-auto  : 열 폭을 내용에 맞게 자동 계산
+           * w-max       : 테이블이 컨테이너보다 넓어질 수 있도록 허용 (overflow-x-auto 와 함께 사용)
+           */}
+          <table className="w-max table-auto text-xs">
             <thead className="sticky top-0 z-10">
               <tr className="border-b border-border bg-muted">
                 {canEdit && (
                   <th className="w-8 border-r border-border/50 px-2 py-2.5">
-                    <input type="checkbox" checked={visibleRows.length > 0 && selectedIds.size === visibleRows.length} onChange={toggleSelectAll}
-                      className="h-3.5 w-3.5 rounded border-border accent-primary" />
+                    <input
+                      type="checkbox"
+                      checked={visibleRows.length > 0 && selectedIds.size === visibleRows.length}
+                      onChange={toggleSelectAll}
+                      className="h-3.5 w-3.5 rounded border-border accent-primary"
+                    />
                   </th>
                 )}
                 {columns.map(col => (
-                  <th key={col.key} className="whitespace-nowrap border-r border-border/50 last:border-r-0 px-3 py-2.5 text-left font-semibold text-foreground">
+                  <th
+                    key={col.key}
+                    style={{ minWidth: col.minWidth }}
+                    className="whitespace-nowrap border-r border-border/50 last:border-r-0 px-3 py-2.5 text-left font-semibold text-foreground"
+                  >
                     <div className="flex items-center gap-1">
-                      <button onClick={() => handleSort(col.key)} className="flex items-center gap-1 hover:text-primary transition-colors">
+                      <button onClick={() => handleSort(col.key)} className="flex items-center gap-1 hover:text-primary transition-colors whitespace-nowrap">
                         {col.label}
                         {sortKey === col.key ? (
                           sortDir === 'asc' ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
@@ -431,17 +452,26 @@ export default function ProjectManage() {
                           <ArrowUpDown className="h-3 w-3 opacity-30" />
                         )}
                       </button>
-                      <button onClick={() => setActiveFilterCol(activeFilterCol === col.key ? null : col.key)}
-                        className={`p-0.5 rounded hover:bg-muted-foreground/20 ${columnFilters[col.key] ? 'text-primary' : 'text-muted-foreground/40'}`}>
+                      <button
+                        onClick={() => setActiveFilterCol(activeFilterCol === col.key ? null : col.key)}
+                        className={`p-0.5 rounded hover:bg-muted-foreground/20 ${columnFilters[col.key] ? 'text-primary' : 'text-muted-foreground/40'}`}
+                      >
                         <Filter className="h-3 w-3" />
                       </button>
                     </div>
                     {activeFilterCol === col.key && (
                       <div className="mt-1 flex items-center gap-1">
-                        <input autoFocus value={columnFilters[col.key] || ''} onChange={(e) => handleFilterChange(col.key, e.target.value)}
-                          placeholder="필터..." className="w-full rounded border border-border bg-background px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary" />
+                        <input
+                          autoFocus
+                          value={columnFilters[col.key] || ''}
+                          onChange={(e) => handleFilterChange(col.key, e.target.value)}
+                          placeholder="필터..."
+                          className="w-full rounded border border-border bg-background px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
                         {columnFilters[col.key] && (
-                          <button onClick={() => clearFilter(col.key)} className="text-muted-foreground hover:text-foreground"><X className="h-3 w-3" /></button>
+                          <button onClick={() => clearFilter(col.key)} className="text-muted-foreground hover:text-foreground">
+                            <X className="h-3 w-3" />
+                          </button>
                         )}
                       </div>
                     )}
@@ -451,19 +481,28 @@ export default function ProjectManage() {
             </thead>
             <tbody>
               {visibleRows.length === 0 ? (
-                <tr><td colSpan={columns.length + (canEdit ? 1 : 0)} className="py-8 text-center text-muted-foreground">데이터 없음</td></tr>
+                <tr>
+                  <td colSpan={columns.length + (canEdit ? 1 : 0)} className="py-8 text-center text-muted-foreground">
+                    데이터 없음
+                  </td>
+                </tr>
               ) : visibleRows.map((row) => (
                 <tr key={row.tempId} className={`border-b border-border/50 transition-colors hover:bg-muted/30 ${rowBg(row)}`}>
                   {canEdit && (
                     <td className="w-8 border-r border-border/50 px-2 py-1.5">
-                      <input type="checkbox" checked={selectedIds.has(row.tempId)} onChange={() => toggleSelect(row.tempId)}
-                        className="h-3.5 w-3.5 rounded border-border accent-primary" />
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(row.tempId)}
+                        onChange={() => toggleSelect(row.tempId)}
+                        className="h-3.5 w-3.5 rounded border-border accent-primary"
+                      />
                     </td>
                   )}
                   {columns.map(col => (
                     <td
                       key={col.key}
-                      className="align-top border-r border-border/50 last:border-r-0 px-3 py-1.5"
+                      style={{ minWidth: col.minWidth }}
+                      className="align-middle border-r border-border/50 last:border-r-0 px-3 py-1.5 whitespace-nowrap"
                     >
                       {renderCell(row, col)}
                     </td>
