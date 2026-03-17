@@ -37,11 +37,17 @@ export async function fetchSalesByDepartment(departmentCode: string) {
   return data as unknown as SalesSummaryRow[];
 }
 
-export async function fetchAvailableMonths() {
-  const { data, error } = await supabase
+export async function fetchAvailableMonths(departmentCode?: string) {
+  let query = supabase
     .from('department_sales_summary')
     .select('month_key')
     .order('month_key', { ascending: false });
+
+  if (departmentCode) {
+    query = query.eq('department_code', departmentCode);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
   const unique = [...new Set((data || []).map((d) => d.month_key))];
   return unique;

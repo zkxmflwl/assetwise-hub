@@ -8,9 +8,10 @@ export function useSalesData(monthKey?: string) {
   });
 }
 
-export function useAvailableMonths() {
+export function useAvailableMonths(departmentCode?: string) {
   return useQuery({
-    queryKey: ['available-months'],
-    queryFn: fetchAvailableMonths,
+    queryKey: ['available-months', departmentCode],
+    queryFn: () => fetchAvailableMonths(departmentCode),
+    enabled: !!departmentCode,
   });
 }

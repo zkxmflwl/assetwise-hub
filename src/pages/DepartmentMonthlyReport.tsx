@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect  } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useAvailableMonths } from '@/hooks/useSalesData';
@@ -49,11 +49,18 @@ function ChangeIndicator({ current, previous }: { current: number; previous: num
 
 export default function DepartmentMonthlyReport() {
   const { data: departments = [] } = useDepartments();
-  const { data: months = [] } = useAvailableMonths();
   const [selectedDept, setSelectedDept] = useState('__none__');
   const [selectedMonth, setSelectedMonth] = useState('');
 
   const activeDept = selectedDept === '__none__' ? '' : selectedDept || departments[0]?.department_code || '';
+
+  const { data: months = [] } = useAvailableMonths(activeDept);
+
+  // 사업부가 바뀌면 월 선택 초기화 → 새 목록의 첫 번째(최신)로 자동 설정
+  useEffect(() => {
+    setSelectedMonth('');
+  }, [activeDept]);
+
   const activeMonth = selectedMonth || months[0] || '';
   //const prevMonth = getPrevMonthKey(activeMonth);
   const prevYearSameMonth = getPrevYearSameMonthKey(activeMonth);
