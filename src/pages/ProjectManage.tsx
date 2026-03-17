@@ -245,21 +245,11 @@ export default function ProjectManage() {
   };
 
   const handleAddRow = useCallback(() => {
-    addRow();
-    // After addRow, auto-fill department_code from the selected filter
+    const tempId = addRow();
     if (deptFilter) {
-      // The newest row is always the last one added; useGridEditor puts it at the end
-      setTimeout(() => {
-        const newRows = rows.filter(r => r.status === 'new');
-        // We'll set it on all new rows that don't have a dept yet
-        newRows.forEach(r => {
-          if (!(r.data as any).department_code) {
-            updateCell(r.tempId, 'department_code' as any, deptFilter);
-          }
-        });
-      }, 0);
+      updateCell(tempId, 'department_code' as any, deptFilter);
     }
-  }, [addRow, deptFilter, rows, updateCell]);
+  }, [addRow, deptFilter, updateCell]);
 
   const renderCell = (row: GridRow<BusinessProjectRow>, col: ColDef) => {
     const val = (row.data as any)[col.key];
