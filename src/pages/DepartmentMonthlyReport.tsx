@@ -13,16 +13,16 @@ const CATEGORY_COLORS = [
   'bg-purple-400', 'bg-cyan-400', 'bg-orange-400', 'bg-pink-400',
 ];
 
-/* 전월대비 사용안함
+// 전월대비
 function getPrevMonthKey(monthKey: string): string {
   if (!monthKey) return '';
   const [y, m] = monthKey.split('-').map(Number);
   if (m === 1) return `${y - 1}-12`;
   return `${y}-${String(m - 1).padStart(2, '0')}`;
 }
-*/
 
-//전년대비 사용
+
+//전년대비 
 function getPrevYearSameMonthKey(monthKey: string): string {
   if (!monthKey) return '';
   const [y, m] = monthKey.split('-').map(Number);
@@ -62,7 +62,7 @@ export default function DepartmentMonthlyReport() {
   }, [activeDept]);
 
   const activeMonth = selectedMonth || months[0] || '';
-  //const prevMonth = getPrevMonthKey(activeMonth);
+  const prevMonth = getPrevMonthKey(activeMonth);
   const prevYearSameMonth = getPrevYearSameMonthKey(activeMonth);
   const activeYear = activeMonth ? Number(activeMonth.split('-')[0]) : new Date().getFullYear();
 
@@ -74,13 +74,13 @@ export default function DepartmentMonthlyReport() {
     queryFn: () => fetchSalesSummary(activeMonth),
     enabled: !!activeDept && !!activeMonth,
   });
-/*
+
   const { data: prevMonthData = [] } = useQuery({
     queryKey: ['dept-sales', activeDept, prevMonth],
     queryFn: () => fetchSalesSummary(prevMonth),
     enabled: !!prevMonth,
   });
-*/
+
 
   const { data: prevYearData = [] } = useQuery({
     queryKey: ['dept-sales', activeDept, prevYearSameMonth],
@@ -90,14 +90,14 @@ export default function DepartmentMonthlyReport() {
   
   const deptCurrent = currentMonthData.find(r => r.department_code === activeDept);
   
-  //const deptPrev = prevMonthData.find(r => r.department_code === activeDept);
-  const deptPrev = prevYearData.find(r => r.department_code === activeDept);
+  const deptMonthPrev = prevMonthData.find(r => r.department_code === activeDept);
+  const deptYearPrev = prevYearData.find(r => r.department_code === activeDept);
 
   const curSales = Number(deptCurrent?.sales_amount || 0);
   const curPurchase = Number(deptCurrent?.purchase_amount || 0);
   const curNetSales = curSales - curPurchase;
-  const prevSales = deptPrev ? Number(deptPrev.sales_amount || 0) : null;
-  const prevPurchase = deptPrev ? Number(deptPrev.purchase_amount || 0) : null;
+  const prevSales = deptYearPrev ? Number(deptYearPrev.sales_amount || 0) : null;
+  const prevPurchase = deptYearPrev ? Number(deptYearPrev.purchase_amount || 0) : null;
   const prevNetSales = prevSales !== null && prevPurchase !== null ? prevSales - prevPurchase : null;
 
   // Ongoing projects (프로젝트 중)
@@ -193,8 +193,8 @@ export default function DepartmentMonthlyReport() {
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">총원</p>
           <p className="mt-1 text-lg font-bold text-foreground">{deptCurrent?.total_headcount ?? 0}명</p>
-          {deptPrev != null && (() => {
-            const diff = (deptCurrent?.total_headcount ?? 0) - (deptPrev?.total_headcount ?? 0);
+          {deptMonthPrev != null && (() => {
+            const diff = (deptCurrent?.total_headcount ?? 0) - (deptMonthPrev?.total_headcount ?? 0);
             if (diff === 0) return null;
             return <span className={`text-xs ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>({diff > 0 ? '+' : ''}전월대비{diff}명)</span>;
           })()}
