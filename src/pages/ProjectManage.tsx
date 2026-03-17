@@ -330,7 +330,7 @@ export default function ProjectManage() {
 
       {canEdit && (
         <div className="flex flex-wrap items-center gap-2">
-          <button onClick={addRow} className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:opacity-90 transition-opacity">
+          <button onClick={handleAddRow} className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:opacity-90 transition-opacity">
             <Plus className="h-3.5 w-3.5" /> 행 추가
           </button>
           <button onClick={handleDelete} className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground hover:text-destructive transition-colors">
