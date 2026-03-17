@@ -327,7 +327,7 @@ export default function ProjectManage() {
           value={val || ''}
           disabled={disabled}
           onChange={handler}
-          className={`${inputBase} w-full`}
+          className={`${inputBase} w-full min-w-0`}
         >
           <option value="">-</option>
           {col.options?.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -342,7 +342,7 @@ export default function ProjectManage() {
           value={val || ''}
           disabled={disabled}
           onChange={(e) => updateCell(row.tempId, col.key as any, e.target.value || null)}
-          className={`${inputBase} w-full`}
+          className={`${inputBase} w-full min-w-0`}
         />
       );
     }
@@ -353,8 +353,12 @@ export default function ProjectManage() {
           type="number"
           value={val ?? ''}
           disabled={disabled}
+          size={1}
           onChange={(e) => updateCell(row.tempId, col.key as any, Number(e.target.value))}
-          className={`${inputBase} w-full text-right`}
+          className={`${inputBase} w-full min-w-0 text-right
+            [appearance:textfield]
+            [&::-webkit-inner-spin-button]:appearance-none
+            [&::-webkit-outer-spin-button]:appearance-none`}
         />
       );
     }
@@ -365,8 +369,9 @@ export default function ProjectManage() {
         type="text"
         value={val ?? ''}
         disabled={disabled}
+        size={1}
         onChange={(e) => updateCell(row.tempId, col.key as any, e.target.value)}
-        className={`${inputBase} w-full`}
+        className={`${inputBase} w-full min-w-0`}
       />
     );
   };
@@ -527,8 +532,8 @@ export default function ProjectManage() {
                   {columns.map(col => (
                     <td
                       key={col.key}
-                      style={{ minWidth: measuredWidths[col.key] ? `${measuredWidths[col.key]}px` : undefined }}
-                      className="align-middle border-r border-border/50 last:border-r-0 px-3 py-1.5 whitespace-nowrap"
+                      style={{ minWidth: measuredWidths[col.key] ? `${measuredWidths[col.key]}px` : undefined, maxWidth: measuredWidths[col.key] ? `${measuredWidths[col.key]}px` : undefined }}
+                      className="align-middle border-r border-border/50 last:border-r-0 px-3 py-1.5 whitespace-nowrap overflow-hidden"
                     >
                       {renderCell(row, col)}
                     </td>
