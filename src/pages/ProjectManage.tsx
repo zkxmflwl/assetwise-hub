@@ -106,31 +106,47 @@ export default function ProjectManage() {
     return String(val);
   }, []);
 
-  // ─── 컬럼 폭: th DOM 실측 기반 ───────────────────────────────────────────────
-  // canvas measureText는 실제 렌더링 폰트와 달라 부정확.
-  // 대신 th 요소를 ref로 참조해 렌더링 후 실제 offsetWidth를 읽어 td에 동일하게 적용.
-  const thRefs = useRef<Record<string, HTMLTableCellElement | null>>({});
-  const [measuredWidths, setMeasuredWidths] = useState<Record<string, number>>({});
+// ─── 컬럼 폭 동적 계산 ────────────────────────────────────────────────────────
+  const colWidths = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const bodyFont = window.getComputedStyle(document.body).fontFamily;
 
-  // th가 렌더링된 뒤 실제 폭을 측정해 state에 저장
-  useEffect(() => {
-    const next: Record<string, number> = {};
-    let changed = false;
-    for (const col of columns) {
-      const el = thRefs.current[col.key];
-      if (!el) continue;
-      const w = el.offsetWidth;
-      if (w > 0 && w !== measuredWidths[col.key]) {
-        next[col.key] = w;
-        changed = true;
-      } else if (measuredWidths[col.key]) {
-        next[col.key] = measuredWidths[col.key];
+    const measure = (text: string, bold = false) => {
+      if (!ctx || !text) return 0;
+      ctx.font = `${bold ? '600 ' : ''}12px ${bodyFont}`;
+      const hasKo = /[\uAC00-\uD7A3]/.test(text);
+      return ctx.measureText(text).width * (hasKo ? 0.88 : 1);
+    };
+
+    const PAD   = 28;
+    const ICONS = 52;
+    const INPUT = 16;
+
+    return columns.reduce<Record<string, number>>((acc, col) => {
+      const header = measure(col.label, true) + PAD + ICONS;
+
+      let data = 0;
+      for (const row of rows) {
+        const v = getDisplayValue(row, col);
+        if (!v) continue;
+        const w = measure(v) + PAD + INPUT;
+        if (w > data) data = w;
       }
-    }
-    if (changed) setMeasuredWidths(prev => ({ ...prev, ...next }));
-  // columns, rows, activeFilterCol 이 바뀌면 th 크기도 바뀔 수 있으므로 재측정
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [columns, rows, activeFilterCol]);
+
+      let optMax = 0;
+      if (col.options) {
+        for (const o of col.options) {
+          const w = measure(o.label) + PAD + INPUT + 20;
+          if (w > optMax) optMax = w;
+        }
+      }
+
+      const typeMin = col.type === 'date' ? 130 : col.type === 'boolean' ? 44 : 0;
+      acc[col.key] = Math.ceil(Math.max(header, data, optMax, typeMin));
+      return acc;
+    }, {});
+  }, [rows, columns, getDisplayValue]);
 
   const visibleRows = useMemo(() => {
     let filtered = rows;
@@ -471,8 +487,7 @@ export default function ProjectManage() {
                 {columns.map(col => (
                   <th
                     key={col.key}
-                    ref={el => { thRefs.current[col.key] = el; }}
-                    style={measuredWidths[col.key] ? { width: `${measuredWidths[col.key]}px`, minWidth: `${measuredWidths[col.key]}px` } : undefined}
+                    style={{ minWidth: `${colWidths[col.key] ?? 0}px` }}
                     className="whitespace-nowrap border-r border-border/50 last:border-r-0 px-3 py-2.5 text-left font-semibold text-foreground"
                   >
                     <div className="flex items-center gap-1">
