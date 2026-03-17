@@ -19,7 +19,7 @@ interface ColDef {
   type: 'text' | 'number' | 'date' | 'select' | 'boolean';
   options?: { value: string; label: string }[];
   readOnly?: boolean;
-  minWidth?: string;
+  // minWidth는 동적으로 계산되므로 ColDef에서 제거
 }
 
 export default function ProjectManage() {
@@ -65,7 +65,7 @@ export default function ProjectManage() {
   const [sortDir, setSortDir] = useState<SortDir>(null);
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [activeFilterCol, setActiveFilterCol] = useState<string | null>(null);
-  const [deptFilter, setDeptFilter] = useState('');
+  const [deptFilter, setDeptFilter] = useState('__none__');
   const [useFilter, setUseFilter] = useState<'all' | 'active' | 'inactive'>('active');
 
   useEffect(() => {
@@ -75,24 +75,24 @@ export default function ProjectManage() {
   }, [departments]);
 
   const columns: ColDef[] = useMemo(() => [
-    { key: 'sort_order',            label: '월간보고 상 정렬',  type: 'number',  minWidth: '100px' },
-    { key: 'visible',               label: '월간보고 상 노출',  type: 'boolean', minWidth: '100px' },
-    { key: 'client_name',           label: '고객사명',          type: 'text',    minWidth: '120px' },
-    { key: 'project_name',          label: '프로젝트명',        type: 'text',    minWidth: '300px' },
-    { key: 'project_summary',       label: '프로젝트 내용',     type: 'text',    minWidth: '300px' },
-    { key: 'project_status',        label: '상태',              type: 'select',  minWidth: '160px', options: PROJECT_STATUSES.map(s => ({ value: s, label: s })) },
-    { key: 'sales_schedule_note',   label: '영업일정',          type: 'text',    minWidth: '200px' },
-    { key: 'secured_schedule_note', label: '수주일정',          type: 'text',    minWidth: '200px' },
-    { key: 'category',              label: '분류',              type: 'text',    minWidth: '80px'  },
-    { key: 'base_date',             label: '기회식별일',        type: 'date',    minWidth: '130px' },
-    { key: 'order_date',            label: '수주완료일',        type: 'date',    minWidth: '130px' },
-    { key: 'start_date',            label: '프로젝트시작일',    type: 'date',    minWidth: '130px' },
-    { key: 'end_date',              label: '프로젝트종료일',    type: 'date',    minWidth: '130px' },
-    { key: 'sales_amount',          label: '매출',              type: 'number',  minWidth: '110px' },
-    { key: 'purchase_amount',       label: '매입',              type: 'number',  minWidth: '110px' },
-    { key: 'effort',                label: '라이선스 및 공수',  type: 'text',    minWidth: '140px' },
-    { key: 'note',                  label: '비고',              type: 'text',    minWidth: '160px' },
-    { key: 'department_code',       label: '사업부',            type: 'select',  minWidth: '140px', readOnly: true, options: departments.map(d => ({ value: d.department_code, label: d.department_name })) },
+    { key: 'sort_order',            label: '월간보고 상 정렬',  type: 'number'  },
+    { key: 'visible',               label: '월간보고 상 노출',  type: 'boolean' },
+    { key: 'client_name',           label: '고객사명',          type: 'text'    },
+    { key: 'project_name',          label: '프로젝트명',        type: 'text'    },
+    { key: 'project_summary',       label: '프로젝트 내용',     type: 'text'    },
+    { key: 'project_status',        label: '상태',              type: 'select',  options: PROJECT_STATUSES.map(s => ({ value: s, label: s })) },
+    { key: 'sales_schedule_note',   label: '영업일정',          type: 'text'    },
+    { key: 'secured_schedule_note', label: '수주일정',          type: 'text'    },
+    { key: 'category',              label: '분류',              type: 'text'    },
+    { key: 'base_date',             label: '기회식별일',        type: 'date'    },
+    { key: 'order_date',            label: '수주완료일',        type: 'date'    },
+    { key: 'start_date',            label: '프로젝트시작일',    type: 'date'    },
+    { key: 'end_date',              label: '프로젝트종료일',    type: 'date'    },
+    { key: 'sales_amount',          label: '매출',              type: 'number'  },
+    { key: 'purchase_amount',       label: '매입',              type: 'number'  },
+    { key: 'effort',                label: '라이선스 및 공수',  type: 'text'    },
+    { key: 'note',                  label: '비고',              type: 'text'    },
+    { key: 'department_code',       label: '사업부',            type: 'select',  readOnly: true, options: departments.map(d => ({ value: d.department_code, label: d.department_name })) },
   ], [departments]);
 
   const getDisplayValue = useCallback((row: GridRow<BusinessProjectRow>, col: ColDef): string => {
@@ -106,9 +106,55 @@ export default function ProjectManage() {
     return String(val);
   }, []);
 
+  // ─── 컬럼 폭 동적 계산 ────────────────────────────────────────────────────────
+  // Canvas measureText로 헤더 레이블과 모든 행 데이터 중 가장 긴 텍스트 폭을 계산,
+  // 셀 패딩(px-3 = 24px) + 정렬/필터 아이콘 여유(40px) + 입력 필드 여백(16px) 을 더해 minWidth 결정
+  const colWidths = useMemo(() => {
+    // canvas 컨텍스트로 텍스트 폭 측정 (폰트: 12px sans-serif = text-xs)
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const measureText = (text: string, bold = false): number => {
+      if (!ctx) return text.length * 7;
+      ctx.font = bold ? 'bold 12px sans-serif' : '12px sans-serif';
+      return ctx.measureText(text).width;
+    };
+
+    const CELL_PADDING = 24;   // px-3 양쪽 = 12*2
+    const HEADER_EXTRA = 44;   // 정렬 아이콘 + 필터 아이콘 버튼 공간
+    const INPUT_EXTRA  = 16;   // input/select 내부 패딩 여유
+
+    return columns.reduce<Record<string, number>>((acc, col) => {
+      // 헤더 폭 (bold)
+      const headerPx = measureText(col.label, true) + CELL_PADDING + HEADER_EXTRA;
+
+      // 데이터 폭: 모든 rows 에서 해당 컬럼 표시값 측정
+      let maxDataPx = 0;
+      for (const row of rows) {
+        const display = getDisplayValue(row, col);
+        if (!display) continue;
+        const w = measureText(display) + CELL_PADDING + INPUT_EXTRA;
+        if (w > maxDataPx) maxDataPx = w;
+      }
+
+      // date 컬럼은 input[type=date] 최솟값 보장
+      const dateMin = col.type === 'date' ? 120 : 0;
+      // boolean 컬럼은 체크박스만 있으므로 최솟값 보장
+      const boolMin = col.type === 'boolean' ? 48 : 0;
+
+      acc[col.key] = Math.max(headerPx, maxDataPx, dateMin, boolMin);
+      return acc;
+    }, {});
+  // rows 가 바뀌거나 columns 가 바뀔 때만 재계산
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, columns]);
+
   const visibleRows = useMemo(() => {
     let filtered = rows;
 
+    // 사업부 필터: '__none__'(선택 안 함)이면 빈 결과, 특정 코드면 해당 부서만
+    if (deptFilter === '__none__') {
+      return [];
+    }
     if (deptFilter) {
       filtered = filtered.filter(r => (r.data as any).department_code === deptFilter);
     }
@@ -241,7 +287,7 @@ export default function ProjectManage() {
 
   const handleAddRow = useCallback(() => {
     const tempId = addRow();
-    if (deptFilter) {
+    if (deptFilter && deptFilter !== '__none__') {
       updateCell(tempId, 'department_code' as any, deptFilter);
     }
   }, [addRow, deptFilter, updateCell]);
@@ -297,7 +343,6 @@ export default function ProjectManage() {
           value={val || ''}
           disabled={disabled}
           onChange={handler}
-          style={{ minWidth: col.minWidth || '80px' }}
           className={`${inputBase} w-full`}
         >
           <option value="">-</option>
@@ -313,7 +358,6 @@ export default function ProjectManage() {
           value={val || ''}
           disabled={disabled}
           onChange={(e) => updateCell(row.tempId, col.key as any, e.target.value || null)}
-          style={{ minWidth: col.minWidth || '130px' }}
           className={`${inputBase} w-full`}
         />
       );
@@ -326,7 +370,6 @@ export default function ProjectManage() {
           value={val ?? ''}
           disabled={disabled}
           onChange={(e) => updateCell(row.tempId, col.key as any, Number(e.target.value))}
-          style={{ minWidth: col.minWidth || '80px' }}
           className={`${inputBase} w-full text-right`}
         />
       );
@@ -339,7 +382,6 @@ export default function ProjectManage() {
         value={val ?? ''}
         disabled={disabled}
         onChange={(e) => updateCell(row.tempId, col.key as any, e.target.value)}
-        style={{ minWidth: col.minWidth || '80px' }}
         className={`${inputBase} w-full`}
       />
     );
@@ -390,7 +432,7 @@ export default function ProjectManage() {
           <span className="text-sm text-muted-foreground">사업부</span>
           <select value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)}
             className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none">
-            <option value="">전체</option>
+            <option value="__none__">선택</option>
             {departments.map(d => <option key={d.department_code} value={d.department_code}>{d.department_name}</option>)}
           </select>
         </div>
@@ -440,7 +482,7 @@ export default function ProjectManage() {
                 {columns.map(col => (
                   <th
                     key={col.key}
-                    style={{ minWidth: col.minWidth }}
+                    style={{ minWidth: colWidths[col.key] ? `${colWidths[col.key]}px` : undefined }}
                     className="whitespace-nowrap border-r border-border/50 last:border-r-0 px-3 py-2.5 text-left font-semibold text-foreground"
                   >
                     <div className="flex items-center gap-1">
@@ -501,7 +543,7 @@ export default function ProjectManage() {
                   {columns.map(col => (
                     <td
                       key={col.key}
-                      style={{ minWidth: col.minWidth }}
+                      style={{ minWidth: colWidths[col.key] ? `${colWidths[col.key]}px` : undefined }}
                       className="align-middle border-r border-border/50 last:border-r-0 px-3 py-1.5 whitespace-nowrap"
                     >
                       {renderCell(row, col)}
