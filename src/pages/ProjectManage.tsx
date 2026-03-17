@@ -195,7 +195,7 @@ export default function ProjectManage() {
     for (const r of [...inserts, ...updates]) {
       if (!(r as any).project_name?.trim()) { toast.error('프로젝트명은 필수입니다.'); return; }
       if (!(r as any).department_code?.trim()) { toast.error('사업부는 필수입니다.'); return; }
-      if (!(r as any).client_name?.trim()) { toast.error('업체명은 필수입니다.'); return; }
+      if (!(r as any).client_name?.trim()) { toast.error('고객사명은 필수입니다.'); return; }
       if (!(r as any).project_status?.trim()) { toast.error('상태는 필수입니다.'); return; }
     }
 
