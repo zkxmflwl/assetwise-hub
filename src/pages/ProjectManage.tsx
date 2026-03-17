@@ -75,24 +75,24 @@ export default function ProjectManage() {
   }, [departments]);
 
   const columns: ColDef[] = useMemo(() => [
-    { key: 'sort_order', label: '정렬 순서', type: 'number', minWidth: '70px' },
-    { key: 'visible', label: '노출여부', type: 'boolean' },
+    { key: 'sort_order', label: '월간보고 상 정렬', type: 'number', minWidth: '70px' },
+    { key: 'visible', label: '월간보고 상 노출', type: 'boolean' },
+    { key: 'client_name', label: '고객사명', type: 'text' },
     { key: 'project_name', label: '프로젝트명', type: 'text', minWidth: '150px' },
     { key: 'project_summary', label: '프로젝트 내용', type: 'text', minWidth: '150px' },
-    { key: 'department_code', label: '사업부', type: 'select', options: departments.map(d => ({ value: d.department_code, label: d.department_name })) },
-    { key: 'client_name', label: '업체명', type: 'text' },
     { key: 'project_status', label: '상태', type: 'select', options: PROJECT_STATUSES.map(s => ({ value: s, label: s })) },
     { key: 'sales_schedule_note', label: '영업일정', type: 'text', minWidth: '120px' },
     { key: 'secured_schedule_note', label: '수주일정', type: 'text', minWidth: '120px' },
     { key: 'category', label: '분류', type: 'text' },
-    { key: 'base_date', label: '기준일', type: 'date' },
-    { key: 'order_date', label: '수주일', type: 'date' },
-    { key: 'start_date', label: '시작일', type: 'date' },
-    { key: 'end_date', label: '종료일', type: 'date' },
+    { key: 'base_date', label: '기회식별일', type: 'date' },
+    { key: 'order_date', label: '수주완료일', type: 'date' },
+    { key: 'start_date', label: '프로젝트시작일', type: 'date' },
+    { key: 'end_date', label: '프로젝트종료일', type: 'date' },
     { key: 'sales_amount', label: '매출', type: 'number' },
     { key: 'purchase_amount', label: '매입', type: 'number' },
-    { key: 'effort', label: '공수', type: 'text' },
+    { key: 'effort', label: '라이선스 및 공수', type: 'text', minWidth: '120px' },
     { key: 'note', label: '비고', type: 'text' },
+    { key: 'department_code', label: '사업부', type: 'select', readOnly: true, options: departments.map(d => ({ value: d.department_code, label: d.department_name })) },
   ], [departments]);
 
   const getDisplayValue = useCallback((row: GridRow<BusinessProjectRow>, col: ColDef): string => {
