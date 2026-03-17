@@ -137,7 +137,10 @@ export default function DepartmentMonthlyReport() {
     return salesProjects.filter(p => {
       const base = p.base_date;
       if (!base) return true;
-      return base.startsWith(activeMonth.split('-')[0]);
+      const activeYear = Number(activeMonth.split('-')[0]);
+      const baseYear = Number(base.split('-')[0]);
+      // 선택 연도 및 전년도 모두 포함
+      return baseYear >= activeYear - 1;
     });
   }, [salesProjects, activeMonth]);
 
