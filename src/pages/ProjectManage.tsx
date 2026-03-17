@@ -106,46 +106,63 @@ export default function ProjectManage() {
     return String(val);
   }, []);
 
-// ─── 컬럼 폭 동적 계산 ────────────────────────────────────────────────────────
+// ─── 컬럼 폭 동적 계산 (hidden span 실측) ────────────────────────────────────
+  // canvas measureText 대신 실제 DOM span을 페이지 폰트로 렌더링해서 측정.
+  // 헤더와 모든 데이터 중 가장 긴 값 기준으로 minWidth 결정.
   const colWidths = useMemo(() => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const bodyFont = window.getComputedStyle(document.body).fontFamily;
+    // 측정용 span 생성 (화면 밖에 렌더링)
+    const probe = document.createElement('span');
+    probe.style.cssText = [
+      'position:fixed', 'top:-9999px', 'left:-9999px',
+      'visibility:hidden', 'white-space:nowrap',
+      'font-size:12px', 'font-family:inherit',
+      'padding:0',
+    ].join(';');
+    document.body.appendChild(probe);
 
-    const measure = (text: string, bold = false) => {
-      if (!ctx || !text) return 0;
-      ctx.font = `${bold ? '600 ' : ''}12px ${bodyFont}`;
-      const hasKo = /[\uAC00-\uD7A3]/.test(text);
-      return ctx.measureText(text).width * (hasKo ? 0.88 : 1);
+    const measure = (text: string, bold = false): number => {
+      probe.style.fontWeight = bold ? '600' : '400';
+      probe.textContent = text;
+      return probe.getBoundingClientRect().width;
     };
 
-    const PAD   = 28;
-    const ICONS = 52;
-    const INPUT = 16;
+    const PAD_CELL  = 24; // px-3 양쪽(12×2)
+    const ICON_BTN  = 44; // 정렬버튼+필터버튼 실제 크기(아이콘12+gap4+필터12+패딩4+여유12)
+    const INPUT_PAD = 10; // input/select 내부 패딩
 
-    return columns.reduce<Record<string, number>>((acc, col) => {
-      const header = measure(col.label, true) + PAD + ICONS;
+    const result = columns.reduce<Record<string, number>>((acc, col) => {
+      // ① 헤더 폭
+      const headerW = measure(col.label, true) + PAD_CELL + ICON_BTN;
 
-      let data = 0;
+      // ② 데이터 폭 (모든 rows 중 최대 표시값)
+      let dataW = 0;
       for (const row of rows) {
         const v = getDisplayValue(row, col);
         if (!v) continue;
-        const w = measure(v) + PAD + INPUT;
-        if (w > data) data = w;
+        const w = measure(v) + PAD_CELL + INPUT_PAD;
+        if (w > dataW) dataW = w;
       }
 
-      let optMax = 0;
+      // ③ select 옵션 최대 폭
+      let optW = 0;
       if (col.options) {
         for (const o of col.options) {
-          const w = measure(o.label) + PAD + INPUT + 20;
-          if (w > optMax) optMax = w;
+          const w = measure(o.label) + PAD_CELL + INPUT_PAD + 24; // 드롭다운 화살표
+          if (w > optW) optW = w;
         }
       }
 
-      const typeMin = col.type === 'date' ? 130 : col.type === 'boolean' ? 44 : 0;
-      acc[col.key] = Math.ceil(Math.max(header, data, optMax, typeMin));
+      // ④ 타입별 최솟값
+      const typeMin =
+        col.type === 'date'    ? 130 :
+        col.type === 'boolean' ? 44  : 0;
+
+      acc[col.key] = Math.ceil(Math.max(headerW, dataW, optW, typeMin));
       return acc;
     }, {});
+
+    document.body.removeChild(probe);
+    return result;
   }, [rows, columns, getDisplayValue]);
 
   const visibleRows = useMemo(() => {
