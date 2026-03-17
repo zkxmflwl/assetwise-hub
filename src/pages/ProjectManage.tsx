@@ -37,8 +37,9 @@ export default function ProjectManage() {
         project_summary: '',
         department_code: deptFilter || departments[0]?.department_code || '',
         client_name: '',
-        project_status: '영업 전',
-        schedule_note: '',
+        project_status: '기회 식별',
+        sales_schedule_note: '',
+        secured_schedule_note: '',
         category: '',
         base_date: null,
         order_date: null,
@@ -81,7 +82,8 @@ export default function ProjectManage() {
     { key: 'department_code', label: '사업부', type: 'select', options: departments.map(d => ({ value: d.department_code, label: d.department_name })) },
     { key: 'client_name', label: '업체명', type: 'text' },
     { key: 'project_status', label: '상태', type: 'select', options: PROJECT_STATUSES.map(s => ({ value: s, label: s })) },
-    { key: 'schedule_note', label: '영업/수주일정', type: 'text', minWidth: '120px' },
+    { key: 'sales_schedule_note', label: '영업일정', type: 'text', minWidth: '120px' },
+    { key: 'secured_schedule_note', label: '수주일정', type: 'text', minWidth: '120px' },
     { key: 'category', label: '분류', type: 'text' },
     { key: 'base_date', label: '기준일', type: 'date' },
     { key: 'order_date', label: '수주일', type: 'date' },
@@ -181,7 +183,7 @@ export default function ProjectManage() {
 
   const handleStatusChange = (tempId: string, newStatus: string) => {
     updateCell(tempId, 'project_status' as any, newStatus);
-    if (newStatus === '비활성') {
+    if (newStatus === '영업 종결') {
       updateCell(tempId, 'is_active' as any, false);
     } else {
       updateCell(tempId, 'is_active' as any, true);

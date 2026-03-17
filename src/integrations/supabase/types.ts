@@ -63,7 +63,8 @@ export type Database = {
           project_summary: string | null
           purchase_amount: number
           sales_amount: number
-          schedule_note: string | null
+          sales_schedule_note: string | null
+          secured_schedule_note: string | null
           sort_order: number
           start_date: string | null
           updated_at: string
@@ -87,7 +88,8 @@ export type Database = {
           project_summary?: string | null
           purchase_amount?: number
           sales_amount?: number
-          schedule_note?: string | null
+          sales_schedule_note?: string | null
+          secured_schedule_note?: string | null
           sort_order?: number
           start_date?: string | null
           updated_at?: string
@@ -111,7 +113,8 @@ export type Database = {
           project_summary?: string | null
           purchase_amount?: number
           sales_amount?: number
-          schedule_note?: string | null
+          sales_schedule_note?: string | null
+          secured_schedule_note?: string | null
           sort_order?: number
           start_date?: string | null
           updated_at?: string
