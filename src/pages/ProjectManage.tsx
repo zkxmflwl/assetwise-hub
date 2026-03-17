@@ -244,18 +244,35 @@ export default function ProjectManage() {
     selectedIds.size === visibleRows.length ? setSelectedIds(new Set()) : setSelectedIds(new Set(visibleRows.map(r => r.tempId)));
   };
 
+  const handleAddRow = useCallback(() => {
+    addRow();
+    // After addRow, auto-fill department_code from the selected filter
+    if (deptFilter) {
+      // The newest row is always the last one added; useGridEditor puts it at the end
+      setTimeout(() => {
+        const newRows = rows.filter(r => r.status === 'new');
+        // We'll set it on all new rows that don't have a dept yet
+        newRows.forEach(r => {
+          if (!(r.data as any).department_code) {
+            updateCell(r.tempId, 'department_code' as any, deptFilter);
+          }
+        });
+      }, 0);
+    }
+  }, [addRow, deptFilter, rows, updateCell]);
+
   const renderCell = (row: GridRow<BusinessProjectRow>, col: ColDef) => {
     const val = (row.data as any)[col.key];
-    const disabled = !canEdit || row.status === 'deleted';
+    const disabled = !canEdit || row.status === 'deleted' || !!col.readOnly;
 
-    if (!canEdit) {
+    if (!canEdit || col.readOnly) {
       if (col.type === 'select') {
         const opt = col.options?.find(o => o.value === val);
-        return <span className="text-xs text-foreground">{opt?.label || val || '-'}</span>;
+        return <span className="text-xs text-foreground whitespace-nowrap">{opt?.label || val || '-'}</span>;
       }
-      if (col.type === 'number') return <span className="text-xs text-foreground text-right block">{col.key === 'sort_order' ? (val ?? 0) : formatKRW(Number(val || 0))}</span>;
-      if (col.type === 'boolean') return <span className="text-xs text-foreground">{val ? 'Y' : 'N'}</span>;
-      return <span className="text-xs text-foreground">{val || '-'}</span>;
+      if (col.type === 'number') return <span className="text-xs text-foreground text-right block whitespace-nowrap">{col.key === 'sort_order' ? (val ?? 0) : formatKRW(Number(val || 0))}</span>;
+      if (col.type === 'boolean') return <span className="text-xs text-foreground whitespace-nowrap">{val ? 'Y' : 'N'}</span>;
+      return <span className="text-xs text-foreground whitespace-nowrap">{val || '-'}</span>;
     }
 
     if (col.type === 'boolean') {
