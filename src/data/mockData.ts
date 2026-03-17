@@ -22,21 +22,21 @@ export function formatRoundedAmount(value: number, unit: number): string {
 }
 
 /** 실적 요약 테이블용
- * 누적 계열: 백만 단위 반올림, 반올림 결과가 0이면 십만 단위 반올림
+ * 누적 계열: 천만 단위 반올림, 반올림 결과가 0이면 백만 단위 반올림
  */
-export const formatSummaryAmount = (value: number): string => {
-  const millionRounded = Math.round(value / 1_000_000) * 1_000_000;
+export const format10MAmount = (value: number): string => {
+  const millionRounded = Math.round(value / 10_000_000) * 10_000_000;
 
   if (millionRounded !== 0) {
     return formatKRWShort(millionRounded);
   }
 
-  const hundredThousandRounded = Math.round(value / 100_000) * 100_000;
+  const hundredThousandRounded = Math.round(value / 1_000_000) * 1_000_000;
   return formatKRWShort(hundredThousandRounded);
 };
 
 // 누적: 백만 단위 반올림, 결과가 0이면 십만 단위 반올림
-export function formatYtdAmount(value: number | null | undefined): string {
+export function format1MAmount(value: number | null | undefined): string {
   const num = value ?? 0;
 
   const millionRounded = Math.round(num / 1_000_000) * 1_000_000;
@@ -48,9 +48,9 @@ export function formatYtdAmount(value: number | null | undefined): string {
   return formatKRWShort(hundredThousandRounded);
 }
 
-// 당월: 십만 단위 반올림
+// 당월: 백만 단위 반올림
 export function formatMonthlyAmount(value: number | null | undefined): string {
   const num = value ?? 0;
-  const rounded = Math.round(num / 100_000) * 100_000;
+  const rounded = Math.round(num / 1_000_000) * 1_000_000;
   return formatKRWShort(rounded);
 }

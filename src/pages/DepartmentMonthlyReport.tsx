@@ -4,7 +4,7 @@ import { useDepartments } from '@/hooks/useDepartments';
 import { useAvailableMonths } from '@/hooks/useSalesData';
 import { fetchSalesSummary, SalesSummaryRow } from '@/services/salesService';
 import { fetchProjectsByDeptAndStatus, fetchOngoingProjectsByDept, BusinessProjectRow } from '@/services/businessProjectService';
-import { formatKRW, formatMonthlyAmount, formatYtdAmount } from '@/data/mockData';
+import { formatKRW, formatMonthlyAmount } from '@/data/mockData';
 import { Loader2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 // Gantt bar colors by category
@@ -302,7 +302,7 @@ export default function DepartmentMonthlyReport() {
                 <tr key={p.id} className="border-b border-border/50 hover:bg-muted/30">
                   <td className="px-3 py-2 text-foreground border-r border-border/50">{p.client_name || '-'}</td>
                   <td className="px-3 py-2 text-foreground border-r border-border/50">{p.project_summary || p.project_name}</td>
-                  <td className="px-3 py-2 text-foreground border-r border-border/50">{p.schedule_note || '-'}</td>
+                  <td className="px-3 py-2 text-foreground border-r border-border/50">{p.secured_schedule_note || '-'}</td>
                   <td className="px-3 py-2 text-foreground text-right border-r border-border/50">{formatMonthlyAmount(Number(p.sales_amount || 0))}</td>
                   <td className="px-3 py-2 text-muted-foreground">{p.note || '-'}</td>
                 </tr>
@@ -333,7 +333,7 @@ export default function DepartmentMonthlyReport() {
                 <tr key={p.id} className="border-b border-border/50 hover:bg-muted/30">
                   <td className="px-3 py-2 text-foreground border-r border-border/50">{p.client_name || '-'}</td>
                   <td className="px-3 py-2 text-foreground border-r border-border/50">{p.project_summary || p.project_name}</td>
-                  <td className="px-3 py-2 text-foreground border-r border-border/50">{p.schedule_note || '-'}</td>
+                  <td className="px-3 py-2 text-foreground border-r border-border/50">{p.sales_schedule_note || '-'}</td>
                   <td className="px-3 py-2 text-foreground border-r border-border/50">{p.effort || '-'}</td>
                   <td className="px-3 py-2 text-muted-foreground">{p.note || '-'}</td>
                 </tr>

@@ -7,7 +7,8 @@ export interface BusinessProjectRow {
   department_code: string;
   client_name: string | null;
   project_status: string;
-  schedule_note: string | null;
+  sales_schedule_note: string | null;
+  secured_schedule_note: string | null;
   category: string | null;
   base_date: string | null;
   order_date: string | null;
@@ -27,12 +28,12 @@ export interface BusinessProjectRow {
 }
 
 export const PROJECT_STATUSES = [
-  '영업 전',
+  '기회 식별',
   '영업 중',
   '수주 완료',
   '프로젝트 중',
   '프로젝트 완료',
-  '영업 실패',
+  '영업 종결',
   '기타',
 ];
 
