@@ -35,7 +35,7 @@ export default function ProjectManage() {
       newRowTemplate: () => ({
         project_name: '',
         project_summary: '',
-        department_code: deptFilter || departments[0]?.department_code || '',
+        department_code: '',
         client_name: '',
         project_status: '기회 식별',
         sales_schedule_note: '',
@@ -75,24 +75,24 @@ export default function ProjectManage() {
   }, [departments]);
 
   const columns: ColDef[] = useMemo(() => [
-    { key: 'sort_order', label: '정렬 순서', type: 'number', minWidth: '70px' },
-    { key: 'visible', label: '노출여부', type: 'boolean' },
+    { key: 'sort_order', label: '월간보고 상 정렬', type: 'number', minWidth: '70px' },
+    { key: 'visible', label: '월간보고 상 노출', type: 'boolean' },
+    { key: 'client_name', label: '고객사명', type: 'text' },
     { key: 'project_name', label: '프로젝트명', type: 'text', minWidth: '150px' },
     { key: 'project_summary', label: '프로젝트 내용', type: 'text', minWidth: '150px' },
-    { key: 'department_code', label: '사업부', type: 'select', options: departments.map(d => ({ value: d.department_code, label: d.department_name })) },
-    { key: 'client_name', label: '업체명', type: 'text' },
     { key: 'project_status', label: '상태', type: 'select', options: PROJECT_STATUSES.map(s => ({ value: s, label: s })) },
     { key: 'sales_schedule_note', label: '영업일정', type: 'text', minWidth: '120px' },
     { key: 'secured_schedule_note', label: '수주일정', type: 'text', minWidth: '120px' },
     { key: 'category', label: '분류', type: 'text' },
-    { key: 'base_date', label: '기준일', type: 'date' },
-    { key: 'order_date', label: '수주일', type: 'date' },
-    { key: 'start_date', label: '시작일', type: 'date' },
-    { key: 'end_date', label: '종료일', type: 'date' },
+    { key: 'base_date', label: '기회식별일', type: 'date' },
+    { key: 'order_date', label: '수주완료일', type: 'date' },
+    { key: 'start_date', label: '프로젝트시작일', type: 'date' },
+    { key: 'end_date', label: '프로젝트종료일', type: 'date' },
     { key: 'sales_amount', label: '매출', type: 'number' },
     { key: 'purchase_amount', label: '매입', type: 'number' },
-    { key: 'effort', label: '공수', type: 'text' },
+    { key: 'effort', label: '라이선스 및 공수', type: 'text', minWidth: '120px' },
     { key: 'note', label: '비고', type: 'text' },
+    { key: 'department_code', label: '사업부', type: 'select', readOnly: true, options: departments.map(d => ({ value: d.department_code, label: d.department_name })) },
   ], [departments]);
 
   const getDisplayValue = useCallback((row: GridRow<BusinessProjectRow>, col: ColDef): string => {
@@ -195,7 +195,7 @@ export default function ProjectManage() {
     for (const r of [...inserts, ...updates]) {
       if (!(r as any).project_name?.trim()) { toast.error('프로젝트명은 필수입니다.'); return; }
       if (!(r as any).department_code?.trim()) { toast.error('사업부는 필수입니다.'); return; }
-      if (!(r as any).client_name?.trim()) { toast.error('업체명은 필수입니다.'); return; }
+      if (!(r as any).client_name?.trim()) { toast.error('고객사명은 필수입니다.'); return; }
       if (!(r as any).project_status?.trim()) { toast.error('상태는 필수입니다.'); return; }
     }
 
@@ -244,18 +244,25 @@ export default function ProjectManage() {
     selectedIds.size === visibleRows.length ? setSelectedIds(new Set()) : setSelectedIds(new Set(visibleRows.map(r => r.tempId)));
   };
 
+  const handleAddRow = useCallback(() => {
+    const tempId = addRow();
+    if (deptFilter) {
+      updateCell(tempId, 'department_code' as any, deptFilter);
+    }
+  }, [addRow, deptFilter, updateCell]);
+
   const renderCell = (row: GridRow<BusinessProjectRow>, col: ColDef) => {
     const val = (row.data as any)[col.key];
-    const disabled = !canEdit || row.status === 'deleted';
+    const disabled = !canEdit || row.status === 'deleted' || !!col.readOnly;
 
-    if (!canEdit) {
+    if (!canEdit || col.readOnly) {
       if (col.type === 'select') {
         const opt = col.options?.find(o => o.value === val);
-        return <span className="text-xs text-foreground">{opt?.label || val || '-'}</span>;
+        return <span className="text-xs text-foreground whitespace-nowrap">{opt?.label || val || '-'}</span>;
       }
-      if (col.type === 'number') return <span className="text-xs text-foreground text-right block">{col.key === 'sort_order' ? (val ?? 0) : formatKRW(Number(val || 0))}</span>;
-      if (col.type === 'boolean') return <span className="text-xs text-foreground">{val ? 'Y' : 'N'}</span>;
-      return <span className="text-xs text-foreground">{val || '-'}</span>;
+      if (col.type === 'number') return <span className="text-xs text-foreground text-right block whitespace-nowrap">{col.key === 'sort_order' ? (val ?? 0) : formatKRW(Number(val || 0))}</span>;
+      if (col.type === 'boolean') return <span className="text-xs text-foreground whitespace-nowrap">{val ? 'Y' : 'N'}</span>;
+      return <span className="text-xs text-foreground whitespace-nowrap">{val || '-'}</span>;
     }
 
     if (col.type === 'boolean') {
@@ -323,7 +330,7 @@ export default function ProjectManage() {
 
       {canEdit && (
         <div className="flex flex-wrap items-center gap-2">
-          <button onClick={addRow} className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:opacity-90 transition-opacity">
+          <button onClick={handleAddRow} className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:opacity-90 transition-opacity">
             <Plus className="h-3.5 w-3.5" /> 행 추가
           </button>
           <button onClick={handleDelete} className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground hover:text-destructive transition-colors">

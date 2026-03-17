@@ -33,12 +33,13 @@ export function useGridEditor<T>(
     })));
   }, [serverData, options.idField]);
 
-  const addRow = useCallback(() => {
+  const addRow = useCallback((): string => {
     const tempId = genTempId();
     setRows((prev) => [
       { data: { ...options.newRowTemplate() } as T, status: 'new', tempId },
       ...prev,
     ]);
+    return tempId;
   }, [options]);
 
   const addRows = useCallback((dataList: Partial<T>[]) => {
