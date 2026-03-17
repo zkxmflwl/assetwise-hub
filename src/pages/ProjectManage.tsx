@@ -565,7 +565,8 @@ export default function ProjectManage() {
                   {columns.map(col => (
                     <td
                       key={col.key}
-                      className="align-middle border-r border-border/50 last:border-r-0 px-3 py-1.5 whitespace-nowrap"
+                      style={{ minWidth: `${colWidths[col.key] ?? 0}px`, maxWidth: `${colWidths[col.key] ?? 0}px` }}
+                      className="align-middle border-r border-border/50 last:border-r-0 px-3 py-1.5 whitespace-nowrap overflow-hidden"
                     >
                       {renderCell(row, col)}
                     </td>
