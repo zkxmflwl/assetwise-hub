@@ -127,7 +127,7 @@ export default function ProjectManage() {
     };
 
     const PAD_CELL  = 24; // px-3 양쪽(12×2)
-    const ICON_BTN  = 44; // 정렬버튼+필터버튼 실제 크기(아이콘12+gap4+필터12+패딩4+여유12)
+    const ICON_BTN  = 32; // 정렬버튼+필터버튼 실제 크기(아이콘12+gap4+필터12+패딩4+여유12)
     const INPUT_PAD = 10; // input/select 내부 패딩
 
     const result = columns.reduce<Record<string, number>>((acc, col) => {
