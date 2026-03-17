@@ -7,7 +7,8 @@ export interface BusinessProjectRow {
   department_code: string;
   client_name: string | null;
   project_status: string;
-  schedule_note: string | null;
+  sales_schedule_note: string | null;
+  secured_schedule_note: string | null;
   category: string | null;
   base_date: string | null;
   order_date: string | null;
