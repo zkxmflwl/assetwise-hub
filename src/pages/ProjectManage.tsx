@@ -107,27 +107,37 @@ export default function ProjectManage() {
   }, []);
 
   // ─── 컬럼 폭 동적 계산 ────────────────────────────────────────────────────────
-  // Canvas measureText로 헤더 레이블과 모든 행 데이터 중 가장 긴 텍스트 폭을 계산,
-  // 셀 패딩(px-3 = 24px) + 정렬/필터 아이콘 여유(40px) + 입력 필드 여백(16px) 을 더해 minWidth 결정
+  // 실제 DOM에서 사용 중인 폰트를 읽어 canvas measureText로 측정.
+  // 한글은 canvas가 과대 측정하는 경향이 있어 0.85 보정 계수를 적용.
   const colWidths = useMemo(() => {
-    // canvas 컨텍스트로 텍스트 폭 측정 (폰트: 12px sans-serif = text-xs)
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
+
+    // 실제 페이지 폰트 가져오기 (없으면 기본값)
+    const bodyFont = typeof window !== 'undefined'
+      ? window.getComputedStyle(document.body).fontFamily
+      : 'sans-serif';
+
+    const KO_CORRECTION = 0.85; // 한글 과대측정 보정
+
     const measureText = (text: string, bold = false): number => {
-      if (!ctx) return text.length * 7;
-      ctx.font = bold ? 'bold 12px sans-serif' : '12px sans-serif';
-      return ctx.measureText(text).width;
+      if (!ctx) return text.length * 8;
+      ctx.font = `${bold ? 'bold ' : ''}12px ${bodyFont}`;
+      const raw = ctx.measureText(text).width;
+      // 한글 포함 여부 확인
+      const hasKorean = /[\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]/.test(text);
+      return hasKorean ? raw * KO_CORRECTION : raw;
     };
 
-    const CELL_PADDING = 24;   // px-3 양쪽 = 12*2
-    const HEADER_EXTRA = 44;   // 정렬 아이콘 + 필터 아이콘 버튼 공간
-    const INPUT_EXTRA  = 16;   // input/select 내부 패딩 여유
+    const CELL_PADDING = 24;  // px-3 양쪽
+    const ICON_W       = 28;  // 정렬 아이콘(12px) + 필터 아이콘(12px) + gap
+    const INPUT_EXTRA  = 12;  // input/select 내부 패딩
 
     return columns.reduce<Record<string, number>>((acc, col) => {
-      // 헤더 폭 (bold)
-      const headerPx = measureText(col.label, true) + CELL_PADDING + HEADER_EXTRA;
+      // ① 헤더 폭
+      const headerPx = measureText(col.label, true) + CELL_PADDING + ICON_W;
 
-      // 데이터 폭: 모든 rows 에서 해당 컬럼 표시값 측정
+      // ② 데이터 폭 (모든 rows 중 최대)
       let maxDataPx = 0;
       for (const row of rows) {
         const display = getDisplayValue(row, col);
@@ -136,17 +146,18 @@ export default function ProjectManage() {
         if (w > maxDataPx) maxDataPx = w;
       }
 
-      // date 컬럼은 input[type=date] 최솟값 보장
-      const dateMin = col.type === 'date' ? 120 : 0;
-      // boolean 컬럼은 체크박스만 있으므로 최솟값 보장
-      const boolMin = col.type === 'boolean' ? 48 : 0;
+      // ③ 타입별 최솟값
+      const typeMin =
+        col.type === 'date'    ? 128 :  // yyyy-mm-dd input
+        col.type === 'boolean' ? 40  :  // 체크박스
+        col.type === 'number'  ? 56  :  // 숫자
+        0;
 
-      acc[col.key] = Math.max(headerPx, maxDataPx, dateMin, boolMin);
+      // 헤더·데이터·타입 최솟값 중 가장 큰 값 사용
+      acc[col.key] = Math.ceil(Math.max(headerPx, maxDataPx, typeMin));
       return acc;
     }, {});
-  // rows 가 바뀌거나 columns 가 바뀔 때만 재계산
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, columns]);
+  }, [rows, columns, getDisplayValue]);
 
   const visibleRows = useMemo(() => {
     let filtered = rows;
