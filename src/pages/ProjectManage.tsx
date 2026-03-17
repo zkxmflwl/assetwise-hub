@@ -472,6 +472,7 @@ export default function ProjectManage() {
                   <th
                     key={col.key}
                     ref={el => { thRefs.current[col.key] = el; }}
+                    style={measuredWidths[col.key] ? { width: `${measuredWidths[col.key]}px`, minWidth: `${measuredWidths[col.key]}px` } : undefined}
                     className="whitespace-nowrap border-r border-border/50 last:border-r-0 px-3 py-2.5 text-left font-semibold text-foreground"
                   >
                     <div className="flex items-center gap-1">
@@ -532,8 +533,7 @@ export default function ProjectManage() {
                   {columns.map(col => (
                     <td
                       key={col.key}
-                      style={{ minWidth: measuredWidths[col.key] ? `${measuredWidths[col.key]}px` : undefined, maxWidth: measuredWidths[col.key] ? `${measuredWidths[col.key]}px` : undefined }}
-                      className="align-middle border-r border-border/50 last:border-r-0 px-3 py-1.5 whitespace-nowrap overflow-hidden"
+                      className="align-middle border-r border-border/50 last:border-r-0 px-3 py-1.5 whitespace-nowrap"
                     >
                       {renderCell(row, col)}
                     </td>
