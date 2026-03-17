@@ -248,7 +248,10 @@ export default function SectorProjectManage() {
       return (
         <input type="number" min={0} max={100} value={val ?? 0} disabled={disabled}
           onChange={(e) => updateCell(row.tempId, col.key as any, Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
-          className="w-full min-w-[60px] bg-transparent px-1 py-0.5 text-xs text-foreground text-right disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary rounded" />
+          className="w-full min-w-[60px] bg-transparent px-1 py-0.5 text-xs text-foreground text-right 
+            [appearance:textfield]
+            [&::-webkit-inner-spin-button]:appearance-none
+            [&::-webkit-outer-spin-button]:appearance-none`} disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary rounded" />
       );
     }
 

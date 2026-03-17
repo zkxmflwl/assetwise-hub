@@ -381,7 +381,10 @@ export default function ProjectManage() {
           value={val ?? ''}
           disabled={disabled}
           onChange={(e) => updateCell(row.tempId, col.key as any, Number(e.target.value))}
-          className={`${inputBase} w-full text-right`}
+          className={`${inputBase} w-full text-right
+            [appearance:textfield]
+            [&::-webkit-inner-spin-button]:appearance-none
+            [&::-webkit-outer-spin-button]:appearance-none`}
         />
       );
     }
