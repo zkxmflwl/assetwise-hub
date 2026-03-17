@@ -258,9 +258,11 @@ export default function ProjectManage() {
 
     if (col.type === 'boolean') {
       return (
-        <input type="checkbox" checked={!!val} disabled={disabled}
-          onChange={(e) => updateCell(row.tempId, col.key as any, e.target.checked)}
-          className="h-3.5 w-3.5 rounded border-border accent-primary" />
+        <div className="flex justify-center items-center"> {/* 가운데 정렬을 위한 래퍼 추가 */}
+          <input type="checkbox" checked={!!val} disabled={disabled}
+            onChange={(e) => updateCell(row.tempId, col.key as any, e.target.checked)}
+            className="h-3.5 w-3.5 rounded border-border accent-primary" />
+        </div>
       );
     }
 
@@ -377,7 +379,7 @@ export default function ProjectManage() {
 
       <div className="glass-card overflow-hidden rounded-xl">
         <div className="overflow-x-auto scrollbar-thin" style={{ maxHeight: '70vh' }}>
-          <table className="w-full text-xs">
+          <table className="w-full text-xs table-auto"> {/* table-auto 추가 */}
             <thead className="sticky top-0 z-10">
               <tr className="border-b border-border bg-muted">
                 {canEdit && (
