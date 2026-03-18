@@ -207,13 +207,9 @@ export default function ProjectManage() {
         const cmp = aVal.localeCompare(bVal, 'ko', { numeric: true });
         return sortDir === 'asc' ? cmp : -cmp;
       } else {
-        const deptA = (a.data as any).department_code || '';
-        const deptB = (b.data as any).department_code || '';
-        const deptCmp = deptA.localeCompare(deptB, 'ko');
-        if (deptCmp !== 0) return deptCmp;
-        const dateA = (a.data as any).base_date || '';
-        const dateB = (b.data as any).base_date || '';
-        return dateB.localeCompare(dateA);
+        const aOrder = Number((a.data as any).sort_order ?? 9999);
+        const bOrder = Number((b.data as any).sort_order ?? 9999);
+        return aOrder - bOrder;
       }
     });
 
