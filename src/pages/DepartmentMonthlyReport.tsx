@@ -299,7 +299,6 @@ export default function DepartmentMonthlyReport() {
               <tr className="border-b border-border bg-muted">
                 <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">업체명</th>
                 <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">프로젝트 내용</th>
-                <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">일정</th>
                 <th className="text-right px-3 py-2.5 font-semibold text-foreground border-r border-border/50">매출</th>
                 <th className="text-left px-3 py-2.5 font-semibold text-foreground">비고</th>
               </tr>
@@ -311,7 +310,6 @@ export default function DepartmentMonthlyReport() {
                 <tr key={p.id} className="border-b border-border/50 hover:bg-muted/30">
                   <td className="px-3 py-2 text-foreground border-r border-border/50">{p.client_name || '-'}</td>
                   <td className="px-3 py-2 text-foreground border-r border-border/50">{p.project_summary || p.project_name}</td>
-                  <td className="px-3 py-2 text-foreground border-r border-border/50">{p.secured_schedule_note || '-'}</td>
                   <td className="px-3 py-2 text-foreground text-right border-r border-border/50">{formatMonthlyAmount(Number(p.sales_amount || 0))}</td>
                   <td className="px-3 py-2 text-muted-foreground">{p.note || '-'}</td>
                 </tr>
@@ -330,7 +328,7 @@ export default function DepartmentMonthlyReport() {
               <tr className="border-b border-border bg-muted">
                 <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">업체명</th>
                 <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">프로젝트 내용</th>
-                <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">일정</th>
+                <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">영업 진행사항</th>
                 <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">라이선스 및 공수</th>
                 <th className="text-left px-3 py-2.5 font-semibold text-foreground">비고</th>
               </tr>
