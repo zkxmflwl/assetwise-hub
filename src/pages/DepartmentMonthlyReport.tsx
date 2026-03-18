@@ -124,11 +124,9 @@ export default function DepartmentMonthlyReport() {
   // Filter completed orders: order_date <= selected month end
   const filteredOrders = useMemo(() => {
     if (!activeMonth) return completedOrders;
-    const [y, m] = activeMonth.split('-');
-    const endDate = `${y}-${m}-31`;
     return completedOrders.filter(p => {
       if (!p.order_date) return false;
-      return p.order_date <= endDate;
+      return p.order_date.startsWith(activeMonth); // 선택한 월과 동일한 것만
     });
   }, [completedOrders, activeMonth]);
 
