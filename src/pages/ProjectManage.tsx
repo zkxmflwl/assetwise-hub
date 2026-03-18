@@ -80,7 +80,7 @@ export default function ProjectManage() {
     { key: 'project_name',          label: '프로젝트명',        type: 'text'    },
     { key: 'project_summary',       label: '프로젝트 내용',     type: 'text'    },
     { key: 'project_status',        label: '상태',              type: 'select',  options: PROJECT_STATUSES.map(s => ({ value: s, label: s })) },
-    { key: 'sales_schedule_note',   label: '영업일정',          type: 'text'    },
+    { key: 'sales_schedule_note',   label: '영업 진행사항',          type: 'text'    },
     { key: 'category',              label: '분류',              type: 'text'    },
     { key: 'base_date',             label: '기회식별일',        type: 'date'    },
     { key: 'order_date',            label: '수주완료일',        type: 'date'    },
