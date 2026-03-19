@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useAvailableDeptMonths } from '@/hooks/useSalesData';
 import { fetchSalesSummary, SalesSummaryRow } from '@/services/salesService';
-import { fetchProjectsByDeptAndStatus, fetchOngoingProjectsByDept, BusinessProjectRow } from '@/services/businessProjectService';
+import { fetchProjectsByDeptAndStatus, fetchOngoingProjectsByDept, fetchProjectsOrdered } from '@/services/businessProjectService';
 import { formatKRW, formatMonthlyAmount } from '@/data/mockData';
 import { Loader2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
@@ -110,7 +110,7 @@ export default function DepartmentMonthlyReport() {
   // 수주 완료
   const { data: completedOrders = [] } = useQuery({
     queryKey: ['completed-orders', activeDept],
-    queryFn: () => fetchProjectsByDeptAndStatus(activeDept, '수주 완료'),
+    queryFn: () => fetchProjectsOrdered(activeDept),
     enabled: !!activeDept,
   });
 

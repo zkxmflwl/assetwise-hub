@@ -127,6 +127,17 @@ export async function fetchProjectsByDeptAndStatus(departmentCode: string, statu
   return data as unknown as BusinessProjectRow[];
 }
 
+export async function fetchProjectsOrdered(departmentCode: string) {
+  const { data, error } = await supabase
+    .from('business_projects')
+    .select('*, departments(department_name)')
+    .eq('department_code', departmentCode)
+    .in('project_status', ['수주 완료', '프로젝트 중', '프로젝트 완료'])
+    .order('updated_at', { ascending: false });
+  if (error) throw error;
+  return data as unknown as BusinessProjectRow[];
+}
+
 export async function fetchOngoingProjectsByDept(departmentCode: string, year: number) {
   const { data, error } = await supabase
     .from('business_projects')
