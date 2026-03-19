@@ -9,13 +9,15 @@ export interface SalesSummaryRow {
   purchase_amount: number;
   note: string | null;
   headcount_note: string | null;
+  deferred_sales: number;    
+  deferred_purchase: number; 
   departments: { department_name: string } | null;
 }
 
 export async function fetchSalesSummary(monthKey?: string) {
   let query = supabase
     .from('department_sales_summary')
-    .select('id, department_code, month_key, total_headcount, sales_amount, purchase_amount, note, headcount_note, departments(department_name)')
+    .select('id, department_code, month_key, total_headcount, sales_amount, purchase_amount, note, headcount_note, departments(department_name), deferred_sales, deferred_purchase')
     .order('department_code');
 
   if (monthKey) {
@@ -30,7 +32,7 @@ export async function fetchSalesSummary(monthKey?: string) {
 export async function fetchSalesByDepartment(departmentCode: string) {
   const { data, error } = await supabase
     .from('department_sales_summary')
-    .select('id, department_code, month_key, total_headcount, sales_amount, purchase_amount, note, headcount_note, departments(department_name)')
+    .select('id, department_code, month_key, total_headcount, sales_amount, purchase_amount, note, headcount_note, departments(department_name), deferred_sales, deferred_purchase')
     .eq('department_code', departmentCode)
     .order('month_key', { ascending: false });
   if (error) throw error;

@@ -235,8 +235,8 @@ export default function DepartmentMonthlyReport() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left px-2 py-2 min-w-[100px] text-foreground">고객사</th>
-                  <th className="text-left px-2 py-2 min-w-[150px] text-foreground">프로젝트 내용</th>
+                  <th className="text-left px-2 py-2 min-w-[100px] text-foreground">고객사명</th>
+                  <th className="text-left px-2 py-2 min-w-[150px] text-foreground">프로젝트 명</th>
                   {monthLabels.map((m, i) => (
                     <th key={i} className="text-center px-0.5 py-2 min-w-[32px] text-muted-foreground text-[10px]">{m}</th>
                   ))}
@@ -252,7 +252,7 @@ export default function DepartmentMonthlyReport() {
                   return (
                     <tr key={proj.id} className="border-b border-border/50">
                       <td className="px-2 py-2 text-foreground">{proj.client_name || '-'}</td>
-                      <td className="px-2 py-2 text-foreground">{proj.project_summary || proj.project_name}</td>
+                      <td className="px-2 py-2 text-foreground">{proj.project_name}</td>
                       {ganttMonths.map((gm, idx) => {
                         const cellStart = new Date(gm.year, gm.month - 1, 1);
                         const cellEnd = new Date(gm.year, gm.month, 0);
@@ -297,7 +297,8 @@ export default function DepartmentMonthlyReport() {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-border bg-muted">
-                <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">업체명</th>
+                <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">고객사명</th>
+                <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">프로젝트 명</th>
                 <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">프로젝트 내용</th>
                 <th className="text-right px-3 py-2.5 font-semibold text-foreground border-r border-border/50">매출</th>
                 <th className="text-left px-3 py-2.5 font-semibold text-foreground">비고</th>
@@ -309,7 +310,8 @@ export default function DepartmentMonthlyReport() {
               ) : filteredOrders.map((p) => (
                 <tr key={p.id} className="border-b border-border/50 hover:bg-muted/30">
                   <td className="px-3 py-2 text-foreground border-r border-border/50">{p.client_name || '-'}</td>
-                  <td className="px-3 py-2 text-foreground border-r border-border/50">{p.project_summary || p.project_name}</td>
+                  <td className="px-3 py-2 text-foreground border-r border-border/50">{p.project_name}</td>
+                  <td className="px-3 py-2 text-foreground border-r border-border/50">{p.project_summary}</td>
                   <td className="px-3 py-2 text-foreground text-right border-r border-border/50">{formatMonthlyAmount(Number(p.sales_amount || 0))}</td>
                   <td className="px-3 py-2 text-muted-foreground">{p.note || '-'}</td>
                 </tr>
@@ -326,7 +328,8 @@ export default function DepartmentMonthlyReport() {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-border bg-muted">
-                <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">업체명</th>
+                <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">고객사명</th>
+                <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">프로젝트 명</th>
                 <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">프로젝트 내용</th>
                 <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">영업 진행사항</th>
                 <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">라이선스 및 공수</th>
@@ -339,7 +342,8 @@ export default function DepartmentMonthlyReport() {
               ) : filteredSalesProjects.map((p) => (
                 <tr key={p.id} className="border-b border-border/50 hover:bg-muted/30">
                   <td className="px-3 py-2 text-foreground border-r border-border/50">{p.client_name || '-'}</td>
-                  <td className="px-3 py-2 text-foreground border-r border-border/50">{p.project_summary || p.project_name}</td>
+                  <td className="px-3 py-2 text-foreground border-r border-border/50">{p.project_name}</td>
+                  <td className="px-3 py-2 text-foreground border-r border-border/50">{p.project_summary}</td>
                   <td className="px-3 py-2 text-foreground border-r border-border/50">{p.sales_schedule_note || '-'}</td>
                   <td className="px-3 py-2 text-foreground border-r border-border/50">{p.effort || '-'}</td>
                   <td className="px-3 py-2 text-muted-foreground">{p.note || '-'}</td>

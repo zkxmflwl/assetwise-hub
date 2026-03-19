@@ -48,6 +48,8 @@ export default function DepartmentMonthlyData() {
         note: '계약 완료 / 프로젝트 수주 / 팀 변동 / 사업부 워크샵 등',
         headcount_note: '+1명 (김철수 사원 입사)\n-1명 (이영희 과장 퇴사)\n-1명 (최영수 대리 사업부 이동)',
         departments: null,
+        deferred_sales: 0,
+        deferred_purchase: 0,
       } as any),
     },
   );
@@ -67,8 +69,10 @@ export default function DepartmentMonthlyData() {
       { key: 'purchase_amount', label: '매입', type: 'number' },
       { key: 'computed_net_sales', label: '순매출', type: 'computed', readOnly: true },
       { key: 'total_headcount', label: '총원', type: 'number' },
-      { key: 'note', label: '비고', type: 'text' },
+      { key: 'note', label: '부서 현황', type: 'text' },
       { key: 'headcount_note', label: '인원비고', type: 'text' },
+      { key: 'deferred_sales', label: '이연 매출', type: 'number' },
+      { key: 'deferred_purchase', label: '이연 매입', type: 'number' },
     ],
     [],
   );
@@ -277,6 +281,8 @@ export default function DepartmentMonthlyData() {
             purchase_amount: rest.purchase_amount || 0,
             note: rest.note || null,
             headcount_note: rest.headcount_note || null,
+            deferred_sales: rest.deferred_sales || 0,
+            deferred_purchase: rest.deferred_purchase || 0,
             last_modified_by_auth_user_id: uid,
           };
         });
@@ -295,6 +301,8 @@ export default function DepartmentMonthlyData() {
             purchase_amount: rest.purchase_amount || 0,
             note: rest.note || null,
             headcount_note: rest.headcount_note || null,
+            deferred_sales: rest.deferred_sales || 0,
+            deferred_purchase: rest.deferred_purchase || 0,
             last_modified_by_auth_user_id: uid,
           })
           .eq('id', id);
