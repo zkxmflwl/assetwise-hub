@@ -588,7 +588,8 @@ export default function DepartmentMonthlyData() {
       )}
 
       <div className="text-xs text-muted-foreground">{deptName} - 전체 {salesData.length}건</div>
-
+      <div className="text-xs text-muted-foreground">{deptName} 이연 매출 / 매입은 1월 데이터에만 기입하며, 전년도에서 이연된 매출/매입을 뜻합니다.{salesData.length}건</div>
+      <div className="text-xs text-muted-foreground">{deptName} *2026년까지는 기입하지 않습니다. {salesData.length}건</div>
       <div className="glass-card overflow-hidden rounded-xl">
         <div className="overflow-x-auto scrollbar-thin" style={{ maxHeight: '70vh' }}>
           <table className="w-full text-xs">
