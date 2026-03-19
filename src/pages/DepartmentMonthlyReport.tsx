@@ -196,7 +196,7 @@ export default function DepartmentMonthlyReport() {
           <p className="mt-1 text-lg font-bold text-foreground">{deptCurrent?.total_headcount ?? 0}명</p>
           {deptMonthPrev != null && (() => {
             const diff = (deptCurrent?.total_headcount ?? 0) - (deptMonthPrev?.total_headcount ?? 0);
-            if (diff === 0) return <span className={`text-xs ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>인원 변동 없음</span>;
+            if (diff === 0) return <p className="mt-1 text-xs text-muted-foreground">인원 변동 없음</p>;
             return <span className={`text-xs ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>({diff > 0 ? '+' : ''}전월대비{diff}명)</span>;
           })()}
         </div>
