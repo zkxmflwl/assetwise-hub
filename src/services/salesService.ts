@@ -82,7 +82,7 @@ export async function fetchYearlyMonthlySummary(year: string, departmentCode?: s
   const endMonth = `${year}-12`;
   let query = supabase
     .from('department_sales_summary')
-    .select('month_key, sales_amount, purchase_amount')
+    .select('month_key, sales_amount, purchase_amount, deferred_sales, deferred_purchase')
     .gte('month_key', startMonth)
     .lte('month_key', endMonth);
   if (departmentCode) {
@@ -92,16 +92,21 @@ export async function fetchYearlyMonthlySummary(year: string, departmentCode?: s
   if (error) throw error;
 
   // Aggregate by month
-  const monthMap = new Map<string, { sales: number; purchase: number }>();
+  const monthMap = new Map<string, {
+    sales: number; purchase: number;
+    deferredSales: number; deferredPurchase: number;
+  }>();
   for (let m = 1; m <= 12; m++) {
     const key = `${year}-${String(m).padStart(2, '0')}`;
-    monthMap.set(key, { sales: 0, purchase: 0 });
+    monthMap.set(key, { sales: 0, purchase: 0, deferredSales: 0, deferredPurchase: 0 });
   }
   for (const r of (data || [])) {
     const existing = monthMap.get(r.month_key);
     if (existing) {
       existing.sales += Number(r.sales_amount || 0);
       existing.purchase += Number(r.purchase_amount || 0);
+      existing.deferredSales += Number((r as any).deferred_sales || 0);
+      existing.deferredPurchase += Number((r as any).deferred_purchase || 0);
     }
   }
 
@@ -111,6 +116,8 @@ export async function fetchYearlyMonthlySummary(year: string, departmentCode?: s
     sales: vals.sales,
     purchase: vals.purchase,
     netSales: vals.sales - vals.purchase,
+    deferredSales: vals.deferredSales,
+    deferredPurchase: vals.deferredPurchase,
   }));
 }
 

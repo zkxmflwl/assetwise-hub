@@ -24,6 +24,7 @@ export default function Dashboard() {
 
   const [selectedDeptCode, setSelectedDeptCode] = useState<string | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  const [excludeDeferred, setExcludeDeferred] = useState(false);
 
   // Click outside grid to deselect
   useEffect(() => {
@@ -206,13 +207,44 @@ export default function Dashboard() {
 
       {/* 월별 매출/매입/순매출 막대 그래프 */}
       <div className="glass-card rounded-xl p-6 animate-fade-in">
-        <h2 className="text-lg font-semibold text-foreground mb-4">
-          {activeMonth.split('-')[0]}년 월별 매출·매입·순매출
-          {selectedDeptCode && sortedDeptRows.find(r => r.departmentCode === selectedDeptCode) && (
-            <span className="ml-2 text-sm text-primary">— {sortedDeptRows.find(r => r.departmentCode === selectedDeptCode)?.departmentName}</span>
-          )}
-        </h2>
-        <MonthlyBarChart year={activeMonth.split('-')[0]} departmentCode={selectedDeptCode ?? undefined} />
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <h2 className="text-lg font-semibold text-foreground">
+            {activeMonth.split('-')[0]}년 월별 매출·매입·순매출
+            {selectedDeptCode && sortedDeptRows.find(r => r.departmentCode === selectedDeptCode) && (
+              <span className="ml-2 text-sm text-primary">
+                — {sortedDeptRows.find(r => r.departmentCode === selectedDeptCode)?.departmentName}
+              </span>
+            )}
+          </h2>
+          {/* 탭 */}
+          <div className="flex rounded-lg border border-border overflow-hidden text-xs">
+            <button
+              onClick={() => setExcludeDeferred(false)}
+              className={`px-3 py-1.5 transition-colors ${
+                !excludeDeferred
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-card text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              이연 데이터 포함
+            </button>
+            <button
+              onClick={() => setExcludeDeferred(true)}
+              className={`px-3 py-1.5 border-l border-border transition-colors ${
+                excludeDeferred
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-card text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              이연 데이터 미포함
+            </button>
+          </div>
+        </div>
+        <MonthlyBarChart
+          year={activeMonth.split('-')[0]}
+          departmentCode={selectedDeptCode ?? undefined}
+          excludeDeferred={excludeDeferred}  // ✅ 추가
+        />
       </div>
 
 
