@@ -132,7 +132,7 @@ export async function fetchOngoingProjectsByDept(departmentCode: string, year: n
     .from('business_projects')
     .select('*, departments(department_name)')
     .eq('department_code', departmentCode)
-    .eq('project_status', '프로젝트 중')
+    .in('project_status', ['프로젝트 중', '프로젝트 완료'])
     .eq('visible', true)
     .not('start_date', 'is', null)
     .order('sort_order', { ascending: true });

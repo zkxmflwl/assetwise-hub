@@ -300,7 +300,7 @@ export default function DepartmentMonthlyReport() {
                 <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">고객사명</th>
                 <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">프로젝트 명</th>
                 <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">프로젝트 내용</th>
-                <th className="text-right px-3 py-2.5 font-semibold text-foreground border-r border-border/50">매출</th>
+                <th className="text-left px-3 py-2.5 font-semibold text-foreground border-r border-border/50">매출</th>
                 <th className="text-left px-3 py-2.5 font-semibold text-foreground">비고</th>
               </tr>
             </thead>
