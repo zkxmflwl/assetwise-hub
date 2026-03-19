@@ -65,9 +65,9 @@ export default function DepartmentMonthlyData() {
   const columns: ColDef[] = useMemo(
     () => [
       { key: 'month_key', label: '연월', type: 'month' },
-      { key: 'sales_amount', label: '매출', type: 'number' },
-      { key: 'purchase_amount', label: '매입', type: 'number' },
-      { key: 'computed_net_sales', label: '순매출', type: 'computed', readOnly: true },
+      { key: 'sales_amount', label: '당월 매출', type: 'number' },
+      { key: 'purchase_amount', label: '당월 매입', type: 'number' },
+      { key: 'computed_net_sales', label: '당월 순매출', type: 'computed', readOnly: true },
       { key: 'total_headcount', label: '총원', type: 'number' },
       { key: 'note', label: '부서 현황', type: 'text' },
       { key: 'headcount_note', label: '인원비고', type: 'text' },
