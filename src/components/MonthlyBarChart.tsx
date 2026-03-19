@@ -41,16 +41,15 @@ export default function MonthlyBarChart({ year, departmentCode, excludeDeferred 
   }, [rawData, excludeDeferred, year]);
 
   const yDomain = useMemo<[number, number]>(() => {
-    const source = excludeDeferred ? data : allData;
-    if (!source || source.length === 0) return [0, 0];
+    if (!data || data.length === 0) return [0, 0];
     let min = 0;
     let max = 0;
-    for (const d of source) {
+    for (const d of data) {
       min = Math.min(min, d.sales, d.purchase, d.netSales);
       max = Math.max(max, d.sales, d.purchase, d.netSales);
     }
     return [Math.min(min, 0), max * 1.1];
-  }, [excludeDeferred, data, allData]);
+  }, [data]);
 
   if (isLoading) {
     return (
