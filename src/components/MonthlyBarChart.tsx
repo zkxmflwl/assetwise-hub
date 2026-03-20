@@ -7,34 +7,38 @@ import { Loader2 } from 'lucide-react';
 interface Props {
   year: string;
   departmentCode?: string;
-  mode?: 'cumulative' | 'monthly'; // 누적 or 당월
+  excludeDeferred?: boolean; // 탭 상태를 부모에서 받음
 }
 
-export default function MonthlyBarChart({ year, departmentCode, mode = 'cumulative' }: Props) {
+export default function MonthlyBarChart({ year, departmentCode, excludeDeferred = false }: Props) {
   const { data: rawData, isLoading } = useYearlyMonthlySummary(year, departmentCode);
+  const { data: allData } = useYearlyMonthlySummary(year, undefined);
 
+  // 이연 제외 로직
   const data = useMemo(() => {
     if (!rawData) return rawData;
+    if (!excludeDeferred) return rawData; // 이연 포함: 원본 그대로
 
-    if (mode === 'cumulative') {
-      // 누적: 1월부터 해당 월까지 합산
-      let cumSales = 0;
-      let cumPurchase = 0;
+    const yearNum = Number(year);
+
+    if (yearNum <= 2026) {
+      // 2026년 이하: 1월 제외
+      return rawData.filter((d) => !d.month_key.endsWith('-01'));
+    } else {
+      // 2027년 이상: 1월만 매출/매입 보정, 나머지는 그대로
       return rawData.map((d) => {
-        cumSales += d.sales;
-        cumPurchase += d.purchase;
+        if (!d.month_key.endsWith('-01')) return d;
+        const adjSales = d.sales - (d.deferredSales ?? 0);
+        const adjPurchase = d.purchase - (d.deferredPurchase ?? 0);
         return {
           ...d,
-          sales: cumSales,
-          purchase: cumPurchase,
-          netSales: cumSales - cumPurchase,
+          sales: adjSales,
+          purchase: adjPurchase,
+          netSales: adjSales - adjPurchase,
         };
       });
     }
-
-    // monthly: 당월 그대로
-    return rawData;
-  }, [rawData, mode]);
+  }, [rawData, excludeDeferred, year]);
 
   const yDomain = useMemo<[number, number]>(() => {
     if (!data || data.length === 0) return [0, 0];
