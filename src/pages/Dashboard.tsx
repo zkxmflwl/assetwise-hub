@@ -125,7 +125,6 @@ export default function Dashboard() {
           icon={<BanknoteArrowDown className="h-5 w-5" />}
           change={stats && stats.prevYtdSales ? stats.ytdSales - stats.prevYtdSales : undefined}
           changeLabel="전년동기대비"
-          subText={stats && stats.prevYtdSales ? <span className="text-xs text-muted-foreground">전년: {format10MAmount(stats.prevYtdSales)}</span> : undefined}
         />
 
         <StatCard
@@ -134,7 +133,6 @@ export default function Dashboard() {
           icon={<BanknoteArrowUp className="h-5 w-5" />}
           change={stats && stats.prevYtdPurchase ? stats.ytdPurchase - stats.prevYtdPurchase : undefined}
           changeLabel="전년동기대비"
-          subText={stats && stats.prevYtdPurchase ? <span className="text-xs text-muted-foreground">전년: {format10MAmount(stats.prevYtdPurchase)}</span> : undefined}
         />
 
         <StatCard
@@ -143,7 +141,6 @@ export default function Dashboard() {
           icon={<HandCoins className="h-5 w-5" />}
           change={stats && stats.prevYtdNetSales ? stats.ytdNetSales - stats.prevYtdNetSales : undefined}
           changeLabel="전년동기대비"
-          subText={stats && stats.prevYtdNetSales ? <span className="text-xs text-muted-foreground">전년: {format10MAmount(stats.prevYtdNetSales)}</span> : undefined}
         />
         <StatCard title="영업 중인 건" value={`${stats?.activeProjectCount ?? 0}건`} icon={<Briefcase className="h-5 w-5" />} />
         <StatCard title="당월 수주 건" value={`${stats?.monthlyOrderCount ?? 0}건`} icon={<CheckCircle className="h-5 w-5" />} />
@@ -226,7 +223,7 @@ export default function Dashboard() {
                   : 'bg-card text-muted-foreground hover:text-foreground'
               }`}
             >
-              이연 데이터 포함
+              누적
             </button>
             <button
               onClick={() => setExcludeDeferred(true)}
@@ -236,7 +233,7 @@ export default function Dashboard() {
                   : 'bg-card text-muted-foreground hover:text-foreground'
               }`}
             >
-              이연 데이터 미포함
+              월별
             </button>
           </div>
         </div>
