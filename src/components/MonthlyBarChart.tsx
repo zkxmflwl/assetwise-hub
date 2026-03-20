@@ -7,38 +7,37 @@ import { Loader2 } from 'lucide-react';
 interface Props {
   year: string;
   departmentCode?: string;
-  excludeDeferred?: boolean; // 탭 상태를 부모에서 받음
+  mode?: 'cumulative' | 'monthly'; // 누적 or 당월
+  activeMonth?: string; // ✅ 추가
 }
 
-export default function MonthlyBarChart({ year, departmentCode, excludeDeferred = false }: Props) {
+export default function MonthlyBarChart({ year, departmentCode, mode = 'cumulative', activeMonth }: Props) {
   const { data: rawData, isLoading } = useYearlyMonthlySummary(year, departmentCode);
-  const { data: allData } = useYearlyMonthlySummary(year, undefined);
 
-  // 이연 제외 로직
   const data = useMemo(() => {
     if (!rawData) return rawData;
-    if (!excludeDeferred) return rawData; // 이연 포함: 원본 그대로
 
-    const yearNum = Number(year);
+    // 기준 월까지만 자르기
+    const cutoff = activeMonth ?? `${year}-12`;
+    const sliced = rawData.filter((d) => d.month_key <= cutoff);
 
-    if (yearNum <= 2026) {
-      // 2026년 이하: 1월 제외
-      return rawData.filter((d) => !d.month_key.endsWith('-01'));
-    } else {
-      // 2027년 이상: 1월만 매출/매입 보정, 나머지는 그대로
-      return rawData.map((d) => {
-        if (!d.month_key.endsWith('-01')) return d;
-        const adjSales = d.sales - (d.deferredSales ?? 0);
-        const adjPurchase = d.purchase - (d.deferredPurchase ?? 0);
+    if (mode === 'cumulative') {
+      let cumSales = 0;
+      let cumPurchase = 0;
+      return sliced.map((d) => {
+        cumSales += d.sales;
+        cumPurchase += d.purchase;
         return {
           ...d,
-          sales: adjSales,
-          purchase: adjPurchase,
-          netSales: adjSales - adjPurchase,
+          sales: cumSales,
+          purchase: cumPurchase,
+          netSales: cumSales - cumPurchase,
         };
       });
     }
-  }, [rawData, excludeDeferred, year]);
+
+    return sliced; // monthly
+  }, [rawData, mode, activeMonth, year]);
 
   const yDomain = useMemo<[number, number]>(() => {
     if (!data || data.length === 0) return [0, 0];
