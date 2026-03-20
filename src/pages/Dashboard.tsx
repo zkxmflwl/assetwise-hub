@@ -24,7 +24,7 @@ export default function Dashboard() {
 
   const [selectedDeptCode, setSelectedDeptCode] = useState<string | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const [excludeDeferred, setExcludeDeferred] = useState(false);
+  const [chartMode, setChartMode] = useState<'cumulative' | 'monthly'>('cumulative');
 
   // Click outside grid to deselect
   useEffect(() => {
@@ -215,32 +215,14 @@ export default function Dashboard() {
           </h2>
           {/* 탭 */}
           <div className="flex rounded-lg border border-border overflow-hidden text-xs">
-            <button
-              onClick={() => setExcludeDeferred(false)}
-              className={`px-3 py-1.5 transition-colors ${
-                !excludeDeferred
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-card text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              누적
-            </button>
-            <button
-              onClick={() => setExcludeDeferred(true)}
-              className={`px-3 py-1.5 border-l border-border transition-colors ${
-                excludeDeferred
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-card text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              월별
-            </button>
+            <button onClick={() => setChartMode('cumulative')}>누적</button>
+            <button onClick={() => setChartMode('monthly')}>월별</button>
           </div>
         </div>
         <MonthlyBarChart
           year={activeMonth.split('-')[0]}
           departmentCode={selectedDeptCode ?? undefined}
-          excludeDeferred={excludeDeferred}  // ✅ 추가
+          mode={chartMode}
         />
       </div>
 
