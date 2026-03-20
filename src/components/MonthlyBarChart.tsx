@@ -19,24 +19,33 @@ export default function MonthlyBarChart({ year, departmentCode, mode = 'cumulati
 
     // 기준 월까지만 자르기
     const cutoff = activeMonth ?? `${year}-12`;
-    const sliced = rawData.filter((d) => d.month_key <= cutoff);
 
     if (mode === 'cumulative') {
       let cumSales = 0;
       let cumPurchase = 0;
-      return sliced.map((d) => {
-        cumSales += d.sales;
-        cumPurchase += d.purchase;
+      return rawData.map((d) => {
+        if (d.month_key <= cutoff) {
+          cumSales += d.sales;
+          cumPurchase += d.purchase;
+        }
+        // cutoff 이후 월은 누적값 유지하되 표시 안 함 (0으로)
+        const isActive = d.month_key <= cutoff;
         return {
           ...d,
-          sales: cumSales,
-          purchase: cumPurchase,
-          netSales: cumSales - cumPurchase,
+          sales: isActive ? cumSales : 0,
+          purchase: isActive ? cumPurchase : 0,
+          netSales: isActive ? cumSales - cumPurchase : 0,
         };
       });
     }
 
-    return sliced; // monthly
+    // monthly: cutoff 이후 월은 0으로
+    return rawData.map((d) => ({
+      ...d,
+      sales: d.month_key <= cutoff ? d.sales : 0,
+      purchase: d.month_key <= cutoff ? d.purchase : 0,
+      netSales: d.month_key <= cutoff ? d.netSales : 0,
+    }));
   }, [rawData, mode, activeMonth, year]);
 
   const yDomain = useMemo<[number, number]>(() => {
