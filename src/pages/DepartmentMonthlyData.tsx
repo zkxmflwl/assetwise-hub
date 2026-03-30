@@ -366,7 +366,14 @@ export default function DepartmentMonthlyData() {
   };
 
   const renderCell = (row: GridRow<SalesSummaryRow>, col: ColDef) => {
+    // 변경 후
     const disabled = !canEdit || row.status === 'deleted';
+
+    // 이연 매출/매입은 01월인 경우에만 편집 가능
+    const isDeferredCol = col.key === 'deferred_sales' || col.key === 'deferred_purchase';
+    const monthKey = (row.data as any).month_key ?? '';
+    const isJanuary = monthKey.endsWith('-01');
+    const effectiveDisabled = disabled || (isDeferredCol && !isJanuary);
     const cellKey = `${row.tempId}__${col.key}`;
     const val = (row.data as any)[col.key];
 
@@ -394,7 +401,8 @@ export default function DepartmentMonthlyData() {
         return (
           <span
             className="block cursor-text px-1 py-0.5 text-right text-xs text-foreground"
-            onClick={() => !disabled && setEditingCell(cellKey)}
+            // ✅ disabled → effectiveDisabled
+            onClick={() => !effectiveDisabled && setEditingCell(cellKey)}
           >
             {formatKRW(Number(val || 0))}
           </span>
@@ -407,7 +415,8 @@ export default function DepartmentMonthlyData() {
           inputMode="numeric"
           autoFocus
           value={val ?? ''}
-          disabled={disabled}
+          // ✅ disabled → effectiveDisabled
+          disabled={effectiveDisabled}
           onChange={(e) => {
             const raw = e.target.value.replace(/[^0-9\-]/g, '');
             updateCell(row.tempId, col.key as any, raw === '' ? 0 : Number(raw));
@@ -421,14 +430,23 @@ export default function DepartmentMonthlyData() {
       );
     }
 
+    // 변경 후
     if (col.type === 'month') {
       return (
         <input
           type="month"
           value={val ?? ''}
           disabled={disabled}
-          onChange={(e) => updateCell(row.tempId, col.key as any, e.target.value)}
-          className="w-full min-w-[120px] rounded bg-transparent px-1 py-0.5 text-xs text-foreground disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary"
+          onChange={(e) => {
+            const newMonthKey = e.target.value;
+            updateCell(row.tempId, col.key as any, newMonthKey);
+            // 01월이 아니면 이연 매출/매입 즉시 0으로 초기화
+            if (!newMonthKey?.endsWith('-01')) {
+              updateCell(row.tempId, 'deferred_sales' as any, 0);
+              updateCell(row.tempId, 'deferred_purchase' as any, 0);
+            }
+          }}
+          className="..."
         />
       );
     }
