@@ -400,9 +400,13 @@ export default function DepartmentMonthlyData() {
       if (!isEditing) {
         return (
           <span
-            className="block cursor-text px-1 py-0.5 text-right text-xs text-foreground"
-            // ✅ disabled → effectiveDisabled
+            className={`block px-1 py-0.5 text-right text-xs ${
+              effectiveDisabled
+                ? 'cursor-not-allowed text-muted-foreground opacity-40 select-none'
+                : 'cursor-text text-foreground'
+            }`}
             onClick={() => !effectiveDisabled && setEditingCell(cellKey)}
+            title={effectiveDisabled && isDeferredCol ? '01월 데이터에서만 입력 가능합니다' : undefined}
           >
             {formatKRW(Number(val || 0))}
           </span>
