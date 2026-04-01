@@ -29,7 +29,11 @@ function getPrevYearSameMonthKey(monthKey: string): string {
   return `${y - 1}-${String(m).padStart(2, '0')}`;
 }
 
-function ChangeIndicator({ current, previous }: { current: number; previous: number | null }) {
+function ChangeIndicator({ current, previous, showLabel = false }: { 
+  current: number; 
+  previous: number | null;
+  showLabel?: boolean;  // ← 추가
+}) {
   if (previous === null) {
     return (
       <p className="mt-1 text-xs text-muted-foreground">
@@ -42,7 +46,7 @@ function ChangeIndicator({ current, previous }: { current: number; previous: num
 
   return (
     <p className={`mt-1 text-xs ${diff > 0 ? 'text-red-500' : diff < 0 ? 'text-blue-500' : 'text-muted-foreground'}`}>
-      전년동월 대비 {diff > 0 ? '+' : ''}{formatMonthlyAmount(diff)}
+      {showLabel && 'YoY '}{diff > 0 ? '+' : ''}{formatMonthlyAmount(diff)}
     </p>
   );
 }
@@ -196,14 +200,14 @@ export default function DepartmentMonthlyReport() {
           <p className="mt-1 text-lg font-bold text-foreground">{deptCurrent?.total_headcount ?? 0}명</p>
           {deptMonthPrev != null && (() => {
             const diff = (deptCurrent?.total_headcount ?? 0) - (deptMonthPrev?.total_headcount ?? 0);
-            if (diff === 0) return <p className="mt-1 text-xs text-muted-foreground">인원 변동 없음</p>;
-            return <span className={`text-xs ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>({diff > 0 ? '+' : ''}전월대비{diff}명)</span>;
+            if (diff === 0) return <p className="mt-1 text-xs text-muted-foreground">-</p>;
+            return <span className={`text-xs ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>({diff > 0 ? '+' : ''}MoM{diff}명)</span>;
           })()}
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">당월 매출</p>
           <p className="mt-1 text-lg font-bold text-foreground">{formatMonthlyAmount(curSales)}원</p>
-          <ChangeIndicator current={curSales} previous={prevSales} />
+          <ChangeIndicator current={curSales} previous={prevSales} showLabel  />
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">당월 매입</p>

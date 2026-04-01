@@ -124,7 +124,7 @@ export default function Dashboard() {
           value={format10MAmount(stats?.ytdSales ?? 0)}
           icon={<BanknoteArrowDown className="h-5 w-5" />}
           change={stats && stats.prevYtdSales ? stats.ytdSales - stats.prevYtdSales : undefined}
-          changeLabel="전년동기대비"
+          changeLabel="YoY"
         />
 
         <StatCard
@@ -132,7 +132,7 @@ export default function Dashboard() {
           value={format10MAmount(stats?.ytdPurchase ?? 0)}
           icon={<BanknoteArrowUp className="h-5 w-5" />}
           change={stats && stats.prevYtdPurchase ? stats.ytdPurchase - stats.prevYtdPurchase : undefined}
-          changeLabel="전년동기대비"
+          changeLabel=""
         />
 
         <StatCard
@@ -140,7 +140,7 @@ export default function Dashboard() {
           value={format10MAmount(stats?.ytdNetSales ?? 0)}
           icon={<HandCoins className="h-5 w-5" />}
           change={stats && stats.prevYtdNetSales ? stats.ytdNetSales - stats.prevYtdNetSales : undefined}
-          changeLabel="전년동기대비"
+          changeLabel=""
         />
         <StatCard title="영업 중인 건" value={`${stats?.activeProjectCount ?? 0}건`} icon={<Briefcase className="h-5 w-5" />} />
         <StatCard title="당월 수주 건" value={`${stats?.monthlyOrderCount ?? 0}건`} icon={<CheckCircle className="h-5 w-5" />} />
