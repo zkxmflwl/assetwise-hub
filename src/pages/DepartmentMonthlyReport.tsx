@@ -29,23 +29,27 @@ function getPrevYearSameMonthKey(monthKey: string): string {
   return `${y - 1}-${String(m).padStart(2, '0')}`;
 }
 
-function ChangeIndicator({ current, previous}: { 
-  current: number; 
-  previous: number | null; // ← 추가
+function ChangeIndicator({ current, previous }: {
+  current: number;
+  previous: number | null;
 }) {
   if (previous === null) {
-    return (
-      <p className="mt-1 text-xs text-muted-foreground">
-        전년동월 데이터 없음
-      </p>
-    );
+    return <p className="mt-1 text-xs text-muted-foreground">-</p>;
   }
 
   const diff = current - previous;
 
+  if (diff === 0) {
+    return <p className="mt-1 text-xs text-muted-foreground">YoY -</p>;
+  }
+
   return (
-    <p className={`mt-1 text-xs ${diff > 0 ? 'text-red-500' : diff < 0 ? 'text-blue-500' : 'text-muted-foreground'}`}>
-      {'YoY '}{diff > 0 ? '+' : ''}{formatMonthlyAmount(diff)}
+    <p className={`mt-1 flex items-center gap-0.5 text-xs ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>
+      {diff > 0
+        ? <TrendingUp className="h-3 w-3" />
+        : <TrendingDown className="h-3 w-3" />
+      }
+      YoY {diff > 0 ? '+' : ''}{formatMonthlyAmount(diff)}
     </p>
   );
 }
