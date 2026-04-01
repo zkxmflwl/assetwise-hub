@@ -29,10 +29,9 @@ function getPrevYearSameMonthKey(monthKey: string): string {
   return `${y - 1}-${String(m).padStart(2, '0')}`;
 }
 
-function ChangeIndicator({ current, previous, showLabel = false }: { 
+function ChangeIndicator({ current, previous}: { 
   current: number; 
-  previous: number | null;
-  showLabel?: boolean;  // ← 추가
+  previous: number | null; // ← 추가
 }) {
   if (previous === null) {
     return (
@@ -46,7 +45,7 @@ function ChangeIndicator({ current, previous, showLabel = false }: {
 
   return (
     <p className={`mt-1 text-xs ${diff > 0 ? 'text-red-500' : diff < 0 ? 'text-blue-500' : 'text-muted-foreground'}`}>
-      {showLabel && 'YoY '}{diff > 0 ? '+' : ''}{formatMonthlyAmount(diff)}
+      {'YoY '}{diff > 0 ? '+' : ''}{formatMonthlyAmount(diff)}
     </p>
   );
 }
@@ -201,13 +200,13 @@ export default function DepartmentMonthlyReport() {
           {deptMonthPrev != null && (() => {
             const diff = (deptCurrent?.total_headcount ?? 0) - (deptMonthPrev?.total_headcount ?? 0);
             if (diff === 0) return <p className="mt-1 text-xs text-muted-foreground">-</p>;
-            return <span className={`text-xs ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>({diff > 0 ? '+' : ''}MoM{diff}명)</span>;
+            return <span className={`text-xs ${diff > 0 ? 'text-red-500' : 'text-blue-500'}`}>{diff > 0 ? '+' : ''}MoM {diff}명</span>;
           })()}
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">당월 매출</p>
           <p className="mt-1 text-lg font-bold text-foreground">{formatMonthlyAmount(curSales)}원</p>
-          <ChangeIndicator current={curSales} previous={prevSales} showLabel  />
+          <ChangeIndicator current={curSales} previous={prevSales}  />
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">당월 매입</p>
