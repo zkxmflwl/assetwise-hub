@@ -24,12 +24,15 @@ export default function MonthlyBarChart({ year, departmentCode, mode = 'cumulati
       let cumSales = 0;
       let cumPurchase = 0;
       return rawData.map((d) => {
-        if (d.month_key <= cutoff) {
-          cumSales += d.sales;
-          cumPurchase += d.purchase;
-        }
-        // cutoff 이후 월은 누적값 유지하되 표시 안 함 (0으로)
+        const isJanuary = d.month_key.endsWith('-01');
         const isActive = d.month_key <= cutoff;
+
+        if (isActive) {
+          // 1월이면 이연 매출/매입을 더함
+          cumSales += d.sales + (isJanuary ? d.deferredSales : 0);
+          cumPurchase += d.purchase + (isJanuary ? d.deferredPurchase : 0);
+        }
+
         return {
           ...d,
           sales: isActive ? cumSales : 0,
