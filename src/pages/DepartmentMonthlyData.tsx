@@ -438,19 +438,41 @@ export default function DepartmentMonthlyData() {
     if (col.type === 'month') {
       return (
         <input
-          type="month"
+          type="text"
           value={val ?? ''}
           disabled={disabled}
+          placeholder="YYYY-MM"
+          maxLength={7}  // "2026-03" = 7자
           onChange={(e) => {
-            const newMonthKey = e.target.value;
-            updateCell(row.tempId, col.key as any, newMonthKey);
-            // 01월이 아니면 이연 매출/매입 즉시 0으로 초기화
-            if (!newMonthKey?.endsWith('-01')) {
+            let raw = e.target.value;
+
+            // 숫자와 하이픈만 허용
+            raw = raw.replace(/[^0-9-]/g, '');
+
+            // 4자리 입력 후 자동으로 하이픈 추가
+            if (raw.length === 4 && !raw.includes('-')) {
+              raw = raw + '-';
+            }
+
+            // 연도 4자리 + 하이픈 + 월 2자리 형식 강제
+            if (raw.length > 7) return;
+
+            updateCell(row.tempId, col.key as any, raw);
+
+            // YYYY-MM 완성됐을 때만 이연 초기화 체크
+            if (/^\d{4}-\d{2}$/.test(raw) && !raw.endsWith('-01')) {
               updateCell(row.tempId, 'deferred_sales' as any, 0);
               updateCell(row.tempId, 'deferred_purchase' as any, 0);
             }
           }}
-          className="..."
+          onBlur={(e) => {
+            const v = e.target.value;
+            // blur 시 형식 검증 — 잘못된 형식이면 초기화
+            if (v && !/^\d{4}-\d{2}$/.test(v)) {
+              updateCell(row.tempId, col.key as any, '');
+            }
+          }}
+          className="w-full min-w-[90px] rounded bg-transparent px-1 py-0.5 text-xs text-foreground disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary"
         />
       );
     }
