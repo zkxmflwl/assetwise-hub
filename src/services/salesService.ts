@@ -69,7 +69,7 @@ export async function fetchYtdSummary(year: string, upToMonth: string) {
   const startMonth = `${year}-01`;
   const { data, error } = await supabase
     .from('department_sales_summary')
-    .select('department_code, sales_amount, purchase_amount')
+    .select('department_code, month_key, sales_amount, purchase_amount, deferred_sales, deferred_purchase')
     .gte('month_key', startMonth)
     .lte('month_key', upToMonth);
   if (error) throw error;

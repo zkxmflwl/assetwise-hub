@@ -42,10 +42,23 @@ export async function fetchDashboardStats(monthKey: string): Promise<DashboardSt
     fetchMonthlyOrderCount(monthKey),
   ]);
 
-  const ytdSales = ytdData.reduce((s, r) => s + Number(r.sales_amount || 0), 0);
-  const ytdPurchase = ytdData.reduce((s, r) => s + Number(r.purchase_amount || 0), 0);
-  const prevYtdSales = prevYtdData.reduce((s, r) => s + Number(r.sales_amount || 0), 0);
-  const prevYtdPurchase = prevYtdData.reduce((s, r) => s + Number(r.purchase_amount || 0), 0);
+// 변경 후
+  const ytdSales = ytdData.reduce((s, r) => {
+    const isJanuary = r.month_key?.endsWith('-01');
+    return s + Number(r.sales_amount || 0) + (isJanuary ? Number(r.deferred_sales || 0) : 0);
+  }, 0);
+  const ytdPurchase = ytdData.reduce((s, r) => {
+    const isJanuary = r.month_key?.endsWith('-01');
+    return s + Number(r.purchase_amount || 0) + (isJanuary ? Number(r.deferred_purchase || 0) : 0);
+  }, 0);
+  const prevYtdSales = prevYtdData.reduce((s, r) => {
+    const isJanuary = r.month_key?.endsWith('-01');
+    return s + Number(r.sales_amount || 0) + (isJanuary ? Number(r.deferred_sales || 0) : 0);
+  }, 0);
+  const prevYtdPurchase = prevYtdData.reduce((s, r) => {
+    const isJanuary = r.month_key?.endsWith('-01');
+    return s + Number(r.purchase_amount || 0) + (isJanuary ? Number(r.deferred_purchase || 0) : 0);
+  }, 0);
 
   return {
     ytdSales,
