@@ -441,28 +441,21 @@ export default function DepartmentMonthlyData() {
           type="month"
           value={val ?? ''}
           disabled={disabled}
+          max="9999-12"
           onChange={(e) => {
             const newMonthKey = e.target.value;
-            if (newMonthKey) {
-              const year = Number(newMonthKey.split('-')[0]);
-              if (year > 9999 || year < 1000) return;
-            }
+
+            // 연도 4자리 초과 입력 무시
+            const year = parseInt(newMonthKey.split('-')[0], 10);
+            if (year > 9999) return;
+
             updateCell(row.tempId, col.key as any, newMonthKey);
             if (!newMonthKey?.endsWith('-01')) {
               updateCell(row.tempId, 'deferred_sales' as any, 0);
               updateCell(row.tempId, 'deferred_purchase' as any, 0);
             }
           }}
-          onBlur={(e) => {
-            const v = e.target.value;
-            if (v) {
-              const year = Number(v.split('-')[0]);
-              if (year > 9999 || year < 1000) {
-                updateCell(row.tempId, col.key as any, '');
-              }
-            }
-          }}
-          className="w-full min-w-[120px] rounded bg-transparent px-1 py-0.5 text-xs text-foreground disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary"
+          className="..."
         />
       );
     }
