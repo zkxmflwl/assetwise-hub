@@ -126,11 +126,19 @@ export async function fetchYtdByDepartment(year: string, upToMonth: string) {
   const startMonth = `${year}-01`;
   const { data, error } = await supabase
     .from('department_sales_summary')
-    .select('department_code, sales_amount, purchase_amount, departments(department_name)')
+    .select('department_code, month_key, sales_amount, purchase_amount, deferred_sales, deferred_purchase, departments(department_name)')
     .gte('month_key', startMonth)
     .lte('month_key', upToMonth);
   if (error) throw error;
-  return data as unknown as { department_code: string; sales_amount: number; purchase_amount: number; departments: { department_name: string } | null }[];
+  return data as unknown as {
+    department_code: string;
+    month_key: string;
+    sales_amount: number;
+    purchase_amount: number;
+    deferred_sales: number;
+    deferred_purchase: number;
+    departments: { department_name: string } | null;
+  }[];
 }
 
 /** 전년 동월 데이터 조회 시 월(Month) 포맷 보완 */

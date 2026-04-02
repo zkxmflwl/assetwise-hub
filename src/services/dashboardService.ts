@@ -125,8 +125,9 @@ export async function fetchDeptSummary(monthKey: string): Promise<DeptSummaryRow
       });
     }
     const d = depts.get(r.department_code)!;
-    d.ytdSales += Number(r.sales_amount || 0);
-    d.ytdPurchase += Number(r.purchase_amount || 0);
+    const isJanuary = r.month_key?.endsWith('-01');
+    d.ytdSales += Number(r.sales_amount || 0) + (isJanuary ? Number(r.deferred_sales || 0) : 0);
+    d.ytdPurchase += Number(r.purchase_amount || 0) + (isJanuary ? Number(r.deferred_purchase || 0) : 0);
     d.ytdNetSales = d.ytdSales - d.ytdPurchase;
   }
 
