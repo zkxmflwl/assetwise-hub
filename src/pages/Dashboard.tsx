@@ -3,7 +3,7 @@ import { useDashboardStats, useDeptSummary } from '@/hooks/useDashboardStats';
 import { useAvailableMonths } from '@/hooks/useSalesData';
 import { useTangibleAssets } from '@/hooks/useTangibleAssets';
 import { useIntangibleAssets } from '@/hooks/useIntangibleAssets';
-import { formatKRW, formatKRWShort, format10MAmount, format1MAmount } from '@/data/mockData';
+import { formatKRW, formatKRWShort, format10MAmount, format1MAmount, formatDashboardAmount } from '@/data/mockData';
 import StatCard from '@/components/StatCard';
 import MonthlyBarChart from '@/components/MonthlyBarChart';
 import { TrendingUp, TrendingDown, DollarSign, Briefcase, CheckCircle, AlertTriangle, Clock, Loader2, ArrowUp, ArrowDown, ArrowUpDown, CircleDollarSign, Receipt, HandCoins, Banknote, BanknoteArrowDown, BanknoteArrowUp } from 'lucide-react';
@@ -121,7 +121,7 @@ export default function Dashboard() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard
           title="누적 매출"
-          value={format10MAmount(stats?.ytdSales ?? 0)}
+          value={formatDashboardAmount(stats?.ytdSales ?? 0)}
           icon={<BanknoteArrowDown className="h-5 w-5" />}
           change={stats && stats.prevYtdSales ? stats.ytdSales - stats.prevYtdSales : undefined}
           changeLabel="YoY"
@@ -129,7 +129,7 @@ export default function Dashboard() {
 
         <StatCard
           title="누적 매입"
-          value={format10MAmount(stats?.ytdPurchase ?? 0)}
+          value={formatDashboardAmount(stats?.ytdPurchase ?? 0)}
           icon={<BanknoteArrowUp className="h-5 w-5" />}
           change={stats && stats.prevYtdPurchase ? stats.ytdPurchase - stats.prevYtdPurchase : undefined}
           changeLabel="YoY"
@@ -137,7 +137,7 @@ export default function Dashboard() {
 
         <StatCard
           title="누적 순매출"
-          value={format10MAmount(stats?.ytdNetSales ?? 0)}
+          value={formatDashboardAmount(stats?.ytdNetSales ?? 0)}
           icon={<HandCoins className="h-5 w-5" />}
           change={stats && stats.prevYtdNetSales ? stats.ytdNetSales - stats.prevYtdNetSales : undefined}
           changeLabel="YoY"
@@ -180,19 +180,19 @@ export default function Dashboard() {
                   className={`border-b border-border/50 cursor-pointer transition-colors ${selectedDeptCode === row.departmentCode ? 'bg-primary/10 hover:bg-primary/15' : 'hover:bg-muted/30'}`}
                 >
                   <td className="border-r border-border/50 px-3 py-2 text-foreground font-medium">{row.departmentName}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{format10MAmount(row.ytdSales)}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{format10MAmount(row.ytdPurchase)}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{format10MAmount(row.ytdNetSales)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatDashboardAmount(row.ytdSales)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatDashboardAmount(row.ytdPurchase)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatDashboardAmount(row.ytdNetSales)}</td>
                   <td className="border-r border-border/50 px-3 py-2 text-right">
                     {row.yoyChange === null ? <span className="text-muted-foreground">-</span> : (
                       <span className={row.yoyChange > 0 ? 'text-red-500' : row.yoyChange < 0 ? 'text-blue-500' : 'text-foreground'}>
-                        {row.yoyChange > 0 ? '+' : ''}{format10MAmount(row.yoyChange)}
+                        {row.yoyChange > 0 ? '+' : ''}{formatDashboardAmount(row.yoyChange)}
                       </span>
                     )}
                   </td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{format1MAmount(row.monthlySales)}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{format1MAmount(row.monthlyPurchase)}</td>
-                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{format1MAmount(row.monthlyNetSales)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatDashboardAmount(row.monthlySales)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatDashboardAmount(row.monthlyPurchase)}</td>
+                  <td className="border-r border-border/50 px-3 py-2 text-right text-foreground">{formatDashboardAmount(row.monthlyNetSales)}</td>
                   <td className="border-r border-border/50 px-3 py-2 text-center text-foreground">{row.activeProjects}건</td>
                   <td className="px-3 py-2 text-center text-foreground">{row.monthlyOrders}건</td>
                 </tr>

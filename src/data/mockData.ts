@@ -21,6 +21,28 @@ export function formatRoundedAmount(value: number, unit: number): string {
   return formatKRWShort(rounded);
 }
 
+/** 대시보드 그리드 통합 포맷
+ * 1억 이상 → 천만 단위 반올림
+ * 1억 미만 → 백만 단위 반올림
+ * 백만 반올림 결과도 0이면 십만 단위 반올림
+ */
+export function formatDashboardAmount(value: number | null | undefined): string {
+  const num = value ?? 0;
+  const abs = Math.abs(num);
+
+  if (abs >= 100_000_000) {
+    const rounded = Math.round(num / 10_000_000) * 10_000_000;
+    return formatKRWShort(rounded);
+  }
+
+  const millionRounded = Math.round(num / 1_000_000) * 1_000_000;
+  if (millionRounded !== 0) {
+    return formatKRWShort(millionRounded);
+  }
+
+  const hundredThousandRounded = Math.round(num / 100_000) * 100_000;
+  return formatKRWShort(hundredThousandRounded);
+}
 /** 실적 요약 테이블용
  * 누적 계열: 천만 단위 반올림, 반올림 결과가 0이면 백만 단위 반올림
  */
