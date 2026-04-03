@@ -441,10 +441,15 @@ export default function DepartmentMonthlyData() {
           type="month"
           value={val ?? ''}
           disabled={disabled}
+          max="9999-12"
           onChange={(e) => {
             const newMonthKey = e.target.value;
+
+            // 연도 4자리 초과 입력 무시
+            const year = parseInt(newMonthKey.split('-')[0], 10);
+            if (year > 9999) return;
+
             updateCell(row.tempId, col.key as any, newMonthKey);
-            // 01월이 아니면 이연 매출/매입 즉시 0으로 초기화
             if (!newMonthKey?.endsWith('-01')) {
               updateCell(row.tempId, 'deferred_sales' as any, 0);
               updateCell(row.tempId, 'deferred_purchase' as any, 0);

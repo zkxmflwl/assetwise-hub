@@ -148,7 +148,11 @@ export async function fetchDeptSummary(monthKey: string): Promise<DeptSummaryRow
   const prevYearYtdMap = new Map<string, number>();
   for (const r of prevYearYtdData) {
     const current = prevYearYtdMap.get(r.department_code) || 0;
-    prevYearYtdMap.set(r.department_code, current + Number(r.sales_amount || 0));
+    const isJanuary = r.month_key?.endsWith('-01');
+    prevYearYtdMap.set(
+      r.department_code,
+      current + Number(r.sales_amount || 0) + (isJanuary ? Number(r.deferred_sales || 0) : 0)
+    );
   }
 
   for (const [code, d] of depts) {
