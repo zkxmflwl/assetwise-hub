@@ -53,17 +53,16 @@ export function useResizableColumns(storageKey?: string) {
   // ── Column resize ──
   const onColResizeStart = useCallback(
     (columnId: string, startX: number, currentWidth: number) => {
-      colResizingRef.current = { columnId, startX, startWidth: currentWidth };
+      // columnId, startX, startWidth를 클로저로 캡처
+      const startWidth = currentWidth;
 
       const onMouseMove = (e: MouseEvent) => {
-        if (!colResizingRef.current) return;
-        const diff = e.clientX - colResizingRef.current.startX;
-        const newWidth = Math.max(50, colResizingRef.current.startWidth + diff);
-        setColumnSizing((prev) => ({ ...prev, [colResizingRef.current!.columnId]: newWidth }));
+        const diff = e.clientX - startX;
+        const newWidth = Math.max(50, startWidth + diff);
+        setColumnSizing((prev) => ({ ...prev, [columnId]: newWidth }));
       };
 
       const onMouseUp = () => {
-        colResizingRef.current = null;
         document.removeEventListener('mousemove', onMouseMove);
         document.removeEventListener('mouseup', onMouseUp);
         document.body.style.cursor = '';
