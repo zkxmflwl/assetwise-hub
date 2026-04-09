@@ -362,14 +362,21 @@ export default function ProjectManage() {
       );
     }
 
+    // progress 분기 끝난 뒤, 마지막 return 전에 추가
     if (col.type === 'date') {
       return (
         <input
           type="date"
-          value={val || ''}
+          value={val ?? ''}
           disabled={disabled}
-          onChange={(e) => updateCell(row.tempId, col.key as any, e.target.value || null)}
-          className={`${inputBase} w-full min-w-0`}
+          max="9999-12-31"
+          onChange={(e) => {
+            const newDate = e.target.value;
+            const year = parseInt(newDate.split('-')[0], 10);
+            if (year > 9999) return;
+            updateCell(row.tempId, col.key as any, newDate);
+          }}
+          className="w-full min-w-[120px] bg-transparent px-1 py-0.5 text-xs text-foreground disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary rounded"
         />
       );
     }
