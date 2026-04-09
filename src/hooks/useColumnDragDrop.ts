@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 export function useColumnDragDrop<T extends { key: string }>(initialColumns: T[], storageKey?: string) {
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
@@ -7,14 +7,12 @@ export function useColumnDragDrop<T extends { key: string }>(initialColumns: T[]
     overKey: string | null;
   }>({ draggingKey: null, overKey: null });
 
-  // Initialize column order from initial columns
   useEffect(() => {
     if (storageKey) {
       try {
         const saved = localStorage.getItem(`col-order-${storageKey}`);
         if (saved) {
           const parsed = JSON.parse(saved) as string[];
-          // Merge: keep saved order but include new columns, remove deleted ones
           const initialKeys = new Set(initialColumns.map((c) => c.key));
           const validSaved = parsed.filter((k) => initialKeys.has(k));
           const newKeys = initialColumns.map((c) => c.key).filter((k) => !validSaved.includes(k));
@@ -28,7 +26,6 @@ export function useColumnDragDrop<T extends { key: string }>(initialColumns: T[]
     setColumnOrder(initialColumns.map((c) => c.key));
   }, [initialColumns, storageKey]);
 
-  // Save order to localStorage
   useEffect(() => {
     if (storageKey && columnOrder.length > 0) {
       localStorage.setItem(`col-order-${storageKey}`, JSON.stringify(columnOrder));
@@ -44,7 +41,6 @@ export function useColumnDragDrop<T extends { key: string }>(initialColumns: T[]
         const col = map.get(key);
         if (col) ordered.push(col);
       }
-      // Add any columns not in order (safety)
       for (const col of cols) {
         if (!columnOrder.includes(col.key)) ordered.push(col);
       }

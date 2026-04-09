@@ -4,21 +4,16 @@ import { ArrowUp, ArrowDown, ArrowUpDown, Filter, X, GripVertical } from 'lucide
 interface DraggableResizableHeaderProps {
   colKey: string;
   label: string;
-  /** Current column width (px). undefined = auto */
   width?: number;
-  /** Sort state */
   sortKey: string | null;
   sortDir: 'asc' | 'desc' | null;
   onSort: (key: string) => void;
-  /** Column resize */
   onResizeStart: (colKey: string, startX: number, currentWidth: number) => void;
-  /** Drag & drop column reorder */
   isDragging: boolean;
   isDragOver: boolean;
   onDragStart: (key: string) => void;
   onDragOver: (key: string) => void;
   onDragEnd: () => void;
-  /** Optional column filter */
   showFilter?: boolean;
   activeFilterCol?: string | null;
   setActiveFilterCol?: (key: string | null) => void;
@@ -67,7 +62,6 @@ export default function DraggableResizableHeader({
       draggable
       onDragStart={(e) => {
         e.dataTransfer.effectAllowed = 'move';
-        // Set minimal drag image
         const el = document.createElement('div');
         el.textContent = label;
         el.style.cssText =
@@ -89,10 +83,7 @@ export default function DraggableResizableHeader({
       onDragEnd={onDragEnd}
     >
       <div className="flex items-center gap-1">
-        {/* Drag grip */}
         <GripVertical className="h-3 w-3 shrink-0 cursor-grab text-muted-foreground/40 hover:text-muted-foreground active:cursor-grabbing" />
-
-        {/* Sort button */}
         <button
           onClick={() => onSort(colKey)}
           className="flex items-center gap-1 hover:text-primary transition-colors"
@@ -108,8 +99,6 @@ export default function DraggableResizableHeader({
             <ArrowUpDown className="h-3 w-3 opacity-30" />
           )}
         </button>
-
-        {/* Optional filter button */}
         {showFilter && setActiveFilterCol && (
           <button
             onClick={() => setActiveFilterCol(activeFilterCol === colKey ? null : colKey)}
@@ -119,8 +108,6 @@ export default function DraggableResizableHeader({
           </button>
         )}
       </div>
-
-      {/* Filter input */}
       {showFilter && activeFilterCol === colKey && onFilterChange && (
         <div className="mt-1 flex items-center gap-1">
           <input
@@ -137,8 +124,7 @@ export default function DraggableResizableHeader({
           )}
         </div>
       )}
-
-      {/* Resize handle */}
+      {/* Column resize handle */}
       <div
         onMouseDown={handleResizeMouseDown}
         className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize bg-transparent hover:bg-primary/30 active:bg-primary/50 transition-colors"

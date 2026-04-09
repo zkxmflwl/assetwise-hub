@@ -85,8 +85,11 @@ export default function DepartmentMonthlyData() {
     useColumnDragDrop(columns, 'dept-monthly');
 
   // ── Column & row resizing ──
-  const { columnSizing, rowHeight, setRowHeight, onResizeStart, resetSizing } =
+  const { columnSizing, getRowHeight, onColResizeStart, onRowResizeStart, resetSizing } =
     useResizableColumns('dept-monthly');
+
+  // Row refs for measuring current height
+  const rowRefs = useRef<Map<string, HTMLTableRowElement>>(new Map());
 
   const displayColumns = useMemo(() => orderedColumns(columns), [orderedColumns, columns]);
 
@@ -116,15 +119,9 @@ export default function DepartmentMonthlyData() {
   }, [rows, columns, sortKey, sortDir, getDisplayValue]);
 
   const handleSort = (key: string) => {
-    if (sortKey !== key) {
-      setSortKey(key);
-      setSortDir('asc');
-    } else if (sortDir === 'asc') {
-      setSortDir('desc');
-    } else {
-      setSortKey(null);
-      setSortDir(null);
-    }
+    if (sortKey !== key) { setSortKey(key); setSortDir('asc'); }
+    else if (sortDir === 'asc') setSortDir('desc');
+    else { setSortKey(null); setSortDir(null); }
   };
 
   const parseNumericCell = (value: any): number | null => {
@@ -142,19 +139,16 @@ export default function DepartmentMonthlyData() {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = '';
-
     try {
       const arrayBuffer = await file.arrayBuffer();
       const wb = XLSX.read(arrayBuffer, { type: 'array' });
       const lastSheetName = wb.SheetNames[wb.SheetNames.length - 1];
       const ws = wb.Sheets[lastSheetName];
       if (!ws) { toast.error('엑셀 파일에 시트가 없습니다.'); return; }
-
       const data: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
       let totalHeadcount: number | null = null;
       let salesAmount: number | null = null;
       let purchaseAmount: number | null = null;
-
       for (const row of data) {
         for (let i = 0; i < row.length; i++) {
           const cellStr = String(row[i] ?? '').trim();
@@ -169,12 +163,10 @@ export default function DepartmentMonthlyData() {
           }
         }
       }
-
       if (salesAmount === null && purchaseAmount === null && totalHeadcount === null) {
         toast.error('엑셀에서 총원, 매출, 매입 라벨을 찾을 수 없습니다. 라벨 옆에 숫자 값이 있는지 확인해주세요.');
         return;
       }
-
       addRow();
       setParsedExcelData({ totalHeadcount, salesAmount, purchaseAmount });
       toast.success(`엑셀 파싱 완료 [시트: ${lastSheetName}] - 총원: ${totalHeadcount ?? '-'}, 매출: ${salesAmount ?? '-'}, 매입: ${purchaseAmount ?? '-'}`);
@@ -374,6 +366,14 @@ export default function DepartmentMonthlyData() {
     return '';
   };
 
+  const handleRowResizeMouseDown = (e: React.MouseEvent, tempId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const trEl = rowRefs.current.get(tempId);
+    const currentHeight = trEl?.getBoundingClientRect().height || 32;
+    onRowResizeStart(tempId, e.clientY, currentHeight);
+  };
+
   const deptName = departments.find((d) => d.department_code === activeDept)?.department_name || activeDept;
 
   if (isLoading) {
@@ -394,10 +394,8 @@ export default function DepartmentMonthlyData() {
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">사업부 선택</span>
-          <select
-            value={selectedDept} onChange={(e) => setSelectedDept(e.target.value)}
-            className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-          >
+          <select value={selectedDept} onChange={(e) => setSelectedDept(e.target.value)}
+            className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none">
             <option value="__none__">선택</option>
             {departments.map((d) => (
               <option key={d.department_code} value={d.department_code}>{d.department_name}</option>
@@ -405,23 +403,9 @@ export default function DepartmentMonthlyData() {
           </select>
         </div>
 
-        {/* Row height control */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">행 높이</span>
-          <input
-            type="range" min={24} max={80} value={rowHeight}
-            onChange={(e) => setRowHeight(Number(e.target.value))}
-            className="w-20 accent-primary"
-          />
-          <span className="text-xs text-muted-foreground">{rowHeight}px</span>
-        </div>
-
-        {/* Reset column layout */}
-        <button
-          onClick={() => { resetOrder(); resetSizing(); }}
+        <button onClick={() => { resetOrder(); resetSizing(); }}
           className="flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-          title="컬럼 순서 및 크기 초기화"
-        >
+          title="컬럼 순서 및 크기 초기화">
           <RotateCw className="h-3 w-3" /> 레이아웃 초기화
         </button>
       </div>
@@ -464,7 +448,7 @@ export default function DepartmentMonthlyData() {
             <thead className="sticky top-0 z-10">
               <tr className="border-b border-border bg-muted">
                 {canEdit && (
-                  <th className="w-8 border-r border-border/50 px-2 py-2.5" style={{ width: '36px', minWidth: '36px' }}>
+                  <th className="border-r border-border/50 px-2 py-2.5" style={{ width: '36px', minWidth: '36px' }}>
                     <input type="checkbox" checked={visibleRows.length > 0 && selectedIds.size === visibleRows.length}
                       onChange={toggleSelectAll} className="h-3.5 w-3.5 rounded border-border accent-primary" />
                   </th>
@@ -478,7 +462,7 @@ export default function DepartmentMonthlyData() {
                     sortKey={sortKey}
                     sortDir={sortDir}
                     onSort={handleSort}
-                    onResizeStart={onResizeStart}
+                    onResizeStart={onColResizeStart}
                     isDragging={dragState.draggingKey === col.key}
                     isDragOver={dragState.overKey === col.key}
                     onDragStart={onDragStart}
@@ -496,23 +480,38 @@ export default function DepartmentMonthlyData() {
                   </td>
                 </tr>
               ) : (
-                visibleRows.map((row) => (
-                  <tr key={row.tempId} style={{ height: `${rowHeight}px` }}
-                    className={`border-b border-border/50 transition-colors hover:bg-muted/30 ${rowBg(row.status)}`}>
-                    {canEdit && (
-                      <td className="w-8 border-r border-border/50 px-2 py-1.5 align-top" style={{ width: '36px', minWidth: '36px' }}>
-                        <input type="checkbox" checked={selectedIds.has(row.tempId)} onChange={() => toggleSelect(row.tempId)}
-                          className="h-3.5 w-3.5 rounded border-border accent-primary" />
-                      </td>
-                    )}
-                    {displayColumns.map((col) => (
-                      <td key={col.key} className="border-r border-border/50 last:border-r-0 px-3 py-1.5 align-top overflow-hidden"
-                        style={columnSizing[col.key] ? { width: `${columnSizing[col.key]}px`, minWidth: `${columnSizing[col.key]}px`, maxWidth: `${columnSizing[col.key]}px` } : undefined}>
-                        {renderCell(row, col)}
-                      </td>
-                    ))}
-                  </tr>
-                ))
+                visibleRows.map((row) => {
+                  const customHeight = getRowHeight(row.tempId);
+                  return (
+                    <tr
+                      key={row.tempId}
+                      ref={(el) => { if (el) rowRefs.current.set(row.tempId, el); else rowRefs.current.delete(row.tempId); }}
+                      style={customHeight ? { height: `${customHeight}px` } : undefined}
+                      className={`relative border-b border-border/50 transition-colors hover:bg-muted/30 ${rowBg(row.status)}`}
+                    >
+                      {canEdit && (
+                        <td className="border-r border-border/50 px-2 py-1.5 align-top" style={{ width: '36px', minWidth: '36px' }}>
+                          <input type="checkbox" checked={selectedIds.has(row.tempId)} onChange={() => toggleSelect(row.tempId)}
+                            className="h-3.5 w-3.5 rounded border-border accent-primary" />
+                        </td>
+                      )}
+                      {displayColumns.map((col, colIdx) => (
+                        <td key={col.key} className="border-r border-border/50 last:border-r-0 px-3 py-1.5 align-top overflow-hidden"
+                          style={columnSizing[col.key] ? { width: `${columnSizing[col.key]}px`, minWidth: `${columnSizing[col.key]}px`, maxWidth: `${columnSizing[col.key]}px` } : undefined}>
+                          {renderCell(row, col)}
+                          {/* Row resize handle - 마지막 컬럼의 td에만 배치 */}
+                          {colIdx === displayColumns.length - 1 && (
+                            <div
+                              onMouseDown={(e) => handleRowResizeMouseDown(e, row.tempId)}
+                              className="absolute bottom-0 left-0 h-1 w-full cursor-row-resize bg-transparent hover:bg-primary/30 active:bg-primary/50 transition-colors z-[1]"
+                              style={{ touchAction: 'none' }}
+                            />
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
