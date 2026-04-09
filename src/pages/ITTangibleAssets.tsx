@@ -9,8 +9,11 @@ import { useGridEditor, GridRow } from '@/hooks/useGridEditor';
 import { TangibleAssetRow } from '@/services/assetService';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, RotateCcw, Loader2, Search, Upload, Download, FileDown, ArrowUp, ArrowDown, ArrowUpDown, Filter, X } from 'lucide-react';
+import { Plus, Trash2, Save, RotateCcw, Loader2, Search, Upload, Download, FileDown, X, RotateCw } from 'lucide-react';
 import { parseCsvFile, mapTangibleCsvRows, downloadTangibleCsv, downloadTangibleTemplate } from '@/utils/csv';
+import { useResizableColumns } from '@/hooks/useResizableColumns';
+import { useColumnDragDrop } from '@/hooks/useColumnDragDrop';
+import DraggableResizableHeader from '@/components/DraggableResizableHeader';
 
 interface ColDef {
   key: string;
@@ -163,6 +166,23 @@ export default function ITTangibleAssets() {
   };
 
   const activeFilterCount = Object.values(columnFilters).filter(v => v.trim() !== '').length;
+
+  // ── Column drag & drop ──
+  const { orderedColumns, dragState, onDragStart, onDragOver, onDragEnd, resetOrder } = useColumnDragDrop(columns);
+
+  // ── Column & row resizing ──
+  const { columnSizing, getRowHeight, onColResizeStart, onRowResizeStart, resetSizing } = useResizableColumns();
+
+  const rowRefs = useRef<Map<string, HTMLTableRowElement>>(new Map());
+  const displayColumns = useMemo(() => orderedColumns(columns), [orderedColumns, columns]);
+
+  const handleRowResizeMouseDown = (e: React.MouseEvent, tempId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const trEl = rowRefs.current.get(tempId);
+    const currentHeight = trEl?.getBoundingClientRect().height || 32;
+    onRowResizeStart(tempId, e.clientY, currentHeight);
+  };
 
   const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -535,11 +555,20 @@ export default function ITTangibleAssets() {
         )}
       </div>
 
-      <div className="text-xs text-muted-foreground">전체 {assets.length}건 / 표시 {visibleRows.length}건</div>
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-muted-foreground">전체 {assets.length}건 / 표시 {visibleRows.length}건</div>
+        <button
+          onClick={() => { resetOrder(); resetSizing(); }}
+          className="flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          title="컬럼 순서 및 크기 초기화"
+        >
+          <RotateCw className="h-3 w-3" /> 레이아웃 초기화
+        </button>
+      </div>
 
       <div className="glass-card overflow-hidden rounded-xl">
         <div className="overflow-x-auto scrollbar-thin" style={{ maxHeight: '70vh' }}>
-          <table className="w-full text-xs">
+          <table className="w-max text-xs">
             <thead className="sticky top-0 z-10">
               <tr className="border-b border-border bg-muted">
                 {canEdit && (
@@ -548,65 +577,68 @@ export default function ITTangibleAssets() {
                       className="h-3.5 w-3.5 rounded border-border accent-primary" />
                   </th>
                 )}
-                {columns.map(col => (
-                  <th key={col.key} className="whitespace-nowrap border-r border-border/50 last:border-r-0 px-3 py-2.5 text-left font-semibold text-foreground">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleSort(col.key)}
-                        className="flex items-center gap-1 hover:text-primary transition-colors"
-                      >
-                        {col.label}
-                        {sortKey === col.key ? (
-                          sortDir === 'asc' ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
-                        ) : (
-                          <ArrowUpDown className="h-3 w-3 opacity-30" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => setActiveFilterCol(activeFilterCol === col.key ? null : col.key)}
-                        className={`p-0.5 rounded hover:bg-muted transition-colors ${columnFilters[col.key]?.trim() ? 'text-primary' : 'opacity-30 hover:opacity-70'}`}
-                      >
-                        <Filter className="h-3 w-3" />
-                      </button>
-                    </div>
-                    {activeFilterCol === col.key && (
-                      <div className="mt-1 flex items-center gap-1">
-                        <input
-                          autoFocus
-                          type="text"
-                          value={columnFilters[col.key] || ''}
-                          onChange={(e) => handleFilterChange(col.key, e.target.value)}
-                          placeholder={`${col.label} 필터...`}
-                          className="w-full min-w-[80px] rounded border border-border bg-card px-2 py-1 text-xs font-normal text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                          onKeyDown={(e) => { if (e.key === 'Escape') setActiveFilterCol(null); }}
-                        />
-                        {columnFilters[col.key]?.trim() && (
-                          <button onClick={() => clearFilter(col.key)} className="p-0.5 text-muted-foreground hover:text-foreground">
-                            <X className="h-3 w-3" />
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </th>
+                {displayColumns.map(col => (
+                  <DraggableResizableHeader
+                    key={col.key}
+                    colKey={col.key}
+                    label={col.label}
+                    width={columnSizing[col.key]}
+                    sortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={handleSort}
+                    onResizeStart={onColResizeStart}
+                    isDragging={dragState.draggingKey === col.key}
+                    isDragOver={dragState.overKey === col.key}
+                    onDragStart={onDragStart}
+                    onDragOver={onDragOver}
+                    onDragEnd={onDragEnd}
+                    showFilter={true}
+                    activeFilterCol={activeFilterCol}
+                    setActiveFilterCol={setActiveFilterCol}
+                    filterValue={columnFilters[col.key]}
+                    onFilterChange={handleFilterChange}
+                    clearFilter={clearFilter}
+                  />
                 ))}
               </tr>
             </thead>
             <tbody>
               {visibleRows.length === 0 ? (
-                <tr><td colSpan={columns.length + (canEdit ? 1 : 0)} className="py-8 text-center text-muted-foreground">데이터 없음</td></tr>
-              ) : visibleRows.map((row) => (
-                <tr key={row.tempId} className={`border-b border-border/50 transition-colors hover:bg-muted/30 ${rowBg(row)}`}>
-                  {canEdit && (
-                    <td className="w-8 border-r border-border/50 px-2 py-1.5">
-                      <input type="checkbox" checked={selectedIds.has(row.tempId)} onChange={() => toggleSelect(row.tempId)}
-                        className="h-3.5 w-3.5 rounded border-border accent-primary" />
-                    </td>
-                  )}
-                  {columns.map(col => (
-                    <td key={col.key} className="border-r border-border/50 last:border-r-0 px-3 py-1.5">{renderCell(row, col)}</td>
-                  ))}
-                </tr>
-              ))}
+                <tr><td colSpan={displayColumns.length + (canEdit ? 1 : 0)} className="py-8 text-center text-muted-foreground">데이터 없음</td></tr>
+              ) : visibleRows.map((row) => {
+                const customHeight = getRowHeight(row.tempId);
+                return (
+                  <tr
+                    key={row.tempId}
+                    ref={(el) => { if (el) rowRefs.current.set(row.tempId, el); else rowRefs.current.delete(row.tempId); }}
+                    style={customHeight ? { height: `${customHeight}px` } : undefined}
+                    className={`relative border-b border-border/50 transition-colors hover:bg-muted/30 ${rowBg(row)}`}
+                  >
+                    {canEdit && (
+                      <td className="w-8 border-r border-border/50 px-2 py-1.5">
+                        <input type="checkbox" checked={selectedIds.has(row.tempId)} onChange={() => toggleSelect(row.tempId)}
+                          className="h-3.5 w-3.5 rounded border-border accent-primary" />
+                      </td>
+                    )}
+                    {displayColumns.map((col, colIdx) => (
+                      <td
+                        key={col.key}
+                        style={columnSizing[col.key] ? { width: `${columnSizing[col.key]}px`, minWidth: `${columnSizing[col.key]}px`, maxWidth: `${columnSizing[col.key]}px` } : undefined}
+                        className="border-r border-border/50 last:border-r-0 px-3 py-1.5 overflow-hidden"
+                      >
+                        {renderCell(row, col)}
+                        {colIdx === displayColumns.length - 1 && (
+                          <div
+                            onMouseDown={(e) => handleRowResizeMouseDown(e, row.tempId)}
+                            className="absolute bottom-0 left-0 h-1 w-full cursor-row-resize bg-transparent hover:bg-primary/30 active:bg-primary/50 transition-colors z-[1]"
+                            style={{ touchAction: 'none' }}
+                          />
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

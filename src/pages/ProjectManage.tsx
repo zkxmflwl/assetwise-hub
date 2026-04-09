@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useBusinessProjects } from '@/hooks/useBusinessProjects';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,8 +8,11 @@ import { buildDeptColorMap, getDeptRowColor } from '@/utils/departmentColors';
 import { supabase } from '@/integrations/supabase/client';
 import { formatKRW } from '@/data/mockData';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, RotateCcw, Loader2, Search, ArrowUp, ArrowDown, ArrowUpDown, Filter, X } from 'lucide-react';
+import { Plus, Trash2, Save, RotateCcw, Loader2, Search, X, RotateCw } from 'lucide-react';
 import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
+import { useResizableColumns } from '@/hooks/useResizableColumns';
+import { useColumnDragDrop } from '@/hooks/useColumnDragDrop';
+import DraggableResizableHeader from '@/components/DraggableResizableHeader';
 
 type SortDir = 'asc' | 'desc' | null;
 
@@ -104,64 +107,22 @@ export default function ProjectManage() {
     return String(val);
   }, []);
 
-// ─── 컬럼 폭 동적 계산 (hidden span 실측) ────────────────────────────────────
-  // canvas measureText 대신 실제 DOM span을 페이지 폰트로 렌더링해서 측정.
-  // 헤더와 모든 데이터 중 가장 긴 값 기준으로 minWidth 결정.
-  const colWidths = useMemo(() => {
-    // 측정용 span 생성 (화면 밖에 렌더링)
-    const probe = document.createElement('span');
-    probe.style.cssText = [
-      'position:fixed', 'top:-9999px', 'left:-9999px',
-      'visibility:hidden', 'white-space:nowrap',
-      'font-size:12px', 'font-family:inherit',
-      'padding:0',
-    ].join(';');
-    document.body.appendChild(probe);
+  // ── Column drag & drop ──
+  const { orderedColumns, dragState, onDragStart, onDragOver, onDragEnd, resetOrder } = useColumnDragDrop(columns);
 
-    const measure = (text: string, bold = false): number => {
-      probe.style.fontWeight = bold ? '600' : '400';
-      probe.textContent = text;
-      return probe.getBoundingClientRect().width;
-    };
+  // ── Column & row resizing ──
+  const { columnSizing, getRowHeight, onColResizeStart, onRowResizeStart, resetSizing } = useResizableColumns();
 
-    const PAD_CELL  = 24; // px-3 양쪽(12×2)
-    const ICON_BTN  = 32; // 정렬버튼+필터버튼 실제 크기(아이콘12+gap4+필터12+패딩4+여유12)
-    const INPUT_PAD = 10; // input/select 내부 패딩
+  const rowRefs = useRef<Map<string, HTMLTableRowElement>>(new Map());
+  const displayColumns = useMemo(() => orderedColumns(columns), [orderedColumns, columns]);
 
-    const result = columns.reduce<Record<string, number>>((acc, col) => {
-      // ① 헤더 폭
-      const headerW = measure(col.label, true) + PAD_CELL + ICON_BTN;
-
-      // ② 데이터 폭 (모든 rows 중 최대 표시값)
-      let dataW = 0;
-      for (const row of rows) {
-        const v = getDisplayValue(row, col);
-        if (!v) continue;
-        const w = measure(v) + PAD_CELL + INPUT_PAD;
-        if (w > dataW) dataW = w;
-      }
-
-      // ③ select 옵션 최대 폭
-      let optW = 0;
-      if (col.options) {
-        for (const o of col.options) {
-          const w = measure(o.label) + PAD_CELL + INPUT_PAD + 24; // 드롭다운 화살표
-          if (w > optW) optW = w;
-        }
-      }
-
-      // ④ 타입별 최솟값
-      const typeMin =
-        col.type === 'date'    ? 130 :
-        col.type === 'boolean' ? 44  : 0;
-
-      acc[col.key] = Math.ceil(Math.max(headerW, dataW, optW, typeMin));
-      return acc;
-    }, {});
-
-    document.body.removeChild(probe);
-    return result;
-  }, [rows, columns, getDisplayValue]);
+  const handleRowResizeMouseDown = (e: React.MouseEvent, tempId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const trEl = rowRefs.current.get(tempId);
+    const currentHeight = trEl?.getBoundingClientRect().height || 32;
+    onRowResizeStart(tempId, e.clientY, currentHeight);
+  };
 
   const visibleRows = useMemo(() => {
     let filtered = rows;
@@ -480,16 +441,20 @@ export default function ProjectManage() {
         )}
       </div>
 
-      <div className="text-xs text-muted-foreground">전체 {projects.length}건 / 표시 {visibleRows.length}건</div>
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-muted-foreground">전체 {projects.length}건 / 표시 {visibleRows.length}건</div>
+        <button
+          onClick={() => { resetOrder(); resetSizing(); }}
+          className="flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          title="컬럼 순서 및 크기 초기화"
+        >
+          <RotateCw className="h-3 w-3" /> 레이아웃 초기화
+        </button>
+      </div>
 
       <div className="glass-card overflow-hidden rounded-xl">
-        {/* overflow-x-auto + 세로 스크롤만 고정 높이로 제한 */}
         <div className="overflow-x-auto scrollbar-thin" style={{ maxHeight: '70vh' }}>
-          {/*
-           * table-auto  : 열 폭을 내용에 맞게 자동 계산
-           * w-max       : 테이블이 컨테이너보다 넓어질 수 있도록 허용 (overflow-x-auto 와 함께 사용)
-           */}
-          <table className="w-max table-auto text-xs">
+          <table className="w-max text-xs">
             <thead className="sticky top-0 z-10">
               <tr className="border-b border-border bg-muted">
                 {canEdit && (
@@ -502,78 +467,76 @@ export default function ProjectManage() {
                     />
                   </th>
                 )}
-                {columns.map(col => (
-                  <th
+                {displayColumns.map(col => (
+                  <DraggableResizableHeader
                     key={col.key}
-                    style={{ minWidth: `${colWidths[col.key] ?? 0}px` }}
-                    className="whitespace-nowrap border-r border-border/50 last:border-r-0 px-3 py-2.5 text-left font-semibold text-foreground"
-                  >
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => handleSort(col.key)} className="flex items-center gap-1 hover:text-primary transition-colors whitespace-nowrap">
-                        {col.label}
-                        {sortKey === col.key ? (
-                          sortDir === 'asc' ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
-                        ) : (
-                          <ArrowUpDown className="h-3 w-3 opacity-30" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => setActiveFilterCol(activeFilterCol === col.key ? null : col.key)}
-                        className={`p-0.5 rounded hover:bg-muted-foreground/20 ${columnFilters[col.key] ? 'text-primary' : 'text-muted-foreground/40'}`}
-                      >
-                        <Filter className="h-3 w-3" />
-                      </button>
-                    </div>
-                    {activeFilterCol === col.key && (
-                      <div className="mt-1 flex items-center gap-1">
-                        <input
-                          autoFocus
-                          value={columnFilters[col.key] || ''}
-                          onChange={(e) => handleFilterChange(col.key, e.target.value)}
-                          placeholder="필터..."
-                          className="w-full rounded border border-border bg-background px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                        />
-                        {columnFilters[col.key] && (
-                          <button onClick={() => clearFilter(col.key)} className="text-muted-foreground hover:text-foreground">
-                            <X className="h-3 w-3" />
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </th>
+                    colKey={col.key}
+                    label={col.label}
+                    width={columnSizing[col.key]}
+                    sortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={handleSort}
+                    onResizeStart={onColResizeStart}
+                    isDragging={dragState.draggingKey === col.key}
+                    isDragOver={dragState.overKey === col.key}
+                    onDragStart={onDragStart}
+                    onDragOver={onDragOver}
+                    onDragEnd={onDragEnd}
+                    showFilter={true}
+                    activeFilterCol={activeFilterCol}
+                    setActiveFilterCol={setActiveFilterCol}
+                    filterValue={columnFilters[col.key]}
+                    onFilterChange={handleFilterChange}
+                    clearFilter={clearFilter}
+                  />
                 ))}
               </tr>
             </thead>
             <tbody>
               {visibleRows.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length + (canEdit ? 1 : 0)} className="py-8 text-center text-muted-foreground">
+                  <td colSpan={displayColumns.length + (canEdit ? 1 : 0)} className="py-8 text-center text-muted-foreground">
                     데이터 없음
                   </td>
                 </tr>
-              ) : visibleRows.map((row) => (
-                <tr key={row.tempId} className={`border-b border-border/50 transition-colors hover:bg-muted/30 ${rowBg(row)}`}>
-                  {canEdit && (
-                    <td className="w-8 border-r border-border/50 px-2 py-1.5">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(row.tempId)}
-                        onChange={() => toggleSelect(row.tempId)}
-                        className="h-3.5 w-3.5 rounded border-border accent-primary"
-                      />
-                    </td>
-                  )}
-                  {columns.map(col => (
-                    <td
-                      key={col.key}
-                      style={{ minWidth: `${colWidths[col.key] ?? 0}px`, maxWidth: `${colWidths[col.key] ?? 0}px` }}
-                      className="align-middle border-r border-border/50 last:border-r-0 px-3 py-1.5 whitespace-nowrap overflow-hidden"
-                    >
-                      {renderCell(row, col)}
-                    </td>
-                  ))}
-                </tr>
-              ))}
+              ) : visibleRows.map((row) => {
+                const customHeight = getRowHeight(row.tempId);
+                return (
+                  <tr
+                    key={row.tempId}
+                    ref={(el) => { if (el) rowRefs.current.set(row.tempId, el); else rowRefs.current.delete(row.tempId); }}
+                    style={customHeight ? { height: `${customHeight}px` } : undefined}
+                    className={`relative border-b border-border/50 transition-colors hover:bg-muted/30 ${rowBg(row)}`}
+                  >
+                    {canEdit && (
+                      <td className="w-8 border-r border-border/50 px-2 py-1.5">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(row.tempId)}
+                          onChange={() => toggleSelect(row.tempId)}
+                          className="h-3.5 w-3.5 rounded border-border accent-primary"
+                        />
+                      </td>
+                    )}
+                    {displayColumns.map((col, colIdx) => (
+                      <td
+                        key={col.key}
+                        style={columnSizing[col.key] ? { width: `${columnSizing[col.key]}px`, minWidth: `${columnSizing[col.key]}px`, maxWidth: `${columnSizing[col.key]}px` } : undefined}
+                        className="align-middle border-r border-border/50 last:border-r-0 px-3 py-1.5 whitespace-nowrap overflow-hidden"
+                      >
+                        {renderCell(row, col)}
+                        {colIdx === displayColumns.length - 1 && (
+                          <div
+                            onMouseDown={(e) => handleRowResizeMouseDown(e, row.tempId)}
+                            className="absolute bottom-0 left-0 h-1 w-full cursor-row-resize bg-transparent hover:bg-primary/30 active:bg-primary/50 transition-colors z-[1]"
+                            style={{ touchAction: 'none' }}
+                          />
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
