@@ -265,7 +265,7 @@ export default function ITIntangibleAssets() {
             {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} 저장
           </button>
           <button onClick={() => { reset(); setSelectedIds(new Set()); }} disabled={!hasDirty} className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors">
-            <RotateCcw className="h-3.5 w-3.5" /> 초기화
+            <RotateCcw className="h-3.5 w-3.5" /> 새로고침
           </button>
           <div className="mx-1 h-6 w-px bg-border" />
           <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={handleCsvUpload} />
