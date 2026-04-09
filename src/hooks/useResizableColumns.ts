@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 export interface ColumnSizing {
   [columnId: string]: number;
@@ -11,18 +11,7 @@ export interface RowSizing {
 export function useResizableColumns(storageKey?: string) {
   const [columnSizing, setColumnSizing] = useState<ColumnSizing>({});
   const [rowSizing, setRowSizing] = useState<RowSizing>({});
-  const colResizingRef = useRef<{
-    columnId: string;
-    startX: number;
-    startWidth: number;
-  } | null>(null);
-  const rowResizingRef = useRef<{
-    rowId: string;
-    startY: number;
-    startHeight: number;
-  } | null>(null);
 
-  // Load saved sizes from localStorage
   useEffect(() => {
     if (storageKey) {
       try {
@@ -36,24 +25,20 @@ export function useResizableColumns(storageKey?: string) {
     }
   }, [storageKey]);
 
-  // Save column sizes
   useEffect(() => {
     if (storageKey && Object.keys(columnSizing).length > 0) {
       localStorage.setItem(`col-sizing-${storageKey}`, JSON.stringify(columnSizing));
     }
   }, [columnSizing, storageKey]);
 
-  // Save row sizes
   useEffect(() => {
     if (storageKey && Object.keys(rowSizing).length > 0) {
       localStorage.setItem(`row-sizing-${storageKey}`, JSON.stringify(rowSizing));
     }
   }, [rowSizing, storageKey]);
 
-  // ── Column resize ──
   const onColResizeStart = useCallback(
     (columnId: string, startX: number, currentWidth: number) => {
-      // columnId, startX, startWidth를 클로저로 캡처
       const startWidth = currentWidth;
 
       const onMouseMove = (e: MouseEvent) => {
@@ -77,20 +62,17 @@ export function useResizableColumns(storageKey?: string) {
     [],
   );
 
-  // ── Row resize ──
   const onRowResizeStart = useCallback(
     (rowId: string, startY: number, currentHeight: number) => {
-      rowResizingRef.current = { rowId, startY, startHeight: currentHeight };
+      const startHeight = currentHeight;
 
       const onMouseMove = (e: MouseEvent) => {
-        if (!rowResizingRef.current) return;
-        const diff = e.clientY - rowResizingRef.current.startY;
-        const newHeight = Math.max(24, rowResizingRef.current.startHeight + diff);
-        setRowSizing((prev) => ({ ...prev, [rowResizingRef.current!.rowId]: newHeight }));
+        const diff = e.clientY - startY;
+        const newHeight = Math.max(24, startHeight + diff);
+        setRowSizing((prev) => ({ ...prev, [rowId]: newHeight }));
       };
 
       const onMouseUp = () => {
-        rowResizingRef.current = null;
         document.removeEventListener('mousemove', onMouseMove);
         document.removeEventListener('mouseup', onMouseUp);
         document.body.style.cursor = '';
