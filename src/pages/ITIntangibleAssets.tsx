@@ -294,7 +294,7 @@ export default function ITIntangibleAssets() {
           className="w-full rounded-lg border border-border bg-card py-2 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors" />
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
         <div className="text-xs text-muted-foreground">전체 {assets.length}건 / 표시 {visibleRows.length}건</div>
         <button
           onClick={() => { resetOrder(); resetSizing(); }}

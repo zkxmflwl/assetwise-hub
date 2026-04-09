@@ -458,26 +458,24 @@ export default function DepartmentMonthlyData() {
         </div>
       )}
 
-      {/* ── 그리드 바로 위: 전체 건수 + 레이아웃 초기화 + 멀티라인 토글 ── */}
-      <div className="flex items-center justify-between">
+      {/* ── 그리드 바로 위: 전체 건수 + 멀티라인 토글 + 레이아웃 초기화 ── */}
+      <div className="flex items-center gap-2">
         <div className="text-xs text-muted-foreground">{deptName} - 전체 {salesData.length}건</div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setMultilineExpanded((prev) => !prev)}
-            className="flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-            title={multilineExpanded ? '한 줄로 보기' : '여러 줄로 보기'}
-          >
-            {multilineExpanded ? <AlignJustify className="h-3 w-3" /> : <WrapText className="h-3 w-3" />}
-            {multilineExpanded ? '한 줄 보기' : '여러 줄 보기'}
-          </button>
-          <button
-            onClick={() => { resetOrder(); resetSizing(); }}
-            className="flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-            title="컬럼 순서 및 크기 초기화"
-          >
-            <RotateCw className="h-3 w-3" /> 레이아웃 초기화
-          </button>
-        </div>
+        <button
+          onClick={() => setMultilineExpanded((prev) => !prev)}
+          className="flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          title={multilineExpanded ? '한 줄로 보기' : '여러 줄로 보기'}
+        >
+          {multilineExpanded ? <AlignJustify className="h-3 w-3" /> : <WrapText className="h-3 w-3" />}
+          {multilineExpanded ? '한 줄 보기' : '여러 줄 보기'}
+        </button>
+        <button
+          onClick={() => { resetOrder(); resetSizing(); }}
+          className="flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          title="컬럼 순서 및 크기 초기화"
+        >
+          <RotateCw className="h-3 w-3" /> 레이아웃 초기화
+        </button>
       </div>
 
       <div className="glass-card overflow-hidden rounded-xl">

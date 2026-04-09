@@ -336,7 +336,7 @@ export default function SectorProjectManage() {
         )}
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
         <div className="text-xs text-muted-foreground">전체 {projects.length}건 / 표시 {visibleRows.length}건</div>
         <button
           onClick={() => { resetOrder(); resetSizing(); }}
