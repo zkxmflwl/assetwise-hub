@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 
 export interface ColumnSizing {
   [columnId: string]: number;
@@ -8,34 +8,9 @@ export interface RowSizing {
   [rowId: string]: number;
 }
 
-export function useResizableColumns(storageKey?: string) {
+export function useResizableColumns() {
   const [columnSizing, setColumnSizing] = useState<ColumnSizing>({});
   const [rowSizing, setRowSizing] = useState<RowSizing>({});
-
-  useEffect(() => {
-    if (storageKey) {
-      try {
-        const savedCol = localStorage.getItem(`col-sizing-${storageKey}`);
-        if (savedCol) setColumnSizing(JSON.parse(savedCol));
-        const savedRow = localStorage.getItem(`row-sizing-${storageKey}`);
-        if (savedRow) setRowSizing(JSON.parse(savedRow));
-      } catch {
-        // ignore
-      }
-    }
-  }, [storageKey]);
-
-  useEffect(() => {
-    if (storageKey && Object.keys(columnSizing).length > 0) {
-      localStorage.setItem(`col-sizing-${storageKey}`, JSON.stringify(columnSizing));
-    }
-  }, [columnSizing, storageKey]);
-
-  useEffect(() => {
-    if (storageKey && Object.keys(rowSizing).length > 0) {
-      localStorage.setItem(`row-sizing-${storageKey}`, JSON.stringify(rowSizing));
-    }
-  }, [rowSizing, storageKey]);
 
   const onColResizeStart = useCallback(
     (columnId: string, startX: number, currentWidth: number) => {
@@ -95,11 +70,7 @@ export function useResizableColumns(storageKey?: string) {
   const resetSizing = useCallback(() => {
     setColumnSizing({});
     setRowSizing({});
-    if (storageKey) {
-      localStorage.removeItem(`col-sizing-${storageKey}`);
-      localStorage.removeItem(`row-sizing-${storageKey}`);
-    }
-  }, [storageKey]);
+  }, []);
 
   return {
     columnSizing,

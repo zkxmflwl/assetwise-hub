@@ -1,36 +1,16 @@
 import { useState, useCallback, useEffect } from 'react';
 
-export function useColumnDragDrop<T extends { key: string }>(initialColumns: T[], storageKey?: string) {
+export function useColumnDragDrop<T extends { key: string }>(initialColumns: T[]) {
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [dragState, setDragState] = useState<{
     draggingKey: string | null;
     overKey: string | null;
   }>({ draggingKey: null, overKey: null });
 
+  // initialColumns가 바뀌면 순서 초기화
   useEffect(() => {
-    if (storageKey) {
-      try {
-        const saved = localStorage.getItem(`col-order-${storageKey}`);
-        if (saved) {
-          const parsed = JSON.parse(saved) as string[];
-          const initialKeys = new Set(initialColumns.map((c) => c.key));
-          const validSaved = parsed.filter((k) => initialKeys.has(k));
-          const newKeys = initialColumns.map((c) => c.key).filter((k) => !validSaved.includes(k));
-          setColumnOrder([...validSaved, ...newKeys]);
-          return;
-        }
-      } catch {
-        // ignore
-      }
-    }
     setColumnOrder(initialColumns.map((c) => c.key));
-  }, [initialColumns, storageKey]);
-
-  useEffect(() => {
-    if (storageKey && columnOrder.length > 0) {
-      localStorage.setItem(`col-order-${storageKey}`, JSON.stringify(columnOrder));
-    }
-  }, [columnOrder, storageKey]);
+  }, [initialColumns]);
 
   const orderedColumns = useCallback(
     (cols: T[]): T[] => {
@@ -79,10 +59,7 @@ export function useColumnDragDrop<T extends { key: string }>(initialColumns: T[]
 
   const resetOrder = useCallback(() => {
     setColumnOrder(initialColumns.map((c) => c.key));
-    if (storageKey) {
-      localStorage.removeItem(`col-order-${storageKey}`);
-    }
-  }, [initialColumns, storageKey]);
+  }, [initialColumns]);
 
   return {
     orderedColumns,

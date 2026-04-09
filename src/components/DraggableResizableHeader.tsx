@@ -124,7 +124,6 @@ export default function DraggableResizableHeader({
           )}
         </div>
       )}
-      {/* Column resize handle */}
       <div
         onMouseDown={handleResizeMouseDown}
         className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize bg-transparent hover:bg-primary/30 active:bg-primary/50 transition-colors"

@@ -11,7 +11,7 @@ import { SalesSummaryRow, fetchSalesByDepartment } from '@/services/salesService
 import { supabase } from '@/integrations/supabase/client';
 import { formatKRW } from '@/data/mockData';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, RotateCcw, Loader2, Upload, RotateCw } from 'lucide-react';
+import { Plus, Trash2, Save, RotateCcw, Loader2, Upload, RotateCw, WrapText, AlignJustify } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 type SortDir = 'asc' | 'desc' | null;
@@ -64,6 +64,7 @@ export default function DepartmentMonthlyData() {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
   const [editingCell, setEditingCell] = useState<string | null>(null);
+  const [multilineExpanded, setMultilineExpanded] = useState(false);
 
   const columns: ColDef[] = useMemo(
     () => [
@@ -80,15 +81,14 @@ export default function DepartmentMonthlyData() {
     [],
   );
 
-  // ── Column drag & drop ──
+  // ── Column drag & drop (localStorage 미사용) ──
   const { orderedColumns, dragState, onDragStart, onDragOver, onDragEnd, resetOrder } =
-    useColumnDragDrop(columns, 'dept-monthly');
+    useColumnDragDrop(columns);
 
-  // ── Column & row resizing ──
+  // ── Column & row resizing (localStorage 미사용) ──
   const { columnSizing, getRowHeight, onColResizeStart, onRowResizeStart, resetSizing } =
-    useResizableColumns('dept-monthly');
+    useResizableColumns();
 
-  // Row refs for measuring current height
   const rowRefs = useRef<Map<string, HTMLTableRowElement>>(new Map());
 
   const displayColumns = useMemo(() => orderedColumns(columns), [orderedColumns, columns]);
@@ -265,8 +265,16 @@ export default function DepartmentMonthlyData() {
 
   const isMultilineColumn = (colKey: string) => colKey === 'note' || colKey === 'headcount_note';
 
+  /** 읽기 전용: 한 줄 말줄임 */
   const renderCollapsedMultilineText = (value: any) => (
     <div className="w-full max-w-[240px] truncate px-1 py-0.5 text-xs text-foreground" title={String(value || '')}>
+      {value || '-'}
+    </div>
+  );
+
+  /** 읽기 전용: 여러 줄 펼침 */
+  const renderExpandedMultilineText = (value: any) => (
+    <div className="w-full max-w-[240px] whitespace-pre-wrap break-words px-1 py-0.5 text-xs text-foreground">
       {value || '-'}
     </div>
   );
@@ -288,7 +296,9 @@ export default function DepartmentMonthlyData() {
 
     if (!canEdit) {
       if (col.type === 'number') return <span className="block text-right text-xs text-foreground">{formatKRW(Number(val || 0))}</span>;
-      if (isMultilineColumn(col.key)) return renderCollapsedMultilineText(val);
+      if (isMultilineColumn(col.key)) {
+        return multilineExpanded ? renderExpandedMultilineText(val) : renderCollapsedMultilineText(val);
+      }
       return <span className="text-xs text-foreground">{val || '-'}</span>;
     }
 
@@ -333,7 +343,20 @@ export default function DepartmentMonthlyData() {
 
     if (isMultilineColumn(col.key)) {
       const isEditing = editingCell === cellKey;
+
+      // 편집 중이 아닐 때
       if (!isEditing) {
+        // multilineExpanded가 true면 여러 줄 표시, false면 한 줄 말줄임
+        if (multilineExpanded) {
+          return (
+            <div
+              className={`w-full max-w-[240px] whitespace-pre-wrap break-words cursor-text px-1 py-0.5 text-xs text-foreground ${disabled ? 'opacity-40 cursor-default' : ''}`}
+              onClick={() => !disabled && setEditingCell(cellKey)}
+            >
+              {val || '-'}
+            </div>
+          );
+        }
         return (
           <div
             className={`w-full max-w-[240px] cursor-text truncate px-1 py-0.5 text-xs text-foreground ${disabled ? 'opacity-40 cursor-default' : ''}`}
@@ -343,6 +366,7 @@ export default function DepartmentMonthlyData() {
           </div>
         );
       }
+
       return (
         <textarea autoFocus value={val ?? ''} disabled={disabled} rows={4}
           onChange={(e) => updateCell(row.tempId, col.key as any, e.target.value)}
@@ -402,12 +426,6 @@ export default function DepartmentMonthlyData() {
             ))}
           </select>
         </div>
-
-        <button onClick={() => { resetOrder(); resetSizing(); }}
-          className="flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-          title="컬럼 순서 및 크기 초기화">
-          <RotateCw className="h-3 w-3" /> 레이아웃 초기화
-        </button>
       </div>
 
       {canEdit && (
@@ -440,7 +458,27 @@ export default function DepartmentMonthlyData() {
         </div>
       )}
 
-      <div className="text-xs text-muted-foreground">{deptName} - 전체 {salesData.length}건</div>
+      {/* ── 그리드 바로 위: 전체 건수 + 레이아웃 초기화 + 멀티라인 토글 ── */}
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-muted-foreground">{deptName} - 전체 {salesData.length}건</div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setMultilineExpanded((prev) => !prev)}
+            className="flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            title={multilineExpanded ? '한 줄로 보기' : '여러 줄로 보기'}
+          >
+            {multilineExpanded ? <AlignJustify className="h-3 w-3" /> : <WrapText className="h-3 w-3" />}
+            {multilineExpanded ? '한 줄 보기' : '여러 줄 보기'}
+          </button>
+          <button
+            onClick={() => { resetOrder(); resetSizing(); }}
+            className="flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            title="컬럼 순서 및 크기 초기화"
+          >
+            <RotateCw className="h-3 w-3" /> 레이아웃 초기화
+          </button>
+        </div>
+      </div>
 
       <div className="glass-card overflow-hidden rounded-xl">
         <div className="overflow-x-auto scrollbar-thin" style={{ maxHeight: '70vh' }}>
@@ -499,7 +537,7 @@ export default function DepartmentMonthlyData() {
                         <td key={col.key} className="border-r border-border/50 last:border-r-0 px-3 py-1.5 align-top overflow-hidden"
                           style={columnSizing[col.key] ? { width: `${columnSizing[col.key]}px`, minWidth: `${columnSizing[col.key]}px`, maxWidth: `${columnSizing[col.key]}px` } : undefined}>
                           {renderCell(row, col)}
-                          {/* Row resize handle - 마지막 컬럼의 td에만 배치 */}
+                          {/* Row resize handle */}
                           {colIdx === displayColumns.length - 1 && (
                             <div
                               onMouseDown={(e) => handleRowResizeMouseDown(e, row.tempId)}
