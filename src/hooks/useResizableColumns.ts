@@ -13,12 +13,12 @@ export function useResizableColumns() {
   const [rowSizing, setRowSizing] = useState<RowSizing>({});
 
   const onColResizeStart = useCallback(
-    (columnId: string, startX: number, currentWidth: number) => {
+    (columnId: string, startX: number, currentWidth: number, minWidth = 50) => {
       const startWidth = currentWidth;
 
       const onMouseMove = (e: MouseEvent) => {
         const diff = e.clientX - startX;
-        const newWidth = Math.max(50, startWidth + diff);
+        const newWidth = Math.max(minWidth, startWidth + diff);
         setColumnSizing((prev) => ({ ...prev, [columnId]: newWidth }));
       };
 

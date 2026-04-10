@@ -343,6 +343,25 @@ export default function ProjectManage() {
     }
 
     if (col.type === 'number') {
+      // 매출/매입: 쉼표 포맷 텍스트 입력 (포커스 시 전체 선택 → 0 자동 대체)
+      if (col.key === 'sales_amount' || col.key === 'purchase_amount') {
+        const numVal = Number(val || 0);
+        return (
+          <input
+            type="text"
+            inputMode="numeric"
+            value={numVal.toLocaleString('ko-KR')}
+            disabled={disabled}
+            onFocus={(e) => e.target.select()}
+            onChange={(e) => {
+              const raw = e.target.value.replace(/[^0-9\-]/g, '');
+              updateCell(row.tempId, col.key as any, raw === '' ? 0 : Number(raw));
+            }}
+            className={`${inputBase} w-full min-w-0 text-right`}
+          />
+        );
+      }
+
       return (
         <input
           type="number"

@@ -274,7 +274,7 @@ export default function DepartmentMonthlyData() {
 
   /** 읽기 전용: 여러 줄 펼침 */
   const renderExpandedMultilineText = (value: any) => (
-    <div className="w-full max-w-[240px] whitespace-pre-wrap break-words px-1 py-0.5 text-xs text-foreground">
+    <div className="w-full whitespace-pre-wrap break-words px-1 py-0.5 text-xs text-foreground">
       {value || '-'}
     </div>
   );
@@ -350,7 +350,7 @@ export default function DepartmentMonthlyData() {
         if (multilineExpanded) {
           return (
             <div
-              className={`w-full max-w-[240px] whitespace-pre-wrap break-words cursor-text px-1 py-0.5 text-xs text-foreground ${disabled ? 'opacity-40 cursor-default' : ''}`}
+              className={`w-full whitespace-pre-wrap break-words cursor-text px-1 py-0.5 text-xs text-foreground ${disabled ? 'opacity-40 cursor-default' : ''}`}
               onClick={() => !disabled && setEditingCell(cellKey)}
             >
               {val || '-'}
