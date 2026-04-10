@@ -317,6 +317,7 @@ export default function DepartmentMonthlyData() {
       }
       return (
         <input type="text" inputMode="numeric" autoFocus value={val ?? ''} disabled={effectiveDisabled}
+          onFocus={(e) => { if (Number(val || 0) === 0) e.target.select(); }}
           onChange={(e) => { const raw = e.target.value.replace(/[^0-9\-]/g, ''); updateCell(row.tempId, col.key as any, raw === '' ? 0 : Number(raw)); }}
           onBlur={() => setEditingCell(null)}
           onKeyDown={(e) => { if (e.key === 'Enter') setEditingCell(null); }}
