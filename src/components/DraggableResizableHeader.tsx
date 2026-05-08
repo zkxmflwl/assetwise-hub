@@ -1,5 +1,18 @@
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
 import { ArrowUp, ArrowDown, ArrowUpDown, Filter, X, GripVertical } from 'lucide-react';
+
+// 헤더 레이블 기준 최소 컬럼 너비 계산 (canvas 실측)
+function measureTextWidth(text: string): number {
+  try {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return text.length * 8;
+    ctx.font = '600 12px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+    return ctx.measureText(text).width;
+  } catch {
+    return text.length * 8;
+  }
+}
 
 interface DraggableResizableHeaderProps {
   colKey: string;
@@ -8,7 +21,7 @@ interface DraggableResizableHeaderProps {
   sortKey: string | null;
   sortDir: 'asc' | 'desc' | null;
   onSort: (key: string) => void;
-  onResizeStart: (colKey: string, startX: number, currentWidth: number) => void;
+  onResizeStart: (colKey: string, startX: number, currentWidth: number, minWidth?: number) => void;
   isDragging: boolean;
   isDragOver: boolean;
   onDragStart: (key: string) => void;
@@ -44,17 +57,32 @@ export default function DraggableResizableHeader({
 }: DraggableResizableHeaderProps) {
   const thRef = useRef<HTMLTableCellElement>(null);
 
+  // 헤더 텍스트 + 아이콘 기반 최소 너비 계산
+  // 레이아웃: [px-3 12px] [grip 12px] [gap 4px] [text] [gap 4px] [sort 12px] [?gap 4px] [?filter 16px] [px-3 12px]
+  const minWidth = useMemo(() => {
+    const textW = measureTextWidth(label);
+    const PAD = 24;       // px-3 양쪽
+    const GRIP = 16;      // grip 아이콘(12) + gap-1(4)
+    const SORT = 16;      // gap-1(4) + sort 아이콘(12)
+    const FILTER = 20;    // gap-1(4) + p-0.5×2(4) + filter 아이콘(12)
+    return Math.ceil(textW + PAD + GRIP + SORT + (showFilter ? FILTER : 0));
+  }, [label, showFilter]);
+
   const handleResizeMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const currentWidth = width || thRef.current?.getBoundingClientRect().width || 100;
-    onResizeStart(colKey, e.clientX, currentWidth);
+    const currentWidth = Math.max(minWidth, width || thRef.current?.getBoundingClientRect().width || 100);
+    onResizeStart(colKey, e.clientX, currentWidth, minWidth);
   };
 
   return (
     <th
       ref={thRef}
-      style={width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : undefined}
+      style={
+        width
+          ? { width: `${Math.max(width, minWidth)}px`, minWidth: `${minWidth}px`, maxWidth: `${Math.max(width, minWidth)}px` }
+          : { minWidth: `${minWidth}px` }
+      }
       className={`relative whitespace-nowrap border-r border-border/50 last:border-r-0 px-3 py-2.5 text-left font-semibold text-foreground select-none
         ${isDragOver ? 'bg-primary/10 border-l-2 border-l-primary' : ''}
         ${isDragging ? 'opacity-50' : ''}

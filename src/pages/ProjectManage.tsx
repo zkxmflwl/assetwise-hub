@@ -69,6 +69,7 @@ export default function ProjectManage() {
   const [activeFilterCol, setActiveFilterCol] = useState<string | null>(null);
   const [deptFilter, setDeptFilter] = useState('__none__');
   const [useFilter, setUseFilter] = useState<'all' | 'active' | 'inactive'>('active');
+  const [editingCell, setEditingCell] = useState<string | null>(null);
 
   useEffect(() => {
     if (departments.length > 0) {
@@ -343,6 +344,44 @@ export default function ProjectManage() {
     }
 
     if (col.type === 'number') {
+      // 매출/매입: 보기=콤마 포맷, 편집=원본 숫자 (클릭 시 전환)
+      if (col.key === 'sales_amount' || col.key === 'purchase_amount') {
+        const cellKey = `${row.tempId}__${col.key}`;
+        const isEditing = editingCell === cellKey;
+        const numVal = Number(val || 0);
+
+        if (!isEditing) {
+          return (
+            <span
+              className={`block text-right text-xs whitespace-nowrap px-1 py-0.5 ${
+                disabled ? 'cursor-not-allowed text-muted-foreground opacity-40' : 'cursor-text text-foreground'
+              }`}
+              onClick={() => !disabled && setEditingCell(cellKey)}
+            >
+              {formatKRW(numVal)}
+            </span>
+          );
+        }
+
+        return (
+          <input
+            type="text"
+            inputMode="numeric"
+            autoFocus
+            value={String(numVal)}
+            disabled={disabled}
+            onFocus={(e) => { if (numVal === 0) e.target.select(); }}
+            onChange={(e) => {
+              const raw = e.target.value.replace(/[^0-9\-]/g, '');
+              updateCell(row.tempId, col.key as any, raw === '' ? 0 : Number(raw));
+            }}
+            onBlur={() => setEditingCell(null)}
+            onKeyDown={(e) => { if (e.key === 'Enter') setEditingCell(null); }}
+            className={`${inputBase} w-full min-w-0 text-right`}
+          />
+        );
+      }
+
       return (
         <input
           type="number"

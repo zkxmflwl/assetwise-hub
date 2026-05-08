@@ -274,7 +274,7 @@ export default function DepartmentMonthlyData() {
 
   /** 읽기 전용: 여러 줄 펼침 */
   const renderExpandedMultilineText = (value: any) => (
-    <div className="w-full max-w-[240px] whitespace-pre-wrap break-words px-1 py-0.5 text-xs text-foreground">
+    <div className="w-full whitespace-pre-wrap break-words px-1 py-0.5 text-xs text-foreground">
       {value || '-'}
     </div>
   );
@@ -317,6 +317,7 @@ export default function DepartmentMonthlyData() {
       }
       return (
         <input type="text" inputMode="numeric" autoFocus value={val ?? ''} disabled={effectiveDisabled}
+          onFocus={(e) => { if (Number(val || 0) === 0) e.target.select(); }}
           onChange={(e) => { const raw = e.target.value.replace(/[^0-9\-]/g, ''); updateCell(row.tempId, col.key as any, raw === '' ? 0 : Number(raw)); }}
           onBlur={() => setEditingCell(null)}
           onKeyDown={(e) => { if (e.key === 'Enter') setEditingCell(null); }}
@@ -350,7 +351,7 @@ export default function DepartmentMonthlyData() {
         if (multilineExpanded) {
           return (
             <div
-              className={`w-full max-w-[240px] whitespace-pre-wrap break-words cursor-text px-1 py-0.5 text-xs text-foreground ${disabled ? 'opacity-40 cursor-default' : ''}`}
+              className={`w-full whitespace-pre-wrap break-words cursor-text px-1 py-0.5 text-xs text-foreground ${disabled ? 'opacity-40 cursor-default' : ''}`}
               onClick={() => !disabled && setEditingCell(cellKey)}
             >
               {val || '-'}
