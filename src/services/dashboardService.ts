@@ -154,12 +154,9 @@ export async function fetchDeptSummary(monthKey: string): Promise<DeptSummaryRow
       current + Number(r.sales_amount || 0) + (isJanuary ? Number(r.deferred_sales || 0) : 0)
     );
   }
-
   for (const [code, d] of depts) {
-    const prevYtdSales = prevYearYtdMap.get(code);
-    if (prevYtdSales !== undefined) {
-      d.yoyChange = d.ytdSales - prevYtdSales;
-    }
+    const prevYtdSales = prevYearYtdMap.get(code) ?? 0;
+    d.yoyChange = d.ytdSales - prevYtdSales;
   }
 
   // Active projects & monthly orders
