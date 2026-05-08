@@ -6,13 +6,13 @@ import { Loader2 } from 'lucide-react';
 
 interface Props {
   year: string;
-  departmentCode?: string;
+  departmentCodes?: string[]; // 비어있으면 전체
   mode?: 'cumulative' | 'monthly'; // 누적 or 당월
-  activeMonth?: string; // ✅ 추가
+  activeMonth?: string;
 }
 
-export default function MonthlyBarChart({ year, departmentCode, mode = 'cumulative', activeMonth }: Props) {
-  const { data: rawData, isLoading } = useYearlyMonthlySummary(year, departmentCode);
+export default function MonthlyBarChart({ year, departmentCodes, mode = 'cumulative', activeMonth }: Props) {
+  const { data: rawData, isLoading } = useYearlyMonthlySummary(year, departmentCodes);
 
   const data = useMemo(() => {
     if (!rawData) return rawData;

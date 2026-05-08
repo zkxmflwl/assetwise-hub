@@ -3,6 +3,7 @@ import { useDashboardStats, useDeptSummary } from '@/hooks/useDashboardStats';
 import { useAvailableMonths } from '@/hooks/useSalesData';
 import { useTangibleAssets } from '@/hooks/useTangibleAssets';
 import { useIntangibleAssets } from '@/hooks/useIntangibleAssets';
+import { useDepartments } from '@/hooks/useDepartments';
 import { formatKRW, formatKRWShort, format10MAmount, format1MAmount, formatDashboardAmount } from '@/data/mockData';
 import StatCard from '@/components/StatCard';
 import MonthlyBarChart from '@/components/MonthlyBarChart';
@@ -21,10 +22,31 @@ export default function Dashboard() {
   const { data: deptRows = [], isLoading: deptLoading } = useDeptSummary(activeMonth);
   const { data: tangibleAssets, isLoading: tangibleLoading } = useTangibleAssets();
   const { data: intangibleAssets, isLoading: intangibleLoading } = useIntangibleAssets();
+  const { data: departments = [] } = useDepartments();
 
   const [selectedDeptCode, setSelectedDeptCode] = useState<string | null>(null);
+  const [selectedSector, setSelectedSector] = useState<string | null>(null); // null = 전체
   const gridRef = useRef<HTMLDivElement>(null);
   const [chartMode, setChartMode] = useState<'cumulative' | 'monthly'>('cumulative');
+
+  // 부문 목록 (sort_order 우선)
+  const sectors = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const d of departments) {
+      if (d.sector_code && d.sector_name && !map.has(d.sector_code)) {
+        map.set(d.sector_code, d.sector_name);
+      }
+    }
+    return Array.from(map.entries()).map(([code, name]) => ({ code, name }));
+  }, [departments]);
+
+  // 선택된 부문에 속하는 부서 코드 집합
+  const sectorDeptCodes = useMemo(() => {
+    if (!selectedSector) return null;
+    return new Set(
+      departments.filter(d => d.sector_code === selectedSector).map(d => d.department_code)
+    );
+  }, [departments, selectedSector]);
 
   // Click outside grid to deselect
   useEffect(() => {
@@ -58,6 +80,48 @@ export default function Dashboard() {
       return sortDir === 'asc' ? cmp : -cmp;
     });
   }, [deptRows, sortKey, sortDir]);
+
+  // 부문 필터링 적용된 행
+  const filteredDeptRows = useMemo(() => {
+    if (!sectorDeptCodes) return sortedDeptRows;
+    return sortedDeptRows.filter(r => sectorDeptCodes.has(r.departmentCode));
+  }, [sortedDeptRows, sectorDeptCodes]);
+
+  // 카드용 stats: 부문 선택 시 클라이언트에서 재계산
+  const displayStats = useMemo(() => {
+    if (!sectorDeptCodes) return stats;
+    let ytdSales = 0, ytdPurchase = 0;
+    let yoySales = 0, hasYoY = false;
+    let activeProjects = 0, monthlyOrders = 0;
+    for (const r of filteredDeptRows) {
+      ytdSales += r.ytdSales;
+      ytdPurchase += r.ytdPurchase;
+      activeProjects += r.activeProjects;
+      monthlyOrders += r.monthlyOrders;
+      if (r.yoyChange !== null) {
+        yoySales += r.yoyChange;
+        hasYoY = true;
+      }
+    }
+    return {
+      ytdSales,
+      ytdPurchase,
+      ytdNetSales: ytdSales - ytdPurchase,
+      // 매출 YoY만 dept 단위로 재구성 가능 (매입/순매출 YoY는 서버 데이터 부재)
+      prevYtdSales: hasYoY ? ytdSales - yoySales : 0,
+      prevYtdPurchase: 0,
+      prevYtdNetSales: 0,
+      activeProjectCount: activeProjects,
+      monthlyOrderCount: monthlyOrders,
+    };
+  }, [stats, filteredDeptRows, sectorDeptCodes]);
+
+  // 차트용: 단일 행 선택 > 부문 > 전체
+  const chartDeptCodes = useMemo(() => {
+    if (selectedDeptCode) return [selectedDeptCode];
+    if (sectorDeptCodes) return Array.from(sectorDeptCodes);
+    return undefined;
+  }, [selectedDeptCode, sectorDeptCodes]);
 
   const isLoading = statsLoading || tangibleLoading || intangibleLoading;
 
@@ -118,32 +182,61 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* 부문 탭 */}
+      {sectors.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1 rounded-lg border border-border bg-card p-1">
+          <button
+            onClick={() => { setSelectedSector(null); setSelectedDeptCode(null); }}
+            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+              selectedSector === null
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
+          >
+            전체
+          </button>
+          {sectors.map(s => (
+            <button
+              key={s.code}
+              onClick={() => { setSelectedSector(s.code); setSelectedDeptCode(null); }}
+              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                selectedSector === s.code
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`}
+            >
+              {s.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard
           title="누적 매출"
-          value={formatDashboardAmount(stats?.ytdSales ?? 0)}
+          value={formatDashboardAmount(displayStats?.ytdSales ?? 0)}
           icon={<BanknoteArrowDown className="h-5 w-5" />}
-          change={stats && stats.prevYtdSales ? stats.ytdSales - stats.prevYtdSales : undefined}
+          change={displayStats && displayStats.prevYtdSales ? displayStats.ytdSales - displayStats.prevYtdSales : undefined}
           changeLabel="YoY"
         />
 
         <StatCard
           title="누적 매입"
-          value={formatDashboardAmount(stats?.ytdPurchase ?? 0)}
+          value={formatDashboardAmount(displayStats?.ytdPurchase ?? 0)}
           icon={<BanknoteArrowUp className="h-5 w-5" />}
-          change={stats && stats.prevYtdPurchase ? stats.ytdPurchase - stats.prevYtdPurchase : undefined}
+          change={displayStats && displayStats.prevYtdPurchase ? displayStats.ytdPurchase - displayStats.prevYtdPurchase : undefined}
           changeLabel="YoY"
         />
 
         <StatCard
           title="누적 순매출"
-          value={formatDashboardAmount(stats?.ytdNetSales ?? 0)}
+          value={formatDashboardAmount(displayStats?.ytdNetSales ?? 0)}
           icon={<HandCoins className="h-5 w-5" />}
-          change={stats && stats.prevYtdNetSales ? stats.ytdNetSales - stats.prevYtdNetSales : undefined}
+          change={displayStats && displayStats.prevYtdNetSales ? displayStats.ytdNetSales - displayStats.prevYtdNetSales : undefined}
           changeLabel="YoY"
         />
-        <StatCard title="영업 중인 건" value={`${stats?.activeProjectCount ?? 0}건`} icon={<Briefcase className="h-5 w-5" />} />
-        <StatCard title="당월 수주 건" value={`${stats?.monthlyOrderCount ?? 0}건`} icon={<CheckCircle className="h-5 w-5" />} />
+        <StatCard title="영업 중인 건" value={`${displayStats?.activeProjectCount ?? 0}건`} icon={<Briefcase className="h-5 w-5" />} />
+        <StatCard title="당월 수주 건" value={`${displayStats?.monthlyOrderCount ?? 0}건`} icon={<CheckCircle className="h-5 w-5" />} />
       </div>
 
       {/* 사업부 별 실적 요약 */}
@@ -171,9 +264,9 @@ export default function Dashboard() {
             <tbody>
               {deptLoading ? (
                 <tr><td colSpan={summaryColumns.length} className="py-8 text-center"><Loader2 className="h-5 w-5 animate-spin mx-auto text-primary" /></td></tr>
-              ) : sortedDeptRows.length === 0 ? (
+              ) : filteredDeptRows.length === 0 ? (
                 <tr><td colSpan={summaryColumns.length} className="py-8 text-center text-muted-foreground">데이터 없음</td></tr>
-              ) : sortedDeptRows.map((row) => (
+              ) : filteredDeptRows.map((row) => (
                 <tr
                   key={row.departmentCode}
                   onClick={() => setSelectedDeptCode(prev => prev === row.departmentCode ? null : row.departmentCode)}
@@ -207,9 +300,9 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <h2 className="text-lg font-semibold text-foreground">
             {activeMonth.split('-')[0]}년 월별 매출·매입·순매출
-            {selectedDeptCode && sortedDeptRows.find(r => r.departmentCode === selectedDeptCode) && (
+            {selectedDeptCode && filteredDeptRows.find(r => r.departmentCode === selectedDeptCode) && (
               <span className="ml-2 text-sm text-primary">
-                — {sortedDeptRows.find(r => r.departmentCode === selectedDeptCode)?.departmentName}
+                — {filteredDeptRows.find(r => r.departmentCode === selectedDeptCode)?.departmentName}
               </span>
             )}
           </h2>
@@ -239,7 +332,7 @@ export default function Dashboard() {
         </div>
         <MonthlyBarChart
           year={activeMonth.split('-')[0]}
-          departmentCode={selectedDeptCode ?? undefined}
+          departmentCodes={chartDeptCodes}
           mode={chartMode}
           activeMonth={activeMonth}
         />
